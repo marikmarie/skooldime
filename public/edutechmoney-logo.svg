@@ -1,0 +1,5 @@
+<svg width="160" height="40" viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="40" height="40" rx="12" fill="#0F4C81"/>
+  <path d="M13 10H27V13H17V17H26V20H17V24H27V27H13V10Z" fill="white"/>
+  <text x="50" y="26" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#0F4C81">EduTechMoney</text>
+</svg>
