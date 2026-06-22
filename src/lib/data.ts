@@ -1,0 +1,151 @@
+import { Student, Transaction } from './types';
+
+export const INITIAL_STUDENTS: Student[] = [
+  {
+    cardId: "SD-9082-K",
+    name: "Kato Mugisha",
+    classroom: "Primary 5 West",
+    currentBalance: 75000,
+    dailyLimit: 15000,
+    pinLessLimit: 8000,
+    parentName: "Florence Mugisha",
+    parentPhone: "+256 772 123456",
+    pinCode: "1482",
+    cardStatus: "active",
+    avatarSeed: "kato",
+  },
+  {
+    cardId: "SD-4412-B",
+    name: "Babirye Namubiru",
+    classroom: "Primary 6 Blue",
+    currentBalance: 124000,
+    dailyLimit: 20000,
+    pinLessLimit: 12000,
+    parentName: "Sarah Namubiru",
+    parentPhone: "+256 701 987654",
+    pinCode: "9002",
+    cardStatus: "active",
+    avatarSeed: "babirye",
+  },
+  {
+    cardId: "SD-8801-O",
+    name: "Okello Derrick",
+    classroom: "Senior 2 North",
+    currentBalance: 180000,
+    dailyLimit: 25000,
+    pinLessLimit: 15000,
+    parentName: "Arthur Okello",
+    parentPhone: "+256 782 555666",
+    pinCode: "5567",
+    cardStatus: "active",
+    avatarSeed: "derrick",
+  },
+  {
+    cardId: "SD-1109-N",
+    name: "Nsubuga Joel",
+    classroom: "Primary 4 Standard",
+    currentBalance: 12000,
+    dailyLimit: 8000,
+    pinLessLimit: 5000,
+    parentName: "Moses Nsubuga",
+    parentPhone: "+256 754 444333",
+    pinCode: "2019",
+    cardStatus: "suspended",
+    avatarSeed: "joel",
+  },
+  {
+    cardId: "SD-7711-K",
+    name: "Katasi Brenda",
+    classroom: "Senior 1 Elite",
+    currentBalance: 95000,
+    dailyLimit: 15000,
+    pinLessLimit: 10000,
+    parentName: "Doreen Katasi",
+    parentPhone: "+256 774 888999",
+    pinCode: "7110",
+    cardStatus: "active",
+    avatarSeed: "brenda",
+  }
+];
+
+export const INITIAL_TRANSACTIONS: Transaction[] = [
+  {
+    id: "tx-1001",
+    amount: 4500,
+    category: "canteen",
+    categoryLabel: "Lunch Sandwich",
+    timestamp: new Date(Date.now() - 3600000 * 2), // 2 hours ago
+    studentName: "Kato Mugisha",
+    studentCardId: "SD-9082-K",
+    status: "completed",
+    merchantName: "Main School Canteen",
+    referenceId: "TXN-8829107",
+  },
+  {
+    id: "tx-1002",
+    amount: 2500,
+    category: "canteen",
+    categoryLabel: "Soda Refreshment",
+    timestamp: new Date(Date.now() - 3600000 * 4), // 4 hours ago
+    studentName: "Babirye Namubiru",
+    studentCardId: "SD-4412-B",
+    status: "completed",
+    merchantName: "West Wing Snack Stand",
+    referenceId: "TXN-1100921",
+  },
+  {
+    id: "tx-1003",
+    amount: 15000,
+    category: "uniform",
+    categoryLabel: "School Badge Embroidery",
+    timestamp: new Date(Date.now() - 3600000 * 18), // 18 hours ago
+    studentName: "Okello Derrick",
+    studentCardId: "SD-8801-O",
+    status: "completed",
+    merchantName: "Tailor Store Terminal",
+    referenceId: "TXN-9028312",
+  },
+  {
+    id: "tx-1004",
+    amount: 6000,
+    category: "library",
+    categoryLabel: "Physics Textbook Fine",
+    timestamp: new Date(Date.now() - 3600000 * 26), // 26 hours ago
+    studentName: "Katasi Brenda",
+    studentCardId: "SD-7711-K",
+    status: "completed",
+    merchantName: "Library Counter",
+    referenceId: "TXN-7362514",
+  },
+  {
+    id: "tx-1005",
+    amount: 150000,
+    category: "tuition",
+    categoryLabel: "Term 2 Fee Premium installment",
+    timestamp: new Date(Date.now() - 3600000 * 30), // 30 hours ago
+    studentName: "Babirye Namubiru",
+    studentCardId: "SD-4412-B",
+    status: "completed",
+    merchantName: "Accounts Portal",
+    referenceId: "TXN-3829102",
+  },
+  {
+    id: "tx-1006",
+    amount: 3200,
+    category: "sports",
+    categoryLabel: "Water bottle replacement",
+    timestamp: new Date(Date.now() - 3600000 * 45), // 45 hours ago
+    studentName: "Kato Mugisha",
+    studentCardId: "SD-9082-K",
+    status: "completed",
+    merchantName: "Sports Store POS",
+    referenceId: "TXN-4428190",
+  }
+];
+
+export const APP_METRICS = {
+  totalUndergradFeeVolume: "84,320,000 UGX",
+  dailyApprovals: "4,215,000 UGX",
+  cardPenetrationPercent: "94.6%",
+  activeTerminals: "18 Stations",
+};
