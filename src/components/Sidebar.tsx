@@ -23,7 +23,7 @@ const defaultItems = [
 export default function Sidebar({ items = defaultItems, title = "SkoolDime", subtitle = "Admin panel", stats = "Students: 1,320 • Vendors: 14" }: SidebarProps) {
   return (
     <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:gap-6">
-      <div className="sticky top-20 flex flex-col gap-6 rounded-3xl bg-gradient-to-b from-[#3d5a72] to-[#2d4660] p-6 text-white shadow-md">
+      <div className="sticky top-20 flex flex-col gap-6 rounded-3xl bg-linear-to-b from-[#3d5a72] to-[#2d4660] p-6 text-white shadow-md">
         <div>
           <Typography variant="h6" className="font-semibold text-white">
             {title}

@@ -17,7 +17,6 @@ import {
   Shirt, 
   BookOpen, 
   GraduationCap, 
-  DollarSign,
   AlertCircle
 } from 'lucide-react';
 import { Student, Transaction, PaymentCategory } from '../lib/types';
@@ -256,7 +255,7 @@ export default function AdminDashboard({
 
         {/* Custom SVG Drawing chart for performance/portability instead of relying on slow library initialization */}
         <div className="w-full overflow-x-auto">
-          <div className="min-w-[600px] h-64 pt-4 flex flex-col justify-between">
+          <div className="min-w-150 h-64 pt-4 flex flex-col justify-between">
             <div className="relative flex-1 flex items-end justify-between border-b border-slate-100 pb-1 px-8 gap-12">
               {/* Chart Grid Lines */}
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
@@ -276,7 +275,7 @@ export default function AdminDashboard({
                       <div className="relative w-7 flex justify-center group-hover:scale-y-105 transition-all">
                         <div 
                           style={{ height: heightFees }}
-                          className="w-full rounded-t-sm bg-gradient-to-t from-[#d4805e] to-[#e8956f]"
+                          className="w-full rounded-t-sm bg-linear-to-t from-[#d4805e] to-[#e8956f]"
                         />
                         {/* Tooltip */}
                         <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white font-mono text-[10px] px-2 py-1 rounded shadow-lg whitespace-nowrap z-20 pointer-events-none">
@@ -363,7 +362,7 @@ export default function AdminDashboard({
           </div>
 
           {/* Table/Card grid */}
-          <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-105 overflow-y-auto pr-1">
             {filteredStudents.length > 0 ? (
               filteredStudents.map((student) => {
                 const maxCap = student.dailyLimit;
@@ -405,7 +404,7 @@ export default function AdminDashboard({
                           {student.currentBalance.toLocaleString()} UGX
                         </span>
                       </div>
-                      <span className="text-[11px] text-slate-500 block sm:text-right mt-0.5 mt-auto">
+                      <span className="text-[11px] text-slate-500 block sm:text-right mt-auto">
                         Daily Limit: <span className="font-semibold font-mono">{maxCap.toLocaleString()}</span>
                       </span>
                     </div>
@@ -456,7 +455,7 @@ export default function AdminDashboard({
         </div>
 
         {/* Right 1 column: Recent transaction audits */}
-        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-xs flex flex-col h-[560px]">
+        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-xs flex flex-col h-140">
           <div className="border-b border-slate-100 pb-4 mb-4">
             <h3 className="font-display font-medium text-slate-900 text-lg">Real-time Payments</h3>
             <p className="text-xs text-slate-500">Live feed of cash register actions and fee payouts across this terminal group.</p>

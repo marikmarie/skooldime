@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Wifi, 
   Trash2, 
@@ -247,7 +247,7 @@ export default function VendorPOS({
         <div className="lg:col-span-8 flex justify-center">
           
           {/* Handheld Device Container */}
-          <div className="w-full max-w-sm bg-slate-930 p-4 pb-6 rounded-[3rem] border-[10px] border-slate-900 shadow-2xl relative overflow-hidden bg-slate-950 text-white min-h-[580px] flex flex-col justify-between">
+          <div className="w-full max-w-sm bg-slate-930 p-4 pb-6 rounded-[3rem] border-10 border-slate-900 shadow-2xl relative overflow-hidden bg-slate-950 text-white min-h-[580px] flex flex-col justify-between">
             <div className="absolute top-0 inset-x-0 h-4 bg-slate-900 flex justify-center z-20">
               <div className="w-16 h-3 bg-black rounded-b-md" /> {/* Phone Speaker */}
             </div>
@@ -278,10 +278,10 @@ export default function VendorPOS({
                       <span className="text-[9px] font-mono uppercase bg-[#fcf2ed]/10 text-[#d4805e] px-2 py-0.5 rounded-full font-semibold">
                         Cashless Checkout POS
                       </span>
-                      <div className="text-2xl font-bold font-mono tracking-tight text-white mt-3 min-h-[36px]">
+                      <div className="text-2xl font-bold font-mono tracking-tight text-white mt-3 min-h-9">
                         {currentNumAmount.toLocaleString()} <span className="text-xs text-slate-400">UGX</span>
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-1 min-h-[16px]">
+                      <p className="text-[10px] text-slate-400 mt-1 min-h-4">
                         Charging for: {activeCategoryLabel}
                       </p>
                     </div>
@@ -342,7 +342,7 @@ export default function VendorPOS({
                     <button
                       onClick={startCheckout}
                       disabled={currentNumAmount <= 0}
-                      className="w-full py-3 rounded-xl bg-gradient-to-r from-[#d4805e] to-[#e8956f] text-sm font-semibold text-white tracking-wide hover:shadow-lg disabled:opacity-50 active:scale-[0.99] transition-all flex items-center justify-center gap-1 cursor-pointer"
+                      className="w-full py-3 rounded-xl bg-linear-to-r from-[#d4805e] to-[#e8956f] text-sm font-semibold text-white tracking-wide hover:shadow-lg disabled:opacity-50 active:scale-[0.99] transition-all flex items-center justify-center gap-1 cursor-pointer"
                     >
                       Process Checkout <ArrowRight className="h-4 w-4" />
                     </button>
@@ -375,7 +375,7 @@ export default function VendorPOS({
                           transition={{ repeat: Infinity, duration: 1.8, delay: 0.6, ease: "easeOut" }}
                           className="absolute h-14 w-14 rounded-full border border-[#e8956f]"
                         />
-                        <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-[#d4805e] to-[#e8956f] text-white flex items-center justify-center shadow-md border-2 border-slate-900 z-10 relative">
+                        <div className="h-14 w-14 rounded-full bg-linear-to-tr from-[#d4805e] to-[#e8956f] text-white flex items-center justify-center shadow-md border-2 border-slate-900 z-10 relative">
                           <Wifi className="h-6 w-6 animate-pulse" />
                         </div>
                       </div>
@@ -388,7 +388,7 @@ export default function VendorPOS({
                     {/* Touch Card Selector inside terminal */}
                     <div className="space-y-1.5 my-4 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
                       <span className="text-[8px] font-mono font-semibold uppercase tracking-wider text-slate-500 block mb-1">Simulate Card Proximity (Tap Card)</span>
-                      <div className="space-y-1 max-h-[140px] overflow-y-auto pr-1">
+                      <div className="space-y-1 max-h-35 overflow-y-auto pr-1">
                         {students.map((student) => (
                           <button
                             key={student.cardId}
