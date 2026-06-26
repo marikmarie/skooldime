@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Smartphone, Shield, ArrowRightLeft, Landmark, RefreshCw, Key, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Smartphone, Shield, ArrowRightLeft, Landmark, RefreshCw, Key, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Parent, Student, Transaction } from '../types';
 
 interface RoleParentProps {
@@ -9,7 +9,7 @@ interface RoleParentProps {
 export default function RoleParent({ userPhone = '+256772444555' }: RoleParentProps) {
   const [parent, setParent] = useState<Parent | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  // const [transactions, setTransactions] = useState<Transaction[]>([]); // Kept for future use
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -39,24 +39,19 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
       const parentRes = await fetch('/api/parents');
       const parentsList = await parentRes.json();
       if (Array.isArray(parentsList)) {
-        const currentParent = parentsList.find((p: any) => p.phone === userPhone); // Dynamic parent
+        const currentParent = parentsList.find((p: any) => p.phone === userPhone);
         setParent(currentParent || null);
 
         if (currentParent) {
           const studRes = await fetch('/api/students');
           const studData = await studRes.json();
           if (Array.isArray(studData)) {
-            // Get linked children (Brian & Patricia)
             const linked = studData.filter((s: Student) => s.parentPhone === currentParent.phone);
             setStudents(linked);
             if (linked.length > 0) setSelectedStudentId(linked[0].id);
           }
         }
       }
-
-      // Fetch transaction logs
-      const logsRes = await fetch('/api/audit-logs');
-      // We can simulate transactions too
     } catch (e) {
       console.error(e);
     }
@@ -80,7 +75,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
       const res = await fetch('/api/collecto/deposit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ parentPhone: '+256772444555', amount: Number(depositAmt) })
+        body: JSON.stringify({ parentPhone: userPhone, amount: Number(depositAmt) })
       });
       const data = await res.json();
       if (data.success) {
@@ -107,13 +102,12 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         const data = await res.json();
         if (data.status === 'SUCCESS') {
           clearInterval(interval);
-          setSuccessMsg(`Deposit approved! credited ${Number(depositAmt).toLocaleString()} UGX to Parent wallet.`);
+          setSuccessMsg(`Deposit approved! Credited ${Number(depositAmt).toLocaleString()} UGX to Parent wallet.`);
           setPollingTxId(null);
           setDepositAmt('');
           setLoading(false);
           fetchParentAndChildren();
         } else if (attempts > 5) {
-          // Fallback timeout
           clearInterval(interval);
           setPollingTxId(null);
           setLoading(false);
@@ -140,7 +134,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          parentPhone: '+256772444555',
+          parentPhone: userPhone,
           studentId: selectedStudentId,
           amount: Number(allocateAmt)
         })
@@ -178,7 +172,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         body: JSON.stringify({
           studentId: pinStudentId,
           newPin,
-          parentPhone: '+256772444555'
+          parentPhone: userPhone
         })
       });
       const data = await res.json();
@@ -227,58 +221,63 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
     }
   };
 
-  if (!parent) return <div className="text-gray-400 text-xs">Loading Parent Portal Profile...</div>;
+  if (!parent) return (
+    <div className="flex items-center justify-center h-40">
+      <div className="text-[#c7515e] flex flex-col items-center gap-3">
+        <RefreshCw className="h-6 w-6 animate-spin" />
+        <span className="text-gray-400 text-xs font-medium tracking-wide">Loading Parent Portal...</span>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       
+      {/* Alerts */}
       {successMsg && (
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-center gap-3 text-xs text-emerald-300">
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 flex items-center gap-3 text-sm text-emerald-200 shadow-sm">
           <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 flex items-center gap-3 text-xs text-rose-300">
-          <span className="text-rose-400 shrink-0 text-base font-bold">⚠️</span>
+        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 flex items-center gap-3 text-sm text-rose-200 shadow-sm">
+          <AlertTriangle className="h-5 w-5 text-rose-400 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Main Indicators Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         
-        {/* Parent Wallet */}
-        <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-4 flex items-center justify-between">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-5 flex items-center justify-between hover:border-[#c7515e]/30 transition-colors shadow-lg">
           <div>
-            <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Parent Fund Wallet Balance</span>
-            <h4 className="text-xl font-bold text-emerald-400 mt-1">{parent.walletBalance.toLocaleString()} UGX</h4>
+            <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Parent Fund Balance</span>
+            <h4 className="text-2xl font-bold text-white mt-1">{parent.walletBalance.toLocaleString()} <span className="text-sm font-medium text-gray-400">UGX</span></h4>
           </div>
-          <div className="rounded-lg bg-emerald-500/10 p-2.5 text-emerald-400">
-            <Landmark className="h-5 w-5" />
+          <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
+            <Landmark className="h-6 w-6" />
           </div>
         </div>
 
-        {/* Linked Accounts */}
-        <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-4 flex items-center justify-between">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-5 flex items-center justify-between hover:border-[#c7515e]/30 transition-colors shadow-lg">
           <div>
             <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Linked Student Cards</span>
-            <h4 className="text-xl font-bold text-white mt-1">{students.length} Active Siblings</h4>
+            <h4 className="text-2xl font-bold text-white mt-1">{students.length} <span className="text-sm font-medium text-gray-400">Active</span></h4>
           </div>
-          <div className="rounded-lg bg-indigo-500/10 p-2.5 text-indigo-400">
-            <Smartphone className="h-5 w-5" />
+          <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
+            <Smartphone className="h-6 w-6" />
           </div>
         </div>
 
-        {/* Identity Verification */}
-        <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-4 flex items-center justify-between">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-5 flex items-center justify-between hover:border-[#c7515e]/30 transition-colors shadow-lg">
           <div>
-            <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">NIN Verification (KYC)</span>
-            <h4 className="text-xl font-bold text-sky-400 mt-1">Tier 2 Verified</h4>
+            <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Identity Verification</span>
+            <h4 className="text-2xl font-bold text-white mt-1">Tier 2 <span className="text-sm font-medium text-gray-400">Verified</span></h4>
           </div>
-          <div className="rounded-lg bg-sky-500/10 p-2.5 text-sky-400">
-            <Shield className="h-5 w-5" />
+          <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
+            <Shield className="h-6 w-6" />
           </div>
         </div>
 
@@ -288,43 +287,46 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         
         {/* Linked student ledger controls (8 cols) */}
         <div className="lg:col-span-8 space-y-6">
-          <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-5 shadow-lg space-y-4">
-            <h3 className="text-sm font-medium text-gray-200 border-b border-white/5 pb-3">Linked Family Ledger Control</h3>
+          <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-5">
+            <h3 className="text-sm font-bold text-gray-200 border-b border-white/5 pb-4 flex items-center gap-2">
+              <Smartphone className="h-4 w-4 text-[#c7515e]" />
+              Linked Family Ledger Control
+            </h3>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {students.map((stud) => (
-                <div key={stud.id} className="p-4 rounded-xl bg-[#06080E]/60 border border-white/5 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <img src={stud.avatarUrl} alt="" className="w-10 h-10 rounded-full border border-white/10" referrerPolicy="no-referrer" />
+                <div key={stud.id} className="p-5 rounded-xl bg-[#06080E]/80 border border-white/5 hover:border-[#c7515e]/20 transition-all space-y-4">
+                  <div className="flex items-center gap-4">
+                    <img src={stud.avatarUrl} alt="" className="w-12 h-12 rounded-full border-2 border-[#c7515e]/30" referrerPolicy="no-referrer" />
                     <div>
-                      <h4 className="text-xs font-bold text-white">{stud.name}</h4>
-                      <p className="text-[10px] text-gray-500">{stud.class}</p>
+                      <h4 className="text-sm font-bold text-white">{stud.name}</h4>
+                      <p className="text-[11px] text-[#c7515e] font-medium">{stud.class}</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-[10px] font-mono py-2.5 border-y border-white/5">
+                  <div className="grid grid-cols-2 gap-3 text-[10px] font-mono py-3 border-y border-white/5">
                     <div>
-                      <span className="text-gray-500 block">CARD CODE:</span>
-                      <span className="text-gray-300 font-bold text-[11px]">{stud.qrHash}</span>
+                      <span className="text-gray-500 block mb-1">CARD CODE</span>
+                      <span className="text-gray-200 font-bold text-[11px] bg-white/5 px-2 py-0.5 rounded">{stud.qrHash}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500 block">NO-PIN TRANSACTION LIMIT:</span>
-                      <span className="text-sky-400 font-bold text-[11px]">{stud.noPinLimit.toLocaleString()} UGX</span>
+                      <span className="text-gray-500 block mb-1">NO-PIN LIMIT</span>
+                      <span className="text-[#c7515e] font-bold text-[11px] bg-[#c7515e]/10 px-2 py-0.5 rounded">{stud.noPinLimit.toLocaleString()} UGX</span>
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <button
                       onClick={() => triggerPinReset(stud.id)}
-                      className="flex-1 rounded border border-white/10 bg-white/5 hover:bg-white/10 py-1.5 text-center text-xs text-gray-300 font-semibold"
+                      className="flex-1 rounded-lg border border-white/10 bg-transparent hover:bg-white/5 py-2 text-center text-xs text-gray-300 font-semibold transition-colors"
                     >
-                      Reset card PIN
+                      Reset PIN
                     </button>
                     <button
                       onClick={() => triggerLimitModal(stud.id, stud.noPinLimit)}
-                      className="flex-1 rounded border border-sky-500/20 bg-sky-500/5 hover:bg-sky-500/10 py-1.5 text-center text-xs text-sky-400 font-semibold"
+                      className="flex-1 rounded-lg border border-[#c7515e]/30 bg-[#c7515e]/10 hover:bg-[#c7515e]/20 py-2 text-center text-xs text-[#c7515e] font-semibold transition-colors"
                     >
-                      Edit limits
+                      Edit Limits
                     </button>
                   </div>
                 </div>
@@ -332,18 +334,18 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
             </div>
           </div>
 
-          {/* Allocate pocket money (3.2) */}
-          <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-5 shadow-lg space-y-4">
-            <div className="flex items-center gap-2 border-b border-white/5 pb-3">
-              <ArrowRightLeft className="h-4.5 w-4.5 text-purple-400" />
-              <h3 className="text-sm font-medium text-gray-200">Allocate pocket money ledger split</h3>
+          {/* Allocate pocket money */}
+          <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-5">
+            <div className="flex items-center gap-2 border-b border-white/5 pb-4">
+              <ArrowRightLeft className="h-5 w-5 text-[#c7515e]" />
+              <h3 className="text-sm font-bold text-gray-200">Allocate Pocket Money</h3>
             </div>
 
-            <form onSubmit={handleAllocateSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <form onSubmit={handleAllocateSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <select
                 value={selectedStudentId}
                 onChange={(e) => setSelectedStudentId(e.target.value)}
-                className="rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-300"
+                className="rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
               >
                 {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
@@ -353,54 +355,57 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                 value={allocateAmt}
                 onChange={(e) => setAllocateAmt(e.target.value)}
                 placeholder="Amount (UGX)"
-                className="rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-200"
+                className="rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
               />
               <button
                 type="submit"
-                className="rounded-lg bg-purple-600 hover:bg-purple-500 text-xs font-semibold text-white transition active:scale-95"
+                className="rounded-lg bg-[#c7515e] hover:bg-[#b04753] px-4 py-2.5 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#c7515e]/20"
               >
-                Send pocket money
+                Send Funds
               </button>
             </form>
           </div>
         </div>
 
         {/* Top-Up via Collecto MoMo Gateway (4 cols) */}
-        <div className="lg:col-span-4 rounded-xl border border-white/5 bg-[#0B0F19] p-5 shadow-lg space-y-4">
-          <h3 className="text-sm font-medium text-gray-200 border-b border-white/5 pb-3">Collecto payment gateway top-up (STK push)</h3>
+        <div className="lg:col-span-4 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl h-fit space-y-5">
+          <h3 className="text-sm font-bold text-gray-200 border-b border-white/5 pb-4 flex items-center gap-2">
+            <RefreshCw className="h-4 w-4 text-[#c7515e]" />
+            Gateway Top-Up (STK Push)
+          </h3>
           
-          <form onSubmit={handleDepositSubmit} className="space-y-3">
+          <form onSubmit={handleDepositSubmit} className="space-y-4">
             <div>
-              <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">MoMo Number</label>
+              <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">MoMo Number</label>
               <input
                 type="text"
                 required
                 value={depositPhone}
                 onChange={(e) => setDepositPhone(e.target.value)}
                 placeholder="+256772444555"
-                className="w-full mt-1 rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-200 font-mono"
+                className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 font-mono focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
               />
             </div>
             <div>
-              <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">Top up Amount</label>
+              <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Top up Amount (UGX)</label>
               <input
                 type="number"
                 required
                 value={depositAmt}
                 onChange={(e) => setDepositAmt(e.target.value)}
-                placeholder="Amount UGX"
-                className="w-full mt-1 rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-200 font-mono"
+                placeholder="0"
+                className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 font-mono focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 py-2.5 text-xs font-semibold text-white transition active:scale-95 flex items-center justify-center gap-1.5"
+              className="w-full rounded-lg bg-[#c7515e] hover:bg-[#b04753] py-3 text-sm font-bold text-white transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-[#c7515e]/20 disabled:opacity-70 disabled:active:scale-100"
             >
               {loading ? (
                 <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  <RefreshCw className="h-4 w-4 animate-spin" />
                   Processing...
                 </>
               ) : 'Initiate Secure Deposit'}
@@ -408,7 +413,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
           </form>
 
           {loading && (
-            <div className="rounded bg-[#06080E] p-3 text-[11px] text-amber-300 font-mono border border-amber-500/20 leading-relaxed text-center">
+            <div className="rounded-lg bg-[#06080E] p-4 text-[11px] text-[#c7515e] font-mono border border-[#c7515e]/20 leading-relaxed text-center animate-pulse">
               {pollingMsg}
             </div>
           )}
@@ -418,38 +423,40 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
 
       {/* Edit Spend Limit Modal */}
       {showLimitModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-xs rounded-xl border border-white/10 bg-[#0F1424] p-5 shadow-2xl space-y-4">
-            <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-              <Shield className="h-5 w-5 text-sky-400" />
-              <h4 className="text-sm font-semibold text-white">Adjust Daily spend limit</h4>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0F1424] p-6 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+              <div className="p-2 rounded-lg bg-[#c7515e]/10">
+                <Shield className="h-5 w-5 text-[#c7515e]" />
+              </div>
+              <h4 className="text-base font-bold text-white">Adjust Daily Limit</h4>
             </div>
 
-            <form onSubmit={handleLimitSubmit} className="space-y-3">
+            <form onSubmit={handleLimitSubmit} className="space-y-5">
               <div>
-                <label className="text-[10px] font-mono text-gray-400 block mb-1">Max No-PIN Transaction Value (UGX)</label>
+                <label className="text-xs font-medium text-gray-400 block mb-2">Max No-PIN Transaction Value (UGX)</label>
                 <input
                   type="number"
                   required
                   value={spendingLimit}
                   onChange={(e) => setSpendingLimit(e.target.value)}
-                  className="w-full rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-300 font-mono"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-3 text-sm text-gray-200 font-mono focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                 />
               </div>
 
-              <div className="flex gap-2 justify-end pt-2 border-t border-white/5">
+              <div className="flex gap-3 justify-end pt-2">
                 <button
                   type="button"
                   onClick={() => setShowLimitModal(false)}
-                  className="rounded border border-white/10 px-3 py-1.5 text-xs text-gray-400"
+                  className="rounded-lg border border-white/10 px-5 py-2.5 text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded bg-sky-600 hover:bg-sky-500 px-4 py-1.5 text-xs font-semibold text-white"
+                  className="rounded-lg bg-[#c7515e] hover:bg-[#b04753] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#c7515e]/20 transition-all active:scale-95"
                 >
-                  Save parameter
+                  Save Amount
                 </button>
               </div>
             </form>
@@ -459,38 +466,40 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
 
       {/* Reset PIN Modal */}
       {showPinModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-xs rounded-xl border border-white/10 bg-[#0F1424] p-5 shadow-2xl space-y-4">
-            <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-              <Key className="h-5 w-5 text-purple-400" />
-              <h4 className="text-sm font-semibold text-white">Secure 4-Digit PIN Update</h4>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0F1424] p-6 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+              <div className="p-2 rounded-lg bg-[#c7515e]/10">
+                <Key className="h-5 w-5 text-[#c7515e]" />
+              </div>
+              <h4 className="text-base font-bold text-white">Secure 4-Digit PIN Update</h4>
             </div>
 
-            <form onSubmit={handlePinResetSubmit} className="space-y-3">
+            <form onSubmit={handlePinResetSubmit} className="space-y-5">
               <div>
-                <label className="text-[10px] font-mono text-gray-400 block mb-1">New PIN code</label>
+                <label className="text-xs font-medium text-gray-400 block mb-2">New PIN Code</label>
                 <input
                   type="password"
                   required
                   maxLength={4}
                   value={newPin}
                   onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
-                  placeholder="e.p. 1234"
-                  className="w-full rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-center font-mono tracking-widest text-gray-300"
+                  placeholder="e.g., 1234"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-3 text-lg text-center font-mono tracking-[0.5em] text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                 />
               </div>
 
-              <div className="flex gap-2 justify-end pt-2 border-t border-white/5">
+              <div className="flex gap-3 justify-end pt-2">
                 <button
                   type="button"
                   onClick={() => setShowPinModal(false)}
-                  className="rounded border border-white/10 px-3 py-1.5 text-xs text-gray-400"
+                  className="rounded-lg border border-white/10 px-5 py-2.5 text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded bg-purple-600 hover:bg-purple-500 px-4 py-1.5 text-xs font-semibold text-white"
+                  className="rounded-lg bg-[#c7515e] hover:bg-[#b04753] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#c7515e]/20 transition-all active:scale-95"
                 >
                   Save PIN
                 </button>

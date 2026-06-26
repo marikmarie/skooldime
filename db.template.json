@@ -1,0 +1,132 @@
+{
+    "parents": [
+        {
+            "id": "P_1782409334151_06a",
+            "name": "David Mugisha",
+            "phone": "+256779998811",
+            "nin": "CM91122334A23",
+            "kycTier": 2,
+            "walletBalance": 0
+        },
+        {
+            "id": "P_1782409334160_2eb",
+            "name": "Moses Mukasa",
+            "phone": "+256772444555",
+            "nin": "CM89021102A12",
+            "kycTier": 2,
+            "walletBalance": 0
+        },
+        {
+            "id": "P_1782409334160_5b2",
+            "name": "Justine Namara",
+            "phone": "+256782555444",
+            "nin": "CF90088112C45",
+            "kycTier": 2,
+            "walletBalance": 0
+        }
+    ],
+    "wallets": [
+        {
+            "id": "W_P_1782409334151_06a",
+            "ownerId": "P_1782409334151_06a",
+            "ownerType": "PARENT",
+            "balance": 0,
+            "status": "ACTIVE",
+            "lastTransactionDate": "2026-06-25T17:42:14+00:00"
+        },
+        {
+            "id": "W_ST_1782409334159_fb2b",
+            "ownerId": "ST_1782409334159_fb2b",
+            "ownerType": "STUDENT",
+            "balance": 0,
+            "status": "ACTIVE",
+            "lastTransactionDate": "2026-06-25T17:42:14+00:00"
+        },
+        {
+            "id": "W_P_1782409334160_2eb",
+            "ownerId": "P_1782409334160_2eb",
+            "ownerType": "PARENT",
+            "balance": 0,
+            "status": "ACTIVE",
+            "lastTransactionDate": "2026-06-25T17:42:14+00:00"
+        },
+        {
+            "id": "W_ST_1782409334160_b4b2",
+            "ownerId": "ST_1782409334160_b4b2",
+            "ownerType": "STUDENT",
+            "balance": 0,
+            "status": "ACTIVE",
+            "lastTransactionDate": "2026-06-25T17:42:14+00:00"
+        },
+        {
+            "id": "W_P_1782409334160_5b2",
+            "ownerId": "P_1782409334160_5b2",
+            "ownerType": "PARENT",
+            "balance": 0,
+            "status": "ACTIVE",
+            "lastTransactionDate": "2026-06-25T17:42:14+00:00"
+        },
+        {
+            "id": "W_ST_1782409334160_440d",
+            "ownerId": "ST_1782409334160_440d",
+            "ownerType": "STUDENT",
+            "balance": 0,
+            "status": "ACTIVE",
+            "lastTransactionDate": "2026-06-25T17:42:14+00:00"
+        }
+    ],
+    "students": [
+        {
+            "id": "ST_1782409334159_fb2b",
+            "schoolId": "S1",
+            "name": "Joan Kembabazi",
+            "admissionNo": "KPS-2026-009",
+            "class": "Primary 6",
+            "qrHash": "ST_QR_6CFD15",
+            "pin": "0000",
+            "parentPhone": "+256779998811",
+            "isLinked": true,
+            "avatarUrl": "https:\/\/images.unsplash.com\/photo-1544005313-94ddf0286df2?w=120",
+            "noPinLimit": 2000
+        },
+        {
+            "id": "ST_1782409334160_b4b2",
+            "schoolId": "S1",
+            "name": "Timothy Mukasa",
+            "admissionNo": "KPS-2026-010",
+            "class": "Primary 4",
+            "qrHash": "ST_QR_D434A1",
+            "pin": "0000",
+            "parentPhone": "+256772444555",
+            "isLinked": true,
+            "avatarUrl": "https:\/\/images.unsplash.com\/photo-1544005313-94ddf0286df2?w=120",
+            "noPinLimit": 2000
+        },
+        {
+            "id": "ST_1782409334160_440d",
+            "schoolId": "S1",
+            "name": "Angella Namara",
+            "admissionNo": "GHS-2026-102",
+            "class": "Senior 2",
+            "qrHash": "ST_QR_A0C8C5",
+            "pin": "0000",
+            "parentPhone": "+256782555444",
+            "isLinked": true,
+            "avatarUrl": "https:\/\/images.unsplash.com\/photo-1544005313-94ddf0286df2?w=120",
+            "noPinLimit": 2000
+        }
+    ],
+    "auditLogs": [
+        {
+            "id": "a_1782409334262_a5b8",
+            "userId": "u_agent",
+            "userName": "Peter Ssekabira",
+            "role": "AGENT",
+            "action": "BULK_CSV_STUDENT_IMPORT",
+            "ipAddress": "::1",
+            "oldValues": null,
+            "newValues": "{\"addedStudentsCount\":3}",
+            "createdAt": "2026-06-25T17:42:14+00:00"
+        }
+    ]
+}

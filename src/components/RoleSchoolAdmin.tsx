@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Landmark, Key, BarChart3, ShieldCheck, RefreshCw, Smartphone } from 'lucide-react';
+import { Landmark, Key, BarChart3, ShieldCheck, RefreshCw, Smartphone, AlertTriangle } from 'lucide-react';
 import { Student } from '../types';
 
 export default function RoleSchoolAdmin() {
@@ -83,51 +83,45 @@ export default function RoleSchoolAdmin() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto font-sans">
       
-      {successMsg && (
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-center gap-3 text-xs text-emerald-300">
-          <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0" />
-          <span>{successMsg}</span>
-        </div>
-      )}
-
-      {errorMsg && (
-        <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 flex items-center gap-3 text-xs text-rose-300">
-          <span className="text-rose-400 shrink-0 text-base font-bold">⚠️</span>
-          <span>{errorMsg}</span>
+      {/* Notifications */}
+      {(successMsg || errorMsg) && (
+        <div className={`rounded-xl p-4 flex items-center gap-3 text-xs ${successMsg ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-300 border border-rose-500/20'}`}>
+          {successMsg ? <ShieldCheck className="h-5 w-5 shrink-0" /> : <AlertTriangle className="h-5 w-5 shrink-0" />}
+          <span className="font-medium">{successMsg || errorMsg}</span>
         </div>
       )}
 
       {/* Analytics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-4 flex items-center justify-between">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Campus Registered</span>
-            <h4 className="text-xl font-bold text-white mt-1">Kampala Parents Primary</h4>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Campus Registered</span>
+            <h4 className="text-lg font-bold text-white">Kampala Parents Primary</h4>
           </div>
-          <div className="rounded-lg bg-sky-500/10 p-2.5 text-sky-400">
-            <Landmark className="h-5 w-5" />
+          <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
+            <Landmark className="h-6 w-6" />
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-4 flex items-center justify-between">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">School Revenue Ledger</span>
-            <h4 className="text-xl font-bold text-emerald-400 mt-1">15,000 UGX</h4>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">School Revenue Ledger</span>
+            <h4 className="text-2xl font-bold text-white">15,000 <span className="text-sm text-gray-500">UGX</span></h4>
           </div>
-          <div className="rounded-lg bg-emerald-500/10 p-2.5 text-emerald-400">
-            <BarChart3 className="h-5 w-5" />
+          <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
+            <BarChart3 className="h-6 w-6" />
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-4 flex items-center justify-between">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Monitored Students</span>
-            <h4 className="text-xl font-bold text-white mt-1">{students.length} Accounts</h4>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Monitored Students</span>
+            <h4 className="text-2xl font-bold text-white">{students.length} <span className="text-sm text-gray-500">Accounts</span></h4>
           </div>
-          <div className="rounded-lg bg-purple-500/10 p-2.5 text-purple-400">
-            <Smartphone className="h-5 w-5" />
+          <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
+            <Smartphone className="h-6 w-6" />
           </div>
         </div>
       </div>
@@ -135,61 +129,76 @@ export default function RoleSchoolAdmin() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Student Spend Analytics Table */}
-        <div className="lg:col-span-8 rounded-xl border border-white/5 bg-[#0B0F19] p-5 shadow-lg">
-          <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
-            <h3 className="text-sm font-medium text-gray-200">Pocket Money Registry & PIN-State Monitor</h3>
-            <button onClick={fetchStudents} className="text-gray-400 hover:text-white p-1">
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        <div className="lg:col-span-8 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl">
+          <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-[#c7515e]" />
+              Pocket Money Registry & PIN Monitor
+            </h3>
+            <button 
+              onClick={fetchStudents} 
+              className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition"
+              title="Refresh Registry"
+            >
+              <RefreshCw className={`h-4.5 w-4.5 ${loading ? 'animate-spin text-[#c7515e]' : ''}`} />
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+          <div className="overflow-x-auto min-h-[300px]">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/5 text-gray-500 font-mono">
-                  <th className="pb-2.5">Student</th>
-                  <th className="pb-2.5">Admission #</th>
-                  <th className="pb-2.5">Class</th>
-                  <th className="pb-2.5">Limit Setting</th>
-                  <th className="pb-2.5">Action</th>
+                <tr className="border-b border-white/5 text-[10px] text-gray-500 uppercase tracking-wider font-bold">
+                  <th className="pb-3 px-2">Student</th>
+                  <th className="pb-3 px-2">Admission #</th>
+                  <th className="pb-3 px-2">Class</th>
+                  <th className="pb-3 px-2">Limit Setting</th>
+                  <th className="pb-3 px-2">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-gray-300">
+              <tbody className="divide-y divide-white/5 text-sm text-gray-300">
                 {students.map((stud) => (
-                  <tr key={stud.id}>
-                    <td className="py-3 flex items-center gap-2.5">
-                      <img src={stud.avatarUrl} alt="" className="w-7 h-7 rounded-full bg-white/10" referrerPolicy="no-referrer" />
+                  <tr key={stud.id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="py-4 px-2 flex items-center gap-3">
+                      <img src={stud.avatarUrl} alt="" className="w-8 h-8 rounded-full border border-white/10" referrerPolicy="no-referrer" />
                       <span className="font-semibold text-white">{stud.name}</span>
                     </td>
-                    <td className="py-3 font-mono text-gray-400">{stud.admissionNo}</td>
-                    <td className="py-3">{stud.class}</td>
-                    <td className="py-3 font-mono text-gray-400">{stud.noPinLimit.toLocaleString()} UGX</td>
-                    <td className="py-3">
+                    <td className="py-4 px-2 font-mono text-gray-400 text-xs">{stud.admissionNo}</td>
+                    <td className="py-4 px-2 text-xs">{stud.class}</td>
+                    <td className="py-4 px-2 font-mono text-emerald-400 text-xs">{stud.noPinLimit.toLocaleString()} UGX</td>
+                    <td className="py-4 px-2">
                       <button
                         onClick={() => triggerOtp(stud)}
-                        className="rounded border border-white/10 bg-white/5 hover:bg-white/10 px-2.5 py-1 text-gray-300 text-[11px] font-medium transition flex items-center gap-1"
+                        className="rounded-lg border border-[#c7515e]/30 bg-[#c7515e]/10 hover:bg-[#c7515e] hover:text-white px-3 py-1.5 text-[#c7515e] text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5"
                       >
-                        <Key className="h-3 w-3" />
+                        <Key className="h-3.5 w-3.5" />
                         Reset PIN
                       </button>
                     </td>
                   </tr>
                 ))}
+                {students.length === 0 && !loading && (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-gray-500 text-xs">No students registered to this campus.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
         {/* Operational Security Guide */}
-        <div className="lg:col-span-4 rounded-xl border border-white/5 bg-[#0B0F19] p-5 shadow-lg space-y-4">
-          <h3 className="text-sm font-medium text-gray-200 border-b border-white/5 pb-3">Institutional PIN reset security</h3>
+        <div className="lg:col-span-4 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-4 h-fit">
+          <div className="flex items-center gap-2 border-b border-white/5 pb-4">
+            <ShieldCheck className="h-5 w-5 text-amber-400" />
+            <h3 className="text-sm font-bold text-white">Institutional PIN Security</h3>
+          </div>
           <p className="text-xs text-gray-400 leading-relaxed">
             In compliance with student financial privacy guidelines, School Admins are strictly forbidden from manual overrides.
           </p>
-          <div className="rounded-lg bg-[#06080E]/60 border border-white/5 p-3.5 space-y-2 text-xs text-gray-400">
-            <span className="text-gray-200 font-semibold block">Regulatory Sequence:</span>
-            <ol className="list-decimal pl-4 space-y-1 text-[11px]">
-              <li>Admin clicks "Reset PIN" which sends an encrypted OTP via Collecto SMS to the registered Parent phone number.</li>
+          <div className="rounded-xl bg-[#06080E] border border-white/5 p-5 space-y-3">
+            <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold block border-b border-white/5 pb-2 mb-3">Regulatory Sequence</span>
+            <ol className="list-decimal pl-4 space-y-2 text-xs text-gray-300">
+              <li>Admin clicks <span className="font-semibold text-white">"Reset PIN"</span> which sends an encrypted OTP via Collecto SMS to the registered Parent phone number.</li>
               <li>Parent reads OTP to School Admin (verifying identity).</li>
               <li>Admin inputs OTP and types the new 4-digit PIN.</li>
             </ol>
@@ -201,55 +210,62 @@ export default function RoleSchoolAdmin() {
       {/* PIN Reset Modal (Simulated with OTP helper) */}
       {showPinModal && selectedStudent && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-sm rounded-xl border border-white/10 bg-[#0F1424] p-5 shadow-2xl space-y-4">
-            <div className="flex items-center gap-2 border-b border-white/5 pb-3">
-              <Key className="h-5 w-5 text-sky-400" />
-              <h4 className="text-sm font-semibold text-white">Reset PIN: {selectedStudent.name}</h4>
-            </div>
-
-            <div className="rounded bg-[#06080E] p-3 text-[11px] font-mono text-amber-300 border border-amber-500/20 flex flex-col gap-1">
-              <span className="font-semibold uppercase text-[9px] text-gray-500 tracking-wider">SMS Sim Gateway:</span>
-              <span>Parent Phone: {selectedStudent.parentPhone}</span>
-              <span className="text-white mt-1">SIMULATED SMS OTP CODE: <span className="text-emerald-400 font-bold">{simulatedOtp}</span></span>
-            </div>
-
-            <form onSubmit={handleResetPin} className="space-y-3.5">
+          <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#0F1424] p-6 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+              <div className="bg-[#c7515e]/20 p-2 rounded-full">
+                <Key className="h-5 w-5 text-[#c7515e]" />
+              </div>
               <div>
-                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">Parent OTP Challenge</label>
+                <h4 className="text-sm font-bold text-white">Reset PIN</h4>
+                <p className="text-xs text-gray-400">{selectedStudent.name}</p>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-[#06080E] p-4 border border-[#c7515e]/20 flex flex-col gap-1.5">
+              <span className="font-bold uppercase text-[10px] text-[#c7515e] tracking-wider flex items-center gap-1.5">
+                <AlertTriangle className="h-3 w-3" /> SMS Sim Gateway
+              </span>
+              <span className="text-xs text-gray-400">Target: {selectedStudent.parentPhone}</span>
+              <span className="text-xs text-white mt-1">SIMULATED OTP CODE: <span className="text-emerald-400 font-mono font-bold text-sm bg-emerald-400/10 px-1.5 py-0.5 rounded ml-1">{simulatedOtp}</span></span>
+            </div>
+
+            <form onSubmit={handleResetPin} className="space-y-4 pt-2">
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Parent OTP Challenge</label>
                 <input
                   type="text"
                   required
                   value={enteredOtp}
                   onChange={(e) => setEnteredOtp(e.target.value)}
                   placeholder="Enter 6-digit OTP code..."
-                  className="w-full mt-1 rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-300"
+                  className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">New 4-Digit Student PIN</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">New 4-Digit Student PIN</label>
                 <input
                   type="password"
                   required
                   maxLength={4}
                   value={newPin}
                   onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
-                  placeholder="e.p. 1234"
-                  className="w-full mt-1 rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-300 font-mono tracking-widest text-center"
+                  placeholder="• • • •"
+                  className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-lg text-white font-mono tracking-[1em] text-center focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition placeholder:tracking-normal placeholder:text-sm"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-white/5">
+              <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowPinModal(false)}
-                  className="rounded border border-white/10 px-3 py-1.5 text-xs text-gray-400 hover:text-white"
+                  className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded bg-sky-600 hover:bg-sky-500 px-4 py-1.5 text-xs font-semibold text-white transition active:scale-95"
+                  className="rounded-xl bg-[#c7515e] hover:bg-[#a6434e] px-5 py-2.5 text-xs font-bold text-white transition active:scale-95 shadow-lg shadow-[#c7515e]/20"
                 >
                   Authorize PIN Reset
                 </button>

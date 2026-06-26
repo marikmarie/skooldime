@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FileDown, UploadCloud, CheckCircle2, UserPlus, RefreshCw } from 'lucide-react';
+import { Users, FileDown, UploadCloud, CheckCircle2, UserPlus, RefreshCw, AlertTriangle } from 'lucide-react';
 import { School, Student } from '../types';
 
 export default function RoleAgent() {
@@ -162,65 +162,67 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto font-sans antialiased text-gray-200">
       
-      {/* Alert message */}
+      {/* Alert Messages */}
       {successMsg && (
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-center gap-3 text-xs text-emerald-300">
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 flex items-center gap-3 text-sm text-emerald-300 shadow-lg">
           <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
-          <span>{successMsg}</span>
+          <span className="font-medium">{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 flex items-center gap-3 text-xs text-rose-300">
-          <span className="text-rose-400 shrink-0 text-base font-bold">⚠️</span>
-          <span>{errorMsg}</span>
+        <div className="rounded-xl border border-[#c7515e]/30 bg-[#c7515e]/10 p-4 flex items-center gap-3 text-sm text-[#c7515e] shadow-lg">
+          <AlertTriangle className="h-5 w-5 text-[#c7515e] shrink-0" />
+          <span className="font-medium">{errorMsg}</span>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Bulk Upload CSV Engine (3.1) */}
-        <div className="lg:col-span-7 rounded-xl border border-white/5 bg-[#0B0F19] p-5 shadow-lg flex flex-col justify-between">
+        {/* Bulk Upload CSV Engine */}
+        <div className="lg:col-span-7 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex flex-col justify-between h-fit">
           <div>
-            <div className="flex items-center gap-2.5 border-b border-white/5 pb-3 mb-4">
-              <UploadCloud className="h-4.5 w-4.5 text-purple-400" />
-              <h3 className="text-sm font-medium text-gray-200">Bulk Upsert Student CSV Engine</h3>
+            <div className="flex items-center gap-2.5 border-b border-white/5 pb-4 mb-5">
+              <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
+                <UploadCloud className="h-5 w-5 text-[#c7515e]" />
+              </div>
+              <h3 className="text-sm font-bold text-white tracking-wide">Bulk Upsert Student CSV Engine</h3>
             </div>
 
-            <p className="text-xs text-gray-400 leading-relaxed mb-4">
+            <p className="text-sm text-gray-400 leading-relaxed mb-5">
               Paste standard comma-separated student arrays below. The parser automates identity lookup for both parents and student entities, binding their ledger limits dynamically.
             </p>
 
-            <div className="text-[10px] font-mono text-gray-500 bg-[#06080E] p-2.5 rounded border border-white/5 mb-4 leading-normal">
-              <span className="font-bold text-gray-300">CSV Header Guide:</span><br />
-              <code>SchoolCode, AdmissionNo, StudentName, Class, GuardianName, GuardianPhone, GuardianNIN</code>
+            <div className="text-xs font-mono text-gray-400 bg-[#06080E]/80 p-4 rounded-xl border border-white/5 mb-5 leading-relaxed shadow-inner">
+              <span className="font-bold text-[#c7515e] tracking-widest uppercase text-[10px]">CSV Header Guide:</span><br />
+              <code className="text-gray-300 mt-1 block">SchoolCode, AdmissionNo, StudentName, Class, GuardianName, GuardianPhone, GuardianNIN</code>
             </div>
 
-            <form onSubmit={handleCsvSubmit} className="space-y-4">
+            <form onSubmit={handleCsvSubmit} className="space-y-5">
               <textarea
                 value={csvText}
                 onChange={(e) => setCsvText(e.target.value)}
                 rows={6}
-                placeholder="e.p. KPS01,KPS-2026-004,Joan Kembabazi,Primary 5,Mugisha,+256779998811,..."
-                className="w-full rounded-lg border border-white/5 bg-[#06080E] p-3.5 font-mono text-xs text-gray-200 focus:outline-none focus:border-purple-500/50"
+                placeholder="e.g. KPS01,KPS-2026-004,Joan Kembabazi,Primary 5,Mugisha,+256779998811,..."
+                className="w-full rounded-lg border border-white/10 bg-[#06080E] p-4 font-mono text-sm text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all placeholder-gray-600"
               />
 
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <button
                   type="button"
                   onClick={loadDemoCsv}
-                  className="text-xs text-purple-400 hover:underline flex items-center gap-1 font-medium"
+                  className="text-sm text-[#c7515e] hover:text-[#b04753] hover:underline flex items-center gap-1.5 font-bold transition-colors"
                 >
-                  <FileDown className="h-3.5 w-3.5" />
+                  <FileDown className="h-4 w-4" />
                   Load Demo School CSV
                 </button>
                 <button
                   type="submit"
                   disabled={loading || !csvText.trim()}
-                  className={`rounded-lg bg-purple-600 hover:bg-purple-500 px-5 py-2 text-xs font-semibold text-white transition active:scale-95 ${
-                    loading || !csvText.trim() ? 'opacity-40 cursor-not-allowed' : ''
+                  className={`w-full sm:w-auto rounded-xl bg-[#c7515e] hover:bg-[#b04753] px-6 py-3 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#c7515e]/20 ${
+                    loading || !csvText.trim() ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   {loading ? 'Processing Upload...' : 'Execute Bulk CSV Import'}
@@ -231,89 +233,91 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
         </div>
 
         {/* Register Single Student */}
-        <div className="lg:col-span-5 rounded-xl border border-white/5 bg-[#0B0F19] p-5 shadow-lg">
-          <div className="flex items-center gap-2.5 border-b border-white/5 pb-3 mb-4">
-            <UserPlus className="h-4.5 w-4.5 text-sky-400" />
-            <h3 className="text-sm font-medium text-gray-200">Register Student & Parent Link</h3>
+        <div className="lg:col-span-5 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl h-fit">
+          <div className="flex items-center gap-2.5 border-b border-white/5 pb-4 mb-5">
+            <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
+              <UserPlus className="h-5 w-5 text-[#c7515e]" />
+            </div>
+            <h3 className="text-sm font-bold text-white tracking-wide">Register Student & Parent Link</h3>
           </div>
 
-          <form onSubmit={handleSingleSubmit} className="space-y-3">
+          <form onSubmit={handleSingleSubmit} className="space-y-4">
             <div>
-              <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">Campus Target</label>
+              <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Campus Target</label>
               <select
                 value={schoolId}
                 onChange={(e) => setSchoolId(e.target.value)}
-                className="w-full mt-1 rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-300"
+                className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-300 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all appearance-none cursor-pointer"
               >
                 {schools.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">Student Name</label>
+                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Student Name</label>
                 <input
                   type="text"
                   value={studentName}
                   onChange={(e) => setStudentName(e.target.value)}
                   placeholder="Brian Mukasa"
-                  className="w-full mt-1 rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-300 placeholder-gray-600"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">Admission No.</label>
+                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Admission No.</label>
                 <input
                   type="text"
                   value={admissionNo}
                   onChange={(e) => setAdmissionNo(e.target.value)}
                   placeholder="KPS-2026-004"
-                  className="w-full mt-1 rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-300 placeholder-gray-600"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">Class / Grade</label>
+                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Class / Grade</label>
                 <input
                   type="text"
                   value={studentClass}
                   onChange={(e) => setStudentClass(e.target.value)}
                   placeholder="Primary 5"
-                  className="w-full mt-1 rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-300 placeholder-gray-600"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">Parent Phone</label>
+                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Parent Phone</label>
                 <input
                   type="text"
                   value={parentPhone}
                   onChange={(e) => setParentPhone(e.target.value)}
                   placeholder="+256772444555"
-                  className="w-full mt-1 rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-300 placeholder-gray-600"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">Parent Name</label>
+                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Parent Name</label>
                 <input
                   type="text"
                   value={parentName}
                   onChange={(e) => setParentName(e.target.value)}
                   placeholder="Moses Mukasa"
-                  className="w-full mt-1 rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-300 placeholder-gray-600"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">Parent NIN (KYC 2)</label>
+                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Parent NIN (KYC 2)</label>
                 <input
                   type="text"
                   value={parentNin}
                   onChange={(e) => setParentNin(e.target.value)}
                   placeholder="CM89021102A12"
-                  className="w-full mt-1 rounded border border-white/10 bg-[#06080E] px-3 py-1.5 text-xs text-gray-300 placeholder-gray-600"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                 />
               </div>
             </div>
@@ -321,7 +325,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-3 rounded-lg bg-sky-600 hover:bg-sky-500 py-2 text-xs font-semibold text-white transition active:scale-95"
+              className="w-full mt-6 rounded-xl bg-[#c7515e] hover:bg-[#b04753] py-3 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#c7515e]/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating Records...' : 'Submit Entry & Link'}
             </button>
@@ -331,35 +335,42 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
       </div>
 
       {/* Live student registries */}
-      <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-5 shadow-lg">
-        <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
-          <h3 className="text-sm font-medium text-gray-200">Active Campus Student registries</h3>
-          <button onClick={fetchBaseData} className="text-gray-400 hover:text-white p-1">
+      <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-5">
+          <h3 className="text-sm font-bold text-white tracking-wide">Active Campus Student Registries</h3>
+          <button onClick={fetchBaseData} className="text-gray-400 hover:text-[#c7515e] p-1.5 rounded-lg hover:bg-[#c7515e]/10 transition-colors">
             <RefreshCw className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="overflow-x-auto max-h-60 scrollbar-thin">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="overflow-x-auto max-h-[300px] scrollbar-thin">
+          <table className="w-full text-left text-sm border-collapse">
             <thead>
-              <tr className="border-b border-white/5 text-gray-500 font-mono">
-                <th className="pb-2.5">Student Name</th>
-                <th className="pb-2.5">Admission #</th>
-                <th className="pb-2.5">Class</th>
-                <th className="pb-2.5">Linked Parent Phone</th>
-                <th className="pb-2.5">Secure QR Key</th>
+              <tr className="border-b border-white/5 text-gray-500 font-mono text-[10px] uppercase tracking-wider">
+                <th className="pb-3 font-bold">Student Name</th>
+                <th className="pb-3 font-bold">Admission #</th>
+                <th className="pb-3 font-bold">Class</th>
+                <th className="pb-3 font-bold">Linked Parent Phone</th>
+                <th className="pb-3 font-bold">Secure QR Key</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-gray-300">
               {students.map((student) => (
-                <tr key={student.id}>
-                  <td className="py-2.5 font-medium text-white">{student.name}</td>
-                  <td className="py-2.5 font-mono text-gray-400">{student.admissionNo}</td>
-                  <td className="py-2.5">{student.class}</td>
-                  <td className="py-2.5 text-gray-400">{student.parentPhone}</td>
-                  <td className="py-2.5 font-mono text-sky-400 text-[10px]">{student.qrHash}</td>
+                <tr key={student.id} className="hover:bg-white/[0.02] transition-colors">
+                  <td className="py-3 font-bold text-white">{student.name}</td>
+                  <td className="py-3 font-mono text-gray-400 text-xs">{student.admissionNo}</td>
+                  <td className="py-3 text-xs">{student.class}</td>
+                  <td className="py-3 text-gray-400 text-xs">{student.parentPhone}</td>
+                  <td className="py-3 font-mono text-[#c7515e] text-[10px] font-bold">{student.qrHash}</td>
                 </tr>
               ))}
+              {students.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-sm font-medium text-gray-500">
+                    No student records found in the registry.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

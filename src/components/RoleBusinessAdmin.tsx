@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Landmark, Users, Sliders, RefreshCw, BadgeAlert } from 'lucide-react';
+import { Landmark, Users, Sliders, RefreshCw, AlertTriangle, MapPin } from 'lucide-react';
 import { School, Vendor } from '../types';
 
 export default function RoleBusinessAdmin() {
@@ -36,61 +36,68 @@ export default function RoleBusinessAdmin() {
   };
 
   const handleSaveCommission = (vendorId: string) => {
-    // Mock updating the state locally to show immediate change
     setVendors(prev => prev.map(v => v.id === vendorId ? { ...v, commissionRate: 100 - customCommRate } : v));
     setEditingCommissionVendorId(null);
     console.log(`[Business Admin] Vendor commission split adjusted. School share set to ${customCommRate}%`);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto font-sans antialiased text-gray-200">
+      
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-4 flex items-center justify-between">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-5 flex items-center justify-between hover:border-[#c7515e]/30 transition-all shadow-lg group">
           <div>
             <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Franchise Territory</span>
-            <h4 className="text-xl font-bold text-white mt-1">Uganda Central Region</h4>
+            <h4 className="text-xl font-bold text-white mt-1.5 tracking-tight">Uganda Central Region</h4>
           </div>
-          <div className="rounded-lg bg-sky-500/10 p-2.5 text-sky-400">
-            <Landmark className="h-5 w-5" />
+          <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e] group-hover:scale-110 transition-transform">
+            <MapPin className="h-6 w-6" />
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-4 flex items-center justify-between">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-5 flex items-center justify-between hover:border-[#c7515e]/30 transition-all shadow-lg group">
           <div>
             <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Linked Schools</span>
-            <h4 className="text-xl font-bold text-white mt-1">{schools.length} Schools</h4>
+            <h4 className="text-2xl font-bold text-white mt-1.5 tracking-tight">{schools.length} <span className="text-sm font-medium text-gray-400 tracking-normal">Institutions</span></h4>
           </div>
-          <div className="rounded-lg bg-indigo-500/10 p-2.5 text-indigo-400">
-            <Landmark className="h-5 w-5" />
+          <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e] group-hover:scale-110 transition-transform">
+            <Landmark className="h-6 w-6" />
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-4 flex items-center justify-between">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-5 flex items-center justify-between hover:border-[#c7515e]/30 transition-all shadow-lg group">
           <div>
             <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Authorized POS Merchants</span>
-            <h4 className="text-xl font-bold text-white mt-1">{vendors.length} Outlets</h4>
+            <h4 className="text-2xl font-bold text-white mt-1.5 tracking-tight">{vendors.length} <span className="text-sm font-medium text-gray-400 tracking-normal">Outlets</span></h4>
           </div>
-          <div className="rounded-lg bg-purple-500/10 p-2.5 text-purple-400">
-            <Users className="h-5 w-5" />
+          <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e] group-hover:scale-110 transition-transform">
+            <Users className="h-6 w-6" />
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
         {/* Commission Configuration Panels */}
-        <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-5 shadow-lg">
-          <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
-            <div className="flex items-center gap-2">
-              <Sliders className="h-4 w-4 text-sky-400" />
-              <h3 className="text-sm font-medium text-gray-200">Merchant-School Commissions (vendor_school_link)</h3>
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl h-fit">
+          <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
+                <Sliders className="h-4 w-4 text-[#c7515e]" />
+              </div>
+              <h3 className="text-sm font-bold text-white tracking-wide">Merchant-School Commissions</h3>
             </div>
-            <button onClick={fetchData} className="text-gray-400 hover:text-white p-1">
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <button 
+              onClick={fetchData} 
+              className="text-gray-400 hover:text-[#c7515e] p-1.5 rounded-lg hover:bg-[#c7515e]/10 transition-colors"
+              title="Refresh Data"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-[#c7515e]' : ''}`} />
             </button>
           </div>
 
-          <p className="text-xs text-gray-400 leading-relaxed mb-4">
+          <p className="text-xs text-gray-400 leading-relaxed mb-6">
             Adjust the institutional cut automatically split to the respective school ledger on checkouts. Remaining percentage defaults to the merchant.
           </p>
 
@@ -100,26 +107,27 @@ export default function RoleBusinessAdmin() {
               const currentSchoolRate = 100 - vendor.commissionRate;
 
               return (
-                <div key={vendor.id} className="p-4 rounded-lg bg-[#06080E]/60 border border-white/5 space-y-3">
+                <div key={vendor.id} className="p-4 rounded-xl bg-[#06080E]/80 border border-white/5 hover:border-[#c7515e]/20 transition-colors space-y-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="text-xs font-semibold text-white">{vendor.name}</h4>
-                      <p className="text-[10px] text-gray-500 mt-0.5">Campus: {school ? school.name : 'Unknown'}</p>
+                      <h4 className="text-sm font-bold text-white">{vendor.name}</h4>
+                      <p className="text-[11px] text-[#c7515e] font-medium mt-1">Campus: {school ? school.name : 'Unknown'}</p>
                     </div>
-                    <span className="text-xs font-mono bg-sky-950/40 text-sky-400 px-2 py-0.5 rounded uppercase font-bold text-[9px]">
+                    <span className="text-[10px] font-mono bg-[#c7515e]/10 text-[#c7515e] px-2.5 py-1 rounded-md uppercase font-bold tracking-wider">
                       {vendor.type}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs pt-1.5 border-t border-white/5">
-                    <span className="text-gray-400">School Revenue Slice:</span>
+                  <div className="flex items-center justify-between text-xs pt-3 border-t border-white/5">
+                    <span className="text-gray-500 font-medium uppercase tracking-wider text-[10px]">School Revenue Slice:</span>
+                    
                     {editingCommissionVendorId === vendor.id ? (
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         <input
                           type="number"
                           value={customCommRate}
                           onChange={(e) => setCustomCommRate(Number(e.target.value))}
-                          className="w-12 rounded border border-white/10 bg-[#06080E] px-1.5 py-0.5 text-right font-mono text-xs text-gray-200"
+                          className="w-16 rounded border border-[#c7515e]/50 bg-[#06080E] px-2 py-1 text-right font-mono text-xs text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                           step="0.5"
                           min="0"
                           max="10"
@@ -127,17 +135,17 @@ export default function RoleBusinessAdmin() {
                         <span className="text-gray-400 font-mono">%</span>
                         <button
                           onClick={() => handleSaveCommission(vendor.id)}
-                          className="rounded bg-sky-600 hover:bg-sky-500 px-2 py-0.5 text-[10px] text-white font-medium"
+                          className="rounded-lg bg-[#c7515e] hover:bg-[#b04753] px-3 py-1 text-[11px] text-white font-bold transition-transform active:scale-95 shadow-lg shadow-[#c7515e]/20"
                         >
                           Save
                         </button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-gray-200 font-bold">{currentSchoolRate.toFixed(1)}%</span>
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-white font-bold bg-white/5 px-2 py-0.5 rounded">{currentSchoolRate.toFixed(1)}%</span>
                         <button
                           onClick={() => handleUpdateCommission(vendor.id, currentSchoolRate)}
-                          className="text-[10px] text-sky-400 hover:underline"
+                          className="text-[11px] text-[#c7515e] hover:text-[#b04753] font-semibold transition-colors"
                         >
                           Edit
                         </button>
@@ -151,27 +159,33 @@ export default function RoleBusinessAdmin() {
         </div>
 
         {/* Territory Guidelines */}
-        <div className="rounded-xl border border-white/5 bg-[#0B0F19] p-5 shadow-lg space-y-4">
-          <h3 className="text-sm font-medium text-gray-200 border-b border-white/5 pb-3">Regional Audit Rules</h3>
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-5 h-fit">
+          <div className="flex items-center gap-2.5 border-b border-white/5 pb-4">
+            <div className="p-1.5 rounded-lg bg-gray-800">
+              <AlertTriangle className="h-4 w-4 text-gray-300" />
+            </div>
+            <h3 className="text-sm font-bold text-white tracking-wide">Regional Audit Rules</h3>
+          </div>
           
-          <div className="space-y-3.5 text-xs text-gray-400 leading-relaxed">
-            <div className="flex gap-3">
-              <BadgeAlert className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="space-y-5 text-sm text-gray-400 leading-relaxed">
+            <div className="flex gap-4 p-4 rounded-xl bg-white/5 border border-white/5">
+              <AlertTriangle className="h-5 w-5 text-[#c7515e] shrink-0 mt-0.5" />
               <div>
-                <span className="font-semibold text-gray-200 block">Agent Registration Limits</span>
-                <span>Each region supports at most 10 operational agents. Commission modification controls are strictly isolated from fields agents.</span>
+                <span className="font-bold text-gray-200 block mb-1">Agent Registration Limits</span>
+                <span className="text-xs">Each region supports at most 10 operational agents. Commission modification controls are strictly isolated from field agents.</span>
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <BadgeAlert className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="flex gap-4 p-4 rounded-xl bg-white/5 border border-white/5">
+              <AlertTriangle className="h-5 w-5 text-[#c7515e] shrink-0 mt-0.5" />
               <div>
-                <span className="font-semibold text-gray-200 block">School Revenue Settlements</span>
-                <span>Settlements of commissions accumulated on school ledgers process automatically on the 1st of every calendar month.</span>
+                <span className="font-bold text-gray-200 block mb-1">School Revenue Settlements</span>
+                <span className="text-xs">Settlements of commissions accumulated on school ledgers process automatically on the 1st of every calendar month.</span>
               </div>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
