@@ -82,7 +82,7 @@ export default function App() {
             fontWeight: 700, color: '#fff', fontSize: 15, overflow: 'hidden',
           }}>
             <img
-              src="skooldime.png"
+              src="logo.png"
               alt="skoolDime"
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -144,7 +144,7 @@ export default function App() {
             </div>
           )}
 
-          <button
+          {/* <button
             onClick={handleResetDb}
             disabled={resetLoading}
             style={{
@@ -159,7 +159,7 @@ export default function App() {
           >
             <RefreshCw size={13} style={{ animation: resetLoading ? 'spin 1s linear infinite' : 'none' }} />
             Reset state
-          </button>
+          </button> */}
         </div>
       </header>
 
