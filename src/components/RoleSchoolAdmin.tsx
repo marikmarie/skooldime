@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Landmark, Key, BarChart3, ShieldCheck, RefreshCw, Smartphone, AlertTriangle } from 'lucide-react';
 import { Student } from '../types';
+import { useToast } from './ToastContext';
 
 export default function RoleSchoolAdmin() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -11,8 +12,7 @@ export default function RoleSchoolAdmin() {
   const [simulatedOtp, setSimulatedOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [enteredOtp, setEnteredOtp] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  const toast = useToast();
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -40,18 +40,15 @@ export default function RoleSchoolAdmin() {
     setSimulatedOtp(otp);
     setOtpSent(true);
     setShowPinModal(true);
-    setSuccessMsg('');
     console.log(`[School Admin] OTP Triggered for Parent at ${student.parentPhone}. Code is: ${otp}`);
   };
 
   const handleResetPin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSuccessMsg('');
-    setErrorMsg('');
     if (!selectedStudent || newPin.length !== 4) return;
 
     if (enteredOtp !== simulatedOtp) {
-      setErrorMsg('Invalid simulated parent OTP challenge.');
+      toast.error('Invalid simulated parent OTP challenge.');
       return;
     }
 
@@ -67,32 +64,24 @@ export default function RoleSchoolAdmin() {
       });
       const data = await res.json();
       if (data.success) {
-        setSuccessMsg(`PIN reset successfully for ${selectedStudent.name}.`);
+        toast.success(`PIN reset successfully for ${selectedStudent.name}.`);
         setShowPinModal(false);
         setNewPin('');
         setEnteredOtp('');
         setOtpSent(false);
         fetchStudents();
       } else {
-        setErrorMsg(data.error || 'Failed to reset PIN.');
+        toast.error(data.error || 'Failed to reset PIN.');
       }
     } catch (e: any) {
       console.error(e);
-      setErrorMsg(e.message || 'Error occurred during PIN reset.');
+      toast.error(e.message || 'Error occurred during PIN reset.');
     }
   };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto font-sans">
       
-      {/* Notifications */}
-      {(successMsg || errorMsg) && (
-        <div className={`rounded-xl p-4 flex items-center gap-3 text-xs ${successMsg ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-300 border border-rose-500/20'}`}>
-          {successMsg ? <ShieldCheck className="h-5 w-5 shrink-0" /> : <AlertTriangle className="h-5 w-5 shrink-0" />}
-          <span className="font-medium">{successMsg || errorMsg}</span>
-        </div>
-      )}
-
       {/* Analytics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between">

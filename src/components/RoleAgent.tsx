@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Users, FileDown, UploadCloud, CheckCircle2, UserPlus, RefreshCw, AlertTriangle } from 'lucide-react';
 import { School, Student } from '../types';
+import { useToast } from './ToastContext';
 
 export default function RoleAgent() {
   const [schools, setSchools] = useState<School[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
   const [csvText, setCsvText] = useState('');
+  const toast = useToast();
 
   // Single form state
   const [studentName, setStudentName] = useState('');
@@ -53,8 +53,6 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
     if (!csvText.trim()) return;
 
     setLoading(true);
-    setSuccessMsg('');
-    setErrorMsg('');
 
     // Parse CSV rows
     const lines = csvText.split('\n');
@@ -92,15 +90,15 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
       });
       const data = await res.json();
       if (data.success) {
-        setSuccessMsg(data.message);
+        toast.success(data.message);
         setCsvText('');
         fetchBaseData();
       } else {
-        setErrorMsg(data.error || 'Failed to bulk upload students.');
+        toast.error(data.error || 'Failed to bulk upload students.');
       }
     } catch (e: any) {
       console.error(e);
-      setErrorMsg(e.message || 'Error occurred during bulk upload.');
+      toast.error(e.message || 'Error occurred during bulk upload.');
     } finally {
       setLoading(false);
     }
@@ -108,10 +106,8 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
 
   const handleSingleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSuccessMsg('');
-    setErrorMsg('');
     if (!studentName || !admissionNo || !parentPhone) {
-      setErrorMsg('Student Name, Admission No, and Parent Phone are required.');
+      toast.error('Student Name, Admission No, and Parent Phone are required.');
       return;
     }
 
@@ -141,7 +137,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
       });
       const data = await res.json();
       if (data.success) {
-        setSuccessMsg(`Student "${studentName}" registered successfully.`);
+        toast.success(`Student "${studentName}" registered successfully.`);
         // Reset form
         setStudentName('');
         setAdmissionNo('');
@@ -151,11 +147,11 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
         setParentNin('');
         fetchBaseData();
       } else {
-        setErrorMsg(data.error || 'Failed to register student.');
+        toast.error(data.error || 'Failed to register student.');
       }
     } catch (e: any) {
       console.error(e);
-      setErrorMsg(e.message || 'Error occurred during registration.');
+      toast.error(e.message || 'Error occurred during registration.');
     } finally {
       setLoading(false);
     }
@@ -164,21 +160,6 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
   return (
     <div className="space-y-6 max-w-7xl mx-auto font-sans antialiased text-gray-200">
       
-      {/* Alert Messages */}
-      {successMsg && (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 flex items-center gap-3 text-sm text-emerald-300 shadow-lg">
-          <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
-          <span className="font-medium">{successMsg}</span>
-        </div>
-      )}
-
-      {errorMsg && (
-        <div className="rounded-xl border border-[#c7515e]/30 bg-[#c7515e]/10 p-4 flex items-center gap-3 text-sm text-[#c7515e] shadow-lg">
-          <AlertTriangle className="h-5 w-5 text-[#c7515e] shrink-0" />
-          <span className="font-medium">{errorMsg}</span>
-        </div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Bulk Upload CSV Engine */}
@@ -191,9 +172,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
               <h3 className="text-sm font-bold text-white tracking-wide">Bulk Upsert Student CSV Engine</h3>
             </div>
 
-            <p className="text-sm text-gray-400 leading-relaxed mb-5">
-              Paste standard comma-separated student arrays below. The parser automates identity lookup for both parents and student entities, binding their ledger limits dynamically.
-            </p>
+
 
             <div className="text-xs font-mono text-gray-400 bg-[#06080E]/80 p-4 rounded-xl border border-white/5 mb-5 leading-relaxed shadow-inner">
               <span className="font-bold text-[#c7515e] tracking-widest uppercase text-[10px]">CSV Header Guide:</span><br />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Smartphone, Shield, ArrowRightLeft, Landmark, RefreshCw, Key, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Parent, Student, Transaction } from '../types';
+import { useToast } from './ToastContext';
 
 interface RoleParentProps {
   userPhone?: string;
@@ -11,8 +12,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
   const [students, setStudents] = useState<Student[]>([]);
   // const [transactions, setTransactions] = useState<Transaction[]>([]); // Kept for future use
   const [loading, setLoading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  const toast = useToast();
 
   // Top up states
   const [depositAmt, setDepositAmt] = useState('');
@@ -68,8 +68,6 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
 
     setLoading(true);
     setPollingMsg('Initiating Collecto STK Push... Check phone screen.');
-    setSuccessMsg('');
-    setErrorMsg('');
 
     try {
       const res = await fetch('/api/collecto/deposit', {
@@ -82,12 +80,12 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         setPollingTxId(data.transactionId);
         startPolling(data.transactionId);
       } else {
-        setErrorMsg(data.error || 'Failed to initiate deposit.');
+        toast.error(data.error || 'Failed to initiate deposit.');
         setLoading(false);
       }
     } catch (e: any) {
       console.error(e);
-      setErrorMsg(e.message || 'Error occurred during deposit request.');
+      toast.error(e.message || 'Error occurred during deposit request.');
       setLoading(false);
     }
   };
@@ -102,7 +100,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         const data = await res.json();
         if (data.status === 'SUCCESS') {
           clearInterval(interval);
-          setSuccessMsg(`Deposit approved! Credited ${Number(depositAmt).toLocaleString()} UGX to Parent wallet.`);
+          toast.success(`Deposit approved! Credited ${Number(depositAmt).toLocaleString()} UGX to Parent wallet.`);
           setPollingTxId(null);
           setDepositAmt('');
           setLoading(false);
@@ -111,7 +109,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
           clearInterval(interval);
           setPollingTxId(null);
           setLoading(false);
-          setErrorMsg('STK Push polling timed out. No approval received.');
+          toast.error('STK Push polling timed out. No approval received.');
         }
       } catch (e) {
         clearInterval(interval);
@@ -126,8 +124,6 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
   const handleAllocateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!allocateAmt || !selectedStudentId) return;
-    setSuccessMsg('');
-    setErrorMsg('');
 
     try {
       const res = await fetch('/api/parents/allocate', {
@@ -141,15 +137,15 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
       });
       const data = await res.json();
       if (data.success) {
-        setSuccessMsg(data.message);
+        toast.success(data.message);
         setAllocateAmt('');
         fetchParentAndChildren();
       } else {
-        setErrorMsg(data.error || 'Failed to allocate pocket money.');
+        toast.error(data.error || 'Failed to allocate pocket money.');
       }
     } catch (e: any) {
       console.error(e);
-      setErrorMsg(e.message || 'Error occurred during pocket money allocation.');
+      toast.error(e.message || 'Error occurred during pocket money allocation.');
     }
   };
 
@@ -162,8 +158,6 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
   const handlePinResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPin.length !== 4) return;
-    setSuccessMsg('');
-    setErrorMsg('');
 
     try {
       const res = await fetch('/api/students/reset-pin', {
@@ -177,16 +171,16 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
       });
       const data = await res.json();
       if (data.success) {
-        setSuccessMsg('Student PIN reset completed. Updated security matrix.');
+        toast.success('Student PIN reset completed. Updated security matrix.');
         setShowPinModal(false);
         setNewPin('');
         fetchParentAndChildren();
       } else {
-        setErrorMsg(data.error || 'Failed to reset PIN.');
+        toast.error(data.error || 'Failed to reset PIN.');
       }
     } catch (e: any) {
       console.error(e);
-      setErrorMsg(e.message || 'Error occurred during PIN reset.');
+      toast.error(e.message || 'Error occurred during PIN reset.');
     }
   };
 
@@ -199,8 +193,6 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
 
   const handleLimitSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSuccessMsg('');
-    setErrorMsg('');
     try {
       const res = await fetch('/api/students/limit', {
         method: 'POST',
@@ -209,15 +201,15 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
       });
       const data = await res.json();
       if (data.success) {
-        setSuccessMsg(data.message);
+        toast.success(data.message);
         setShowLimitModal(false);
         fetchParentAndChildren();
       } else {
-        setErrorMsg(data.error || 'Failed to update spending limit.');
+        toast.error(data.error || 'Failed to update spending limit.');
       }
     } catch (e: any) {
       console.error(e);
-      setErrorMsg(e.message || 'Error occurred during spending limit update.');
+      toast.error(e.message || 'Error occurred during spending limit update.');
     }
   };
 
@@ -233,21 +225,6 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       
-      {/* Alerts */}
-      {successMsg && (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 flex items-center gap-3 text-sm text-emerald-200 shadow-sm">
-          <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
-          <span>{successMsg}</span>
-        </div>
-      )}
-
-      {errorMsg && (
-        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 flex items-center gap-3 text-sm text-rose-200 shadow-sm">
-          <AlertTriangle className="h-5 w-5 text-rose-400 shrink-0" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
-
       {/* Main Indicators Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         

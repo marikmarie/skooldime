@@ -100,6 +100,7 @@ $routes = [
         '#^/api/loans/products$#' => 'handle_loan_products',
         '#^/api/loans/my-loans/(?P<borrowerId>[^/]+)$#' => 'handle_my_loans',
         '#^/api/loans/score/(?P<borrowerId>[^/]+)/(?P<role>[^/]+)$#' => 'handle_loan_score',
+        '#^/api/pos/payment-status/(?P<refCode>[^/]+)$#' => 'handle_pos_payment_status',
     ],
     'POST' => [
         '#^/api/auth/login$#' => 'handle_login',
@@ -114,6 +115,8 @@ $routes = [
         '#^/api/collecto/withdraw$#' => 'handle_collect_withdraw',
         '#^/api/loans/apply$#' => 'handle_loan_apply',
         '#^/api/loans/repay$#' => 'handle_loan_repay',
+        '#^/api/pos/generate-payment-qr$#' => 'handle_pos_generate_payment_qr',
+        '#^/api/pos/complete-dynamic-payment$#' => 'handle_pos_complete_dynamic_payment',
     ]
 ];
 
@@ -157,36 +160,9 @@ function handle_health() {
     ]);
 }
 
-// function handle_login($vars, $input) {
-//     $db = load_db();
-//     $username = $input['username'] ?? '';
-//     $found = null;
-//     if (isset($db['users']) && is_array($db['users'])) {
-//         foreach ($db['users'] as $u) {
-//             if (($u['username'] ?? '') === $username) {
-//                 $found = $u;
-//                 break;
-//             }
-//         }
-//     }
-//     if ($found) {
-//         echo json_encode(['success' => true, 'user' => $found]);
-//     } else {
-//         http_response_code(401);
-//         echo json_encode(['success' => false, 'error' => 'Invalid username or password.']);
-//     }
-// }
-
 function handle_login($vars, $input) {
     $db = load_db();
     $username = $input['username'] ?? '';
-    
-    if (empty($username)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Username is required.']);
-        return;
-    }
-    
     $found = null;
     if (isset($db['users']) && is_array($db['users'])) {
         foreach ($db['users'] as $u) {
@@ -196,13 +172,11 @@ function handle_login($vars, $input) {
             }
         }
     }
-    
     if ($found) {
         echo json_encode(['success' => true, 'user' => $found]);
     } else {
-        // http_response_code(401);
-        // echo json_encode(['success' => false, 'error' => 'Username not found.']);
-         echo json_encode(['success' => true, 'user' => $found]);
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Invalid username or password.']);
     }
 }
 
@@ -1313,4 +1287,409 @@ function handle_loan_repay($vars, $input) {
         'message' => 'Repayment of ' . number_format($finalPay) . ' UGX completed successfully.',
         'remaining' => $db['loans'][$loanIdx]['totalRepayable'] - $db['loans'][$loanIdx]['amountPaid']
     ]);
+}
+
+// ----------------------------------------------------
+// DYNAMIC QR CODE PAYMENTS & POLLING ENDPOINTS (PHP)
+// ----------------------------------------------------
+
+function handle_pos_generate_payment_qr($vars, $input) {
+    $db = load_db();
+    $vendorId = $input['vendorId'] ?? '';
+    $amount = (int)($input['amount'] ?? 0);
+    $items = $input['items'] ?? [];
+
+    if (empty($vendorId) || $amount <= 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid merchant or checkout amount.']);
+        return;
+    }
+
+    $vendor = null;
+    if (isset($db['vendors']) && is_array($db['vendors'])) {
+        foreach ($db['vendors'] as $v) {
+            if ($v['id'] === $vendorId) {
+                $vendor = $v;
+                break;
+            }
+        }
+    }
+
+    if (!$vendor) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Merchant vendor not found.']);
+        return;
+    }
+
+    $txId = 'tx_qr_' . round(microtime(true) * 1000);
+    $refCode = generate_ref('QR-PAY');
+
+    $descItems = 'POS Purchase';
+    if (is_array($items) && count($items) > 0) {
+        $descArr = [];
+        foreach ($items as $item) {
+            $descArr[] = ($item['name'] ?? 'Item') . ' x' . ($item['quantity'] ?? 1);
+        }
+        $descItems = implode(', ', $descArr);
+    }
+
+    if (!isset($db['transactions'])) {
+        $db['transactions'] = [];
+    }
+
+    $db['transactions'][] = [
+        'id' => $txId,
+        'referenceCode' => $refCode,
+        'senderWalletId' => 'PENDING_SCAN_PAY',
+        'receiverWalletId' => 'W_' . $vendorId,
+        'amount' => $amount,
+        'fee' => (int)floor($amount * 0.015),
+        'type' => 'SPEND',
+        'status' => 'PENDING',
+        'description' => 'POS QR Pay: ' . $descItems,
+        'createdAt' => date('c')
+    ];
+
+    save_db($db);
+    audit('VENDOR', $vendor['name'], 'VENDOR', 'DYNAMIC_QR_CODE_GENERATED', ['amount' => $amount], ['refCode' => $refCode]);
+
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $paymentUrl = $proto . '://' . $host . '/pay?ref=' . $refCode;
+
+    echo json_encode([
+        'success' => true,
+        'transactionId' => $txId,
+        'referenceCode' => $refCode,
+        'paymentUrl' => $paymentUrl,
+        'amount' => $amount
+    ]);
+}
+
+function handle_pos_payment_status($vars) {
+    $db = load_db();
+    $refCode = $vars['refCode'] ?? '';
+    
+    $txn = null;
+    if (isset($db['transactions']) && is_array($db['transactions'])) {
+        foreach ($db['transactions'] as $t) {
+            if (($t['referenceCode'] ?? '') === $refCode || ($t['id'] ?? '') === $refCode) {
+                $txn = $t;
+                break;
+            }
+        }
+    }
+
+    if (!$txn) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Dynamic payment request not found.']);
+        return;
+    }
+
+    echo json_encode([
+        'success' => true,
+        'id' => $txn['id'],
+        'referenceCode' => $txn['referenceCode'],
+        'amount' => $txn['amount'],
+        'status' => $txn['status'],
+        'senderWalletId' => $txn['senderWalletId'] ?? '',
+        'receiverWalletId' => $txn['receiverWalletId'] ?? '',
+        'description' => $txn['description'] ?? '',
+        'createdAt' => $txn['createdAt'] ?? ''
+    ]);
+}
+
+function handle_pos_complete_dynamic_payment($vars, $input) {
+    $db = load_db();
+    $refCode = $input['refCode'] ?? '';
+    $fundingSource = $input['fundingSource'] ?? '';
+    $studentId = $input['studentId'] ?? '';
+    $parentId = $input['parentId'] ?? '';
+    $pin = $input['pin'] ?? '';
+
+    $txnIdx = -1;
+    if (isset($db['transactions']) && is_array($db['transactions'])) {
+        foreach ($db['transactions'] as $idx => $t) {
+            if (($t['referenceCode'] ?? '') === $refCode) {
+                $txnIdx = $idx;
+                break;
+            }
+        }
+    }
+
+    if ($txnIdx === -1) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Dynamic transaction request not found.']);
+        return;
+    }
+
+    $txn = $db['transactions'][$txnIdx];
+
+    if ($txn['status'] === 'SUCCESS') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Payment has already been completed.']);
+        return;
+    }
+
+    if ($txn['status'] !== 'PENDING') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Transaction is not in pending state.']);
+        return;
+    }
+
+    $receiverWalletIdx = -1;
+    if (isset($db['wallets']) && is_array($db['wallets'])) {
+        foreach ($db['wallets'] as $idx => $w) {
+            if ($w['id'] === $txn['receiverWalletId']) {
+                $receiverWalletIdx = $idx;
+                break;
+            }
+        }
+    }
+
+    $vendor = null;
+    if (isset($db['vendors']) && is_array($db['vendors'])) {
+        foreach ($db['vendors'] as $v) {
+            if ('W_' . $v['id'] === $txn['receiverWalletId']) {
+                $vendor = $v;
+                break;
+            }
+        }
+    }
+
+    if ($receiverWalletIdx === -1 || !$vendor) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Receiver merchant wallet is unavailable.']);
+        return;
+    }
+
+    $school = null;
+    if (isset($db['schools']) && is_array($db['schools'])) {
+        foreach ($db['schools'] as $s) {
+            if ($s['id'] === $vendor['schoolId']) {
+                $school = $s;
+                break;
+            }
+        }
+    }
+
+    $schoolWalletIdx = -1;
+    if ($school && isset($db['wallets']) && is_array($db['wallets'])) {
+        foreach ($db['wallets'] as $idx => $w) {
+            if ($w['ownerId'] === $school['id'] && $w['ownerType'] === 'SCHOOL') {
+                $schoolWalletIdx = $idx;
+                break;
+            }
+        }
+    }
+
+    $platformWalletIdx = -1;
+    if (isset($db['wallets']) && is_array($db['wallets'])) {
+        foreach ($db['wallets'] as $idx => $w) {
+            if ($w['ownerType'] === 'PLATFORM') {
+                $platformWalletIdx = $idx;
+                break;
+            }
+        }
+    }
+
+    $schoolCommRate = $school ? $school['commissionRate'] : 1;
+    $platformCommRate = 0.5;
+
+    $schoolPart = (int)floor(($txn['amount'] * $schoolCommRate) / 100);
+    $platformPart = (int)floor(($txn['amount'] * $platformCommRate) / 100);
+    $vendorPart = $txn['amount'] - $schoolPart - $platformPart;
+
+    try {
+        if ($fundingSource === 'MOMO') {
+            $db['wallets'][$receiverWalletIdx]['balance'] += $vendorPart;
+            $db['wallets'][$receiverWalletIdx]['lastTransactionDate'] = date('c');
+
+            if ($schoolWalletIdx !== -1 && $schoolPart > 0) {
+                $db['wallets'][$schoolWalletIdx]['balance'] += $schoolPart;
+                $db['wallets'][$schoolWalletIdx]['lastTransactionDate'] = date('c');
+            }
+
+            if ($platformWalletIdx !== -1 && $platformPart > 0) {
+                $db['wallets'][$platformWalletIdx]['balance'] += $platformPart;
+                $db['wallets'][$platformWalletIdx]['lastTransactionDate'] = date('c');
+            }
+
+            $db['transactions'][$txnIdx]['senderWalletId'] = 'MOMO-PAY-INTEGRATION';
+            $db['transactions'][$txnIdx]['status'] = 'SUCCESS';
+            $db['transactions'][$txnIdx]['description'] = 'Dynamic QR Pay (MoMo Cash Out): ' . $txn['description'];
+
+            save_db($db);
+            audit('VENDOR', $vendor['name'], 'VENDOR', 'DYNAMIC_QR_PAY_MOMO_COMPLETED', ['amount' => $txn['amount']], ['refCode' => $refCode]);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Payment of ' . number_format($txn['amount']) . ' UGX completed successfully via Mobile Money!'
+            ]);
+            return;
+
+        } else if ($fundingSource === 'STUDENT') {
+            $student = null;
+            if (isset($db['students']) && is_array($db['students'])) {
+                foreach ($db['students'] as $s) {
+                    if ($s['id'] === $studentId) {
+                        $student = $s;
+                        break;
+                    }
+                }
+            }
+
+            if (!$student) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Student card account not found.']);
+                return;
+            }
+
+            if ($student['pin'] !== $pin) {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'error' => 'Invalid 4-digit Student PIN code.']);
+                return;
+            }
+
+            $studentWalletIdx = -1;
+            if (isset($db['wallets']) && is_array($db['wallets'])) {
+                foreach ($db['wallets'] as $idx => $w) {
+                    if ($w['ownerId'] === $student['id'] && $w['ownerType'] === 'STUDENT') {
+                        $studentWalletIdx = $idx;
+                        break;
+                    }
+                }
+            }
+
+            if ($studentWalletIdx === -1) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Student wallet ledger not found.']);
+                return;
+            }
+
+            if ($db['wallets'][$studentWalletIdx]['balance'] < $txn['amount']) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Insufficient pocket money balance. Card holds ' . number_format($db['wallets'][$studentWalletIdx]['balance']) . ' UGX.'
+                ]);
+                return;
+            }
+
+            $db['wallets'][$studentWalletIdx]['balance'] -= $txn['amount'];
+            $db['wallets'][$studentWalletIdx]['lastTransactionDate'] = date('c');
+
+            $db['wallets'][$receiverWalletIdx]['balance'] += $vendorPart;
+            $db['wallets'][$receiverWalletIdx]['lastTransactionDate'] = date('c');
+
+            if ($schoolWalletIdx !== -1 && $schoolPart > 0) {
+                $db['wallets'][$schoolWalletIdx]['balance'] += $schoolPart;
+                $db['wallets'][$schoolWalletIdx]['lastTransactionDate'] = date('c');
+            }
+
+            if ($platformWalletIdx !== -1 && $platformPart > 0) {
+                $db['wallets'][$platformWalletIdx]['balance'] += $platformPart;
+                $db['wallets'][$platformWalletIdx]['lastTransactionDate'] = date('c');
+            }
+
+            $db['transactions'][$txnIdx]['senderWalletId'] = $db['wallets'][$studentWalletIdx]['id'];
+            $db['transactions'][$txnIdx]['status'] = 'SUCCESS';
+            $db['transactions'][$txnIdx]['description'] = 'Dynamic QR Pay (Student Debit): ' . $txn['description'];
+
+            save_db($db);
+            audit('STUDENT', $student['name'], 'STUDENT', 'DYNAMIC_QR_PAY_DEBITED', ['amount' => $txn['amount']], ['refCode' => $refCode]);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Payment of ' . number_format($txn['amount']) . ' UGX successfully authorized! debited from ' . $student['name'] . '\'s card.'
+            ]);
+            return;
+
+        } else if ($fundingSource === 'PARENT') {
+            $parent = null;
+            if (isset($db['parents']) && is_array($db['parents'])) {
+                foreach ($db['parents'] as $p) {
+                    if ($p['id'] === $parentId) {
+                        $parent = $p;
+                        break;
+                    }
+                }
+            }
+
+            if (!$parent) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Parent wallet account not found.']);
+                return;
+            }
+
+            if ($pin !== '1234') {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'error' => 'Invalid 4-digit Parent PIN code.']);
+                return;
+            }
+
+            $parentWalletIdx = -1;
+            if (isset($db['wallets']) && is_array($db['wallets'])) {
+                foreach ($db['wallets'] as $idx => $w) {
+                    if ($w['ownerId'] === $parent['id'] && $w['ownerType'] === 'PARENT') {
+                        $parentWalletIdx = $idx;
+                        break;
+                    }
+                }
+            }
+
+            if ($parentWalletIdx === -1) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Parent wallet ledger not found.']);
+                return;
+            }
+
+            if ($db['wallets'][$parentWalletIdx]['balance'] < $txn['amount']) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Insufficient parent wallet balance. Available: ' . number_format($db['wallets'][$parentWalletIdx]['balance']) . ' UGX.'
+                ]);
+                return;
+            }
+
+            $db['wallets'][$parentWalletIdx]['balance'] -= $txn['amount'];
+            $db['wallets'][$parentWalletIdx]['lastTransactionDate'] = date('c');
+
+            $db['wallets'][$receiverWalletIdx]['balance'] += $vendorPart;
+            $db['wallets'][$receiverWalletIdx]['lastTransactionDate'] = date('c');
+
+            if ($schoolWalletIdx !== -1 && $schoolPart > 0) {
+                $db['wallets'][$schoolWalletIdx]['balance'] += $schoolPart;
+                $db['wallets'][$schoolWalletIdx]['lastTransactionDate'] = date('c');
+            }
+
+            if ($platformWalletIdx !== -1 && $platformPart > 0) {
+                $db['wallets'][$platformWalletIdx]['balance'] += $platformPart;
+                $db['wallets'][$platformWalletIdx]['lastTransactionDate'] = date('c');
+            }
+
+            $db['transactions'][$txnIdx]['senderWalletId'] = $db['wallets'][$parentWalletIdx]['id'];
+            $db['transactions'][$txnIdx]['status'] = 'SUCCESS';
+            $db['transactions'][$txnIdx]['description'] = 'Dynamic QR Pay (Parent Debit): ' . $txn['description'];
+
+            save_db($db);
+            audit('PARENT', $parent['name'], 'PARENT', 'DYNAMIC_QR_PAY_PARENT_DEBITED', ['amount' => $txn['amount']], ['refCode' => $refCode]);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Payment of ' . number_format($txn['amount']) . ' UGX completed successfully! debited from ' . $parent['name'] . '\'s parent wallet.'
+            ]);
+            return;
+
+        } else {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Unknown funding source method.']);
+            return;
+        }
+
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Dynamic payment crash: ' . $e->getMessage()]);
+    }
 }

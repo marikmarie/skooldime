@@ -4,53 +4,79 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  --color-brand: #c7515e;
-  --color-brand-hover: #b3414d;
-  --color-brand-muted: rgba(199, 81, 94, 0.1);
-  --color-brand-border: rgba(199, 81, 94, 0.25);
+  --color-brand: #ED0101;
+  --color-brand-hover: #c90000;
+  --color-brand-muted: rgba(237, 1, 1, 0.08);
+  --color-brand-border: rgba(237, 1, 1, 0.25);
+  --color-navy: #06065C;
+  --color-navy-hover: #040440;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: #f8fafc !important; /* Slate 50 */
+  background-color: #f8fafc !important; /* Slate 50 background */
   color: #1e293b !important; /* Slate 800 */
+}
+
+/* --- BRAND COLOR ASSIGNMENTS --- */
+:root {
+  --brand-primary: #ED0101;
+  --brand-secondary: #06065C;
 }
 
 /* --- SYSTEM-WIDE PREMIUM LIGHT MODE OVERRIDES --- */
 
-/* Background Overrides */
-[class*="bg-[#070A13]"] {
-  background-color: #f1f5f9 !important; /* Slate 100 */
+/* Background Overrides - Make all cards solid crisp white */
+[class*="bg-[#070A13]"], [class*="bg-slate-950"] {
+  background-color: #f8fafc !important; /* Slate 50 background */
 }
-[class*="bg-[#080B15]"], [class*="bg-[#080B15]"] {
+[class*="bg-[#080B15]"], [class*="bg-[#080B15]"], [class*="bg-slate-900"] {
   background-color: #ffffff !important;
+  box-shadow: 0 4px 12px -2px rgba(6, 6, 92, 0.04), 0 2px 6px -1px rgba(6, 6, 92, 0.02) !important;
+  border: 1px solid rgba(6, 6, 92, 0.08) !important;
 }
 [class*="bg-[#0B0F19]"] {
   background-color: #ffffff !important;
+  box-shadow: 0 4px 12px -2px rgba(6, 6, 92, 0.04), 0 2px 6px -1px rgba(6, 6, 92, 0.02) !important;
+  border: 1px solid rgba(6, 6, 92, 0.08) !important;
 }
-[class*="bg-[#06080E]"] {
-  background-color: #f8fafc !important; /* Slate 50 */
+[class*="bg-[#06080E]"], [class*="bg-slate-800"] {
+  background-color: #f8fafc !important; /* Slate 50 background */
+  border: 1px solid rgba(6, 6, 92, 0.05) !important;
+}
+[class*="bg-slate-800/50"], [class*="bg-slate-800/30"], [class*="bg-slate-900/50"], [class*="bg-slate-900/80"] {
+  background-color: #fafaf9 !important;
 }
 [class*="bg-[#0D1222]"] {
   background-color: #ffffff !important;
+  box-shadow: 0 4px 12px -2px rgba(6, 6, 92, 0.04), 0 2px 6px -1px rgba(6, 6, 92, 0.02) !important;
+  border: 1px solid rgba(6, 6, 92, 0.08) !important;
 }
 [class*="bg-[#0F1424]"] {
   background-color: #ffffff !important;
+  box-shadow: 0 4px 12px -2px rgba(6, 6, 92, 0.04), 0 2px 6px -1px rgba(6, 6, 92, 0.02) !important;
+  border: 1px solid rgba(6, 6, 92, 0.08) !important;
 }
 [class*="bg-[#141C2F]"] {
   background-color: #f1f5f9 !important; /* Slate 100 */
 }
 [class*="bg-black/20"] {
-  background-color: rgba(15, 23, 42, 0.05) !important;
+  background-color: rgba(6, 6, 92, 0.05) !important;
 }
 [class*="bg-white/5"], [class*="bg-white/10"], [class*="bg-white/[0.02]"] {
   background-color: #f8fafc !important;
+  border: 1px solid rgba(6, 6, 92, 0.04) !important;
 }
 [class*="hover:bg-white/5"]:hover {
   background-color: #f1f5f9 !important;
 }
+/* Modals backdrop */
+[class*="bg-slate-950/80"], [class*="bg-black/80"] {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(4px) !important;
+}
 
-/* Accent Background Overrides */
+/* Accent Background Overrides - Using brand red and navy accents */
 [class*="bg-emerald-500/10"], [class*="bg-emerald-600/10"] {
   background-color: #ecfdf5 !important;
   color: #047857 !important;
@@ -75,35 +101,66 @@ body {
   background-color: #fef3c7 !important;
   color: #b45309 !important;
 }
-[class*="bg-violet-500/10"] {
-  background-color: #f5f3ff !important;
-  color: #6d28d9 !important;
+
+/* Map the old red color to our exact primary red */
+[class*="bg-[#c7515e]"] {
+  background-color: #ED0101 !important;
 }
-[class*="bg-brand/5"] {
-  background-color: rgba(199, 81, 94, 0.05) !important;
+[class*="bg-[#c7515e]/10"] {
+  background-color: rgba(237, 1, 1, 0.08) !important;
+  color: #ED0101 !important;
 }
-[class*="bg-brand/10"] {
-  background-color: rgba(199, 81, 94, 0.1) !important;
+[class*="bg-[#c7515e]/20"] {
+  background-color: rgba(237, 1, 1, 0.15) !important;
 }
-[class*="bg-brand/20"] {
-  background-color: rgba(199, 81, 94, 0.15) !important;
+[class*="text-[#c7515e]"] {
+  color: #ED0101 !important;
+}
+[class*="border-[#c7515e]"] {
+  border-color: rgba(237, 1, 1, 0.25) !important;
+}
+[class*="hover:text-[#c7515e]"]:hover {
+  color: #ED0101 !important;
+}
+[class*="hover:border-[#c7515e]"]:hover {
+  border-color: #ED0101 !important;
 }
 
-/* Text Overrides */
-[class*="text-gray-100"], [class*="text-gray-200"], [class*="text-gray-300"] {
+/* Text Overrides - Ensure absolute legibility */
+[class*="text-gray-100"], [class*="text-gray-200"], [class*="text-gray-300"],
+[class*="text-slate-100"], [class*="text-slate-200"], [class*="text-slate-300"] {
   color: #334155 !important; /* Slate 700 */
 }
 [class*="text-white"] {
-  color: #0f172a !important; /* Slate 900 */
+  color: #06065C !important; /* Dark Navy Blue */
 }
-[class*="text-gray-400"] {
+
+/* Specific Restoration: Ensure that buttons, badges, and colored/brand backgrounds with white text keep their crisp white text */
+button[class*="text-white"],
+button [class*="text-white"],
+a[class*="text-white"],
+span[class*="bg-"][class*="text-white"],
+span[class*="bg-"] [class*="text-white"],
+div[class*="bg-indigo-600"] [class*="text-white"],
+div[class*="bg-[#c7515e]"] [class*="text-white"],
+[class*="bg-[#c7515e]"] [class*="text-white"],
+[class*="bg-[#ED0101]"] [class*="text-white"],
+[class*="bg-[#06065C]"] [class*="text-white"],
+[class*="bg-indigo-600"] [class*="text-white"],
+[class*="bg-emerald-600"] [class*="text-white"],
+[class*="bg-rose-600"] [class*="text-white"],
+[class*="bg-purple-600"] [class*="text-white"],
+[class*="bg-sky-600"] [class*="text-white"] {
+  color: #ffffff !important;
+}
+[class*="text-gray-400"], [class*="text-slate-400"] {
   color: #475569 !important; /* Slate 600 */
 }
-[class*="text-gray-500"] {
+[class*="text-gray-500"], [class*="text-slate-500"] {
   color: #64748b !important; /* Slate 500 */
 }
 
-/* Text Accent Overrides for contrast on white/gray */
+/* Interactive Text Accents */
 [class*="text-emerald-400"] {
   color: #047857 !important; /* Emerald 700 */
 }
@@ -126,19 +183,53 @@ body {
   color: #6d28d9 !important; /* Violet 700 */
 }
 
-/* Borders Overrides */
+/* Borders Overrides - Make them subtle but present on white cards */
 [class*="border-white/5"], 
 [class*="border-white/10"], 
 [class*="border-white/15"],
 [class*="border-white/20"], 
 [class*="border-white/30"], 
-[class*="border-slate-800"] {
-  border-color: #cbd5e1 !important; /* Slate 300 */
+[class*="border-slate-800"],
+[class*="border-slate-700"] {
+  border-color: rgba(6, 6, 92, 0.08) !important;
 }
 
-/* Input elements placeholders */
+/* Inputs, Textareas, and Placeholders */
+input, select, textarea {
+  background-color: #ffffff !important;
+  color: #06065C !important;
+  border: 1px solid rgba(6, 6, 92, 0.15) !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #ED0101 !important;
+  box-shadow: 0 0 0 3px rgba(237, 1, 1, 0.1) !important;
+}
 input::placeholder {
   color: #94a3b8 !important; /* Slate 400 */
+}
+
+/* --- UNIFORM & LEGIBLE FONTS --- */
+/* Scale up all extremely small text (10px, 11px) to a highly readable, uniform 13px */
+[class*="text-[10px]"], 
+[class*="text-xs"], 
+.text-xs, 
+.text-\[10px\] {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+[class*="text-[11px]"] {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+/* Standardize table sizes and padding for modern corporate feel */
+table th {
+  color: #06065C !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.03em !important;
+}
+table td {
+  color: #334155 !important;
 }
 
 /* Custom scrollbar formatting */
@@ -154,4 +245,15 @@ input::placeholder {
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Additional specific aesthetic highlights */
+button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+button:hover {
+  transform: translateY(-1px);
+}
+button:active {
+  transform: translateY(0);
 }

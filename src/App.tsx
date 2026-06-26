@@ -8,6 +8,7 @@ import RoleSchoolAdmin from './components/RoleSchoolAdmin';
 import RoleVendorPOS from './components/RoleVendorPOS';
 import RoleParent from './components/RoleParent';
 import MicroLoans from './components/MicroLoans';
+import { useToast } from './components/ToastContext';
 import {
   RefreshCw,
   CheckCircle2,
@@ -15,35 +16,32 @@ import {
   LogOut,
 } from 'lucide-react';
 
-const BRAND = '#c7515e';
-const BRAND_LIGHT = 'rgba(199,81,94,0.10)';
-const BRAND_BORDER = 'rgba(199,81,94,0.28)';
+const BRAND = '#ED0101';
+const BRAND_LIGHT = 'rgba(237,1,1,0.08)';
+const BRAND_BORDER = 'rgba(237,1,1,0.25)';
+const NAVY = '#06065C';
 
 export default function App() {
   const [user, setUser] = useState<LoggedInUser | null>(null);
   const [userSubTab, setUserSubTab] = useState<'DASHBOARD' | 'LOANS'>('DASHBOARD');
+  const toast = useToast();
 
   const [resetId, setResetId] = useState(0);
   const [resetLoading, setResetLoading] = useState(false);
-  const [globalSuccess, setGlobalSuccess] = useState('');
-  const [globalError, setGlobalError] = useState('');
 
   const handleResetDb = async () => {
     setResetLoading(true);
-    setGlobalSuccess('');
-    setGlobalError('');
     try {
       const res = await fetch('/api/setup/reset', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
         setResetId(prev => prev + 1);
-        setGlobalSuccess('Database successfully reset.');
-        setTimeout(() => setGlobalSuccess(''), 5000);
+        toast.success('Database successfully reset.');
       } else {
-        setGlobalError(data.error || 'Failed to reset database.');
+        toast.error(data.error || 'Failed to reset database.');
       }
     } catch (e: any) {
-      setGlobalError(e.message || 'Error occurred during database reset.');
+      toast.error(e.message || 'Error occurred during database reset.');
     } finally {
       setResetLoading(false);
     }
@@ -64,133 +62,77 @@ export default function App() {
   return (
     <div className="min-h-screen font-sans" style={{ background: 'var(--surface-0, #f5f5f3)', color: 'var(--text-primary, #1a1a18)' }}>
 
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <header
-        style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 24px',
-          borderBottom: '0.5px solid rgba(0,0,0,0.08)',
-          background: 'var(--surface-1, #ffffff)',
-        }}
-      >
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 8,
-            background: BRAND,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 700, color: '#fff', fontSize: 15, overflow: 'hidden',
-          }}>
-            <img
-              src="logo.png"
-              alt="skoolDime"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-            <span style={{ position: 'absolute' }}>S</span>
-          </div>
-          <span style={{ fontSize: 17, fontWeight: 500, letterSpacing: '-0.3px' }}>
-            <span style={{ color: BRAND }}>skool</span>Dime
-          </span>
-          {user && (
-            <span style={{
-              fontSize: 10, fontWeight: 500,
-              background: BRAND_LIGHT, color: BRAND, border: `0.5px solid ${BRAND_BORDER}`,
-              borderRadius: 20, padding: '3px 10px',
-              display: 'flex', alignItems: 'center', gap: 4,
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: BRAND, display: 'inline-block' }} />
-              Authorized
-            </span>
-          )}
-        </div>
-
-        {/* Right controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {user && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              background: 'var(--surface-2, #fafaf8)',
-              border: '0.5px solid rgba(0,0,0,0.08)',
-              borderRadius: 10, padding: '6px 14px 6px 8px',
-            }}>
-              <div style={{
-                width: 30, height: 30, borderRadius: 8,
-                background: BRAND_LIGHT, color: BRAND,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 600, fontSize: 11,
-              }}>
-                {user.name.substring(0, 2).toUpperCase()}
-              </div>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 500 }}>{user.name}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted, #888)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  {roleLabel(user.role)}
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                title="Sign out"
-                style={{
-                  marginLeft: 6, padding: 6, borderRadius: 6, border: 'none',
-                  background: 'transparent', cursor: 'pointer', color: 'var(--text-muted, #888)',
-                  display: 'flex', alignItems: 'center',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.color = BRAND)}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted, #888)')}
-              >
-                <LogOut size={15} />
-              </button>
-            </div>
-          )}
-
-          {/* <button
-            onClick={handleResetDb}
-            disabled={resetLoading}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '7px 14px', borderRadius: 8,
-              border: '0.5px solid rgba(0,0,0,0.12)',
-              background: 'var(--surface-2, #fafaf8)',
-              color: 'var(--text-secondary, #555)',
-              fontSize: 12, fontWeight: 500, cursor: 'pointer',
-              opacity: resetLoading ? 0.6 : 1,
-            }}
-          >
-            <RefreshCw size={13} style={{ animation: resetLoading ? 'spin 1s linear infinite' : 'none' }} />
-            Reset state
-          </button> */}
-        </div>
-      </header>
-
-      {/* ── Global banners ──────────────────────────────────────── */}
-      {globalSuccess && (
-        <div style={{
-          margin: '12px 24px 0', borderRadius: 8,
-          background: 'rgba(16,185,129,0.07)', border: '0.5px solid rgba(16,185,129,0.25)',
-          padding: '10px 14px', fontSize: 12, color: '#059669',
-          display: 'flex', alignItems: 'center', gap: 8,
-        }}>
-          <CheckCircle2 size={15} /> {globalSuccess}
-        </div>
-      )}
-      {globalError && (
-        <div style={{
-          margin: '12px 24px 0', borderRadius: 8,
-          background: 'rgba(239,68,68,0.07)', border: '0.5px solid rgba(239,68,68,0.22)',
-          padding: '10px 14px', fontSize: 12, color: '#dc2626',
-          display: 'flex', alignItems: 'center', gap: 8,
-        }}>
-          <AlertTriangle size={15} /> {globalError}
-        </div>
-      )}
-
       {/* ── Main Routing Content ────────────────────────────────── */}
       {!user ? (
         <Login onLoginSuccess={handleLoginSuccess} />
       ) : (
         /* ── Logged-in dashboard ─────────────────────────────── */
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 48px' }}>
+
+          {/* Inner Dashboard Header (Subtle, custom-contained, no full navbar) */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 24,
+            paddingBottom: 16,
+            borderBottom: '1px solid rgba(0,0,0,0.06)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <img
+                src="logo.png"
+                alt="Logo"
+                style={{ height: '48px', width: 'auto', objectFit: 'contain' }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+              <span style={{
+                fontSize: 11, fontWeight: 600,
+                background: BRAND_LIGHT, color: BRAND, border: `0.5px solid ${BRAND_BORDER}`,
+                borderRadius: 20, padding: '4px 12px',
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: BRAND, display: 'inline-block' }} />
+                Authorized Portal
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: 'var(--surface-1, #ffffff)',
+                border: '0.5px solid rgba(0,0,0,0.08)',
+                borderRadius: 10, padding: '6px 14px 6px 8px',
+              }}>
+                <div style={{
+                  width: 30, height: 30, borderRadius: 8,
+                  background: BRAND_LIGHT, color: BRAND,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 600, fontSize: 11,
+                }}>
+                  {user.name.substring(0, 2).toUpperCase()}
+                </div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: 12, fontWeight: 500 }}>{user.name}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted, #888)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    {roleLabel(user.role)}
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  title="Sign out"
+                  style={{
+                    marginLeft: 6, padding: 6, borderRadius: 6, border: 'none',
+                    background: 'transparent', cursor: 'pointer', color: 'var(--text-muted, #888)',
+                    display: 'flex', alignItems: 'center',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = BRAND)}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted, #888)')}
+                >
+                  <LogOut size={15} />
+                </button>
+              </div>
+            </div>
+          </div>
 
           {/* Sub-tabs for Parent / Vendor */}
           {(user.role === 'PARENT' || user.role === 'VENDOR') && (

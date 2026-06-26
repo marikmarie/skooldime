@@ -97,9 +97,7 @@ export default function RoleBusinessAdmin() {
             </button>
           </div>
 
-          <p className="text-xs text-gray-400 leading-relaxed mb-6">
-            Adjust the institutional cut automatically split to the respective school ledger on checkouts. Remaining percentage defaults to the merchant.
-          </p>
+
 
           <div className="space-y-4">
             {vendors.map((vendor) => {

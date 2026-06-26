@@ -172,6 +172,16 @@
                 "depositFrequency": 5,
                 "repaymentHistory": "Standard automatic system profile assessment"
             }
+        },
+        {
+            "id": "cs_1782466526524",
+            "ownerId": "V1",
+            "score": 78,
+            "factors": {
+                "txCount30Days": 120,
+                "depositFrequency": 0,
+                "repaymentHistory": "Standard automatic system profile assessment"
+            }
         }
     ]
 }
