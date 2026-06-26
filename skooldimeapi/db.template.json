@@ -1,0 +1,460 @@
+{
+  "users": [
+    {
+      "id": "u_admin",
+      "username": "superadmin",
+      "role": "SUPER_ADMIN",
+      "name": "Alinda Robert (HQ)",
+      "phone": "+256770000000",
+      "email": "admin@edutechmoney.ug"
+    },
+    {
+      "id": "u_b_admin",
+      "username": "central_admin",
+      "role": "BUSINESS_ADMIN",
+      "name": "Nakimbugwe Stella",
+      "phone": "+256771111222",
+      "email": "stella@edutechmoney.ug"
+    },
+    {
+      "id": "u_agent",
+      "username": "agent_peter",
+      "role": "AGENT",
+      "name": "Peter Ssekabira",
+      "phone": "+256782555666"
+    },
+    {
+      "id": "u_school",
+      "username": "kps_bursar",
+      "role": "SCHOOL_ADMIN",
+      "name": "Kato Charles (Bursar)",
+      "phone": "+256773888999",
+      "schoolId": "S1"
+    },
+    {
+      "id": "u_vendor1",
+      "username": "kps_canteen",
+      "role": "VENDOR",
+      "name": "Mama Betty Canteen",
+      "phone": "+256771000111",
+      "schoolId": "S1"
+    },
+    {
+      "id": "u_parent1",
+      "username": "moses_parent",
+      "role": "PARENT",
+      "name": "Moses Mukasa",
+      "phone": "+256772444555"
+    }
+  ],
+  "schools": [
+    {
+      "id": "S1",
+      "name": "Kampala Parents Primary School",
+      "region": "Central Kampala",
+      "code": "KPS01",
+      "commissionRate": 1
+    },
+    {
+      "id": "S2",
+      "name": "Gayaza High School",
+      "region": "Wakiso District",
+      "code": "GHS02",
+      "commissionRate": 1
+    }
+  ],
+  "vendors": [
+    {
+      "id": "V1",
+      "name": "Mama Betty Canteen",
+      "schoolId": "S1",
+      "phone": "+256771000111",
+      "type": "CANTEEN",
+      "commissionRate": 99,
+      "deviceBound": true,
+      "fingerprint": "device-fingerprint-123"
+    },
+    {
+      "id": "V2",
+      "name": "Gayaza Central Bookshop",
+      "schoolId": "S2",
+      "phone": "+256772222333",
+      "type": "BOOKSHOP",
+      "commissionRate": 99,
+      "deviceBound": false
+    }
+  ],
+  "parents": [
+    {
+      "id": "P1",
+      "name": "Moses Mukasa",
+      "phone": "+256772444555",
+      "nin": "CM89021102A12",
+      "kycTier": 2,
+      "walletBalance": 350000
+    },
+    {
+      "id": "P2",
+      "name": "Sarah Namubiru",
+      "phone": "+256782111222",
+      "nin": "CF92015562B34",
+      "kycTier": 1,
+      "walletBalance": 80000
+    },
+    {
+      "id": "P_1782469401709_hvw",
+      "name": "David Mugisha",
+      "phone": "+256779998811",
+      "nin": "CM91122334A23",
+      "kycTier": 2,
+      "walletBalance": 0
+    },
+    {
+      "id": "P_1782469401709_ew0",
+      "name": "Justine Namara",
+      "phone": "+256782555444",
+      "nin": "CF90088112C45",
+      "kycTier": 2,
+      "walletBalance": 0
+    }
+  ],
+  "students": [
+    {
+      "id": "ST1",
+      "schoolId": "S1",
+      "name": "Brian Mukasa",
+      "admissionNo": "KPS-2026-004",
+      "class": "Primary 5",
+      "qrHash": "ST1_QR_9812",
+      "pin": "1234",
+      "parentPhone": "+256772444555",
+      "isLinked": true,
+      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120",
+      "noPinLimit": 5000
+    },
+    {
+      "id": "ST2",
+      "schoolId": "S1",
+      "name": "Patricia Mukasa",
+      "admissionNo": "KPS-2026-005",
+      "class": "Primary 3",
+      "qrHash": "ST2_QR_4321",
+      "pin": "5678",
+      "parentPhone": "+256772444555",
+      "isLinked": true,
+      "avatarUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120",
+      "noPinLimit": 2000
+    },
+    {
+      "id": "ST_1782469401709_gjqi",
+      "schoolId": "S1",
+      "name": "Joan Kembabazi",
+      "admissionNo": "KPS-2026-009",
+      "class": "Primary 6",
+      "qrHash": "ST_QR_FZ4WZM",
+      "pin": "0000",
+      "parentPhone": "+256779998811",
+      "isLinked": true,
+      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120",
+      "noPinLimit": 2000
+    },
+    {
+      "id": "ST_1782469401709_p8j1",
+      "schoolId": "S1",
+      "name": "Timothy Mukasa",
+      "admissionNo": "KPS-2026-010",
+      "class": "Primary 4",
+      "qrHash": "ST_QR_IANH0R",
+      "pin": "0000",
+      "parentPhone": "+256772444555",
+      "isLinked": true,
+      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120",
+      "noPinLimit": 2000
+    },
+    {
+      "id": "ST_1782469401709_q40z",
+      "schoolId": "S2",
+      "name": "Angella Namara",
+      "admissionNo": "GHS-2026-102",
+      "class": "Senior 2",
+      "qrHash": "ST_QR_O81S72",
+      "pin": "0000",
+      "parentPhone": "+256782555444",
+      "isLinked": true,
+      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120",
+      "noPinLimit": 2000
+    }
+  ],
+  "wallets": [
+    {
+      "id": "W_P1",
+      "ownerId": "P1",
+      "ownerType": "PARENT",
+      "balance": 350000,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-22T14:30:00Z"
+    },
+    {
+      "id": "W_P2",
+      "ownerId": "P2",
+      "ownerType": "PARENT",
+      "balance": 80000,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-21T10:15:00Z"
+    },
+    {
+      "id": "W_ST1",
+      "ownerId": "ST1",
+      "ownerType": "STUDENT",
+      "balance": 12000,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-23T08:00:00Z"
+    },
+    {
+      "id": "W_ST2",
+      "ownerId": "ST2",
+      "ownerType": "STUDENT",
+      "balance": 4500,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-23T08:12:00Z"
+    },
+    {
+      "id": "W_V1",
+      "ownerId": "V1",
+      "ownerType": "VENDOR",
+      "balance": 180000,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-23T09:30:00Z"
+    },
+    {
+      "id": "W_V2",
+      "ownerId": "V2",
+      "ownerType": "VENDOR",
+      "balance": 0,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-20T17:45:00Z"
+    },
+    {
+      "id": "W_S1",
+      "ownerId": "S1",
+      "ownerType": "SCHOOL",
+      "balance": 15000,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-23T09:30:00Z"
+    },
+    {
+      "id": "W_S2",
+      "ownerId": "S2",
+      "ownerType": "SCHOOL",
+      "balance": 0,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-20T17:45:00Z"
+    },
+    {
+      "id": "W_PLAT",
+      "ownerId": "PLAT",
+      "ownerType": "PLATFORM",
+      "balance": 3200,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-23T09:30:00Z"
+    },
+    {
+      "id": "W_P_1782469401709_hvw",
+      "ownerId": "P_1782469401709_hvw",
+      "ownerType": "PARENT",
+      "balance": 0,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-26T10:23:21.709Z"
+    },
+    {
+      "id": "W_ST_1782469401709_gjqi",
+      "ownerId": "ST_1782469401709_gjqi",
+      "ownerType": "STUDENT",
+      "balance": 0,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-26T10:23:21.709Z"
+    },
+    {
+      "id": "W_ST_1782469401709_p8j1",
+      "ownerId": "ST_1782469401709_p8j1",
+      "ownerType": "STUDENT",
+      "balance": 0,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-26T10:23:21.709Z"
+    },
+    {
+      "id": "W_P_1782469401709_ew0",
+      "ownerId": "P_1782469401709_ew0",
+      "ownerType": "PARENT",
+      "balance": 0,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-26T10:23:21.709Z"
+    },
+    {
+      "id": "W_ST_1782469401709_q40z",
+      "ownerId": "ST_1782469401709_q40z",
+      "ownerType": "STUDENT",
+      "balance": 0,
+      "status": "ACTIVE",
+      "lastTransactionDate": "2026-06-26T10:23:21.709Z"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx1",
+      "referenceCode": "TXN-DEP-883A",
+      "senderWalletId": "MOMO-AIRTEL",
+      "receiverWalletId": "W_P1",
+      "amount": 400000,
+      "fee": 1500,
+      "type": "DEPOSIT",
+      "status": "SUCCESS",
+      "description": "Collecto Top-Up Mobile Money Deposit",
+      "createdAt": "2026-06-22T14:30:00Z"
+    },
+    {
+      "id": "tx2",
+      "referenceCode": "TXN-ALL-99A1",
+      "senderWalletId": "W_P1",
+      "receiverWalletId": "W_ST1",
+      "amount": 15000,
+      "fee": 0,
+      "type": "DEPOSIT",
+      "status": "SUCCESS",
+      "description": "Pocket Money Allocation",
+      "createdAt": "2026-06-23T08:00:00Z"
+    },
+    {
+      "id": "tx3",
+      "referenceCode": "TXN-POS-4412",
+      "senderWalletId": "W_ST1",
+      "receiverWalletId": "W_V1",
+      "amount": 2000,
+      "fee": 20,
+      "type": "SPEND",
+      "status": "SUCCESS",
+      "description": "Bought 2 Chapatis at Mama Betty",
+      "createdAt": "2026-06-23T09:30:00Z"
+    }
+  ],
+  "loanProducts": [
+    {
+      "id": "LP1",
+      "name": "Vendor Restock Advance",
+      "description": "Fast short-term capital to purchase canteen inventory. Repaid via auto-splits on sales.",
+      "minAmount": 50000,
+      "maxAmount": 300000,
+      "interestRate": 5,
+      "durationDays": 14,
+      "targetRole": "VENDOR"
+    },
+    {
+      "id": "LP2",
+      "name": "Staff Emergency Float",
+      "description": "Instant salary advance for school teachers & support staff.",
+      "minAmount": 100000,
+      "maxAmount": 1000000,
+      "interestRate": 7,
+      "durationDays": 30,
+      "targetRole": "STAFF"
+    },
+    {
+      "id": "LP3",
+      "name": "Parent Fees Micro-Credit",
+      "description": "Emergency school fees support to keep students in class.",
+      "minAmount": 50000,
+      "maxAmount": 500000,
+      "interestRate": 6,
+      "durationDays": 21,
+      "targetRole": "PARENT"
+    }
+  ],
+  "loans": [],
+  "catalogItems": [
+    {
+      "id": "c1",
+      "vendorId": "V1",
+      "name": "Rolex (Egg + Chapati)",
+      "price": 2000,
+      "usageCount": 65,
+      "category": "FOOD"
+    },
+    {
+      "id": "c2",
+      "vendorId": "V1",
+      "name": "Samosa (Meat)",
+      "price": 1000,
+      "usageCount": 42,
+      "category": "FOOD"
+    },
+    {
+      "id": "c3",
+      "vendorId": "V1",
+      "name": "Baking Book",
+      "price": 4000,
+      "usageCount": 15,
+      "category": "STATIONERY"
+    },
+    {
+      "id": "c4",
+      "vendorId": "V1",
+      "name": "School Pencil",
+      "price": 500,
+      "usageCount": 88,
+      "category": "STATIONERY"
+    },
+    {
+      "id": "c5",
+      "vendorId": "V1",
+      "name": "Mineral Water",
+      "price": 1000,
+      "usageCount": 30,
+      "category": "FOOD"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "a_1782469401709_xcny",
+      "userId": "u_agent",
+      "userName": "Peter Ssekabira",
+      "role": "AGENT",
+      "action": "BULK_CSV_STUDENT_IMPORT",
+      "ipAddress": "127.0.0.1",
+      "oldValues": null,
+      "newValues": "{\"addedStudentsCount\":3}",
+      "createdAt": "2026-06-26T10:23:21.709Z"
+    },
+    {
+      "id": "a1",
+      "userId": "u_admin",
+      "userName": "Alinda Robert",
+      "role": "SUPER_ADMIN",
+      "action": "SYSTEM_INITIALIZATION",
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-06-23T06:00:00Z"
+    }
+  ],
+  "creditScores": [
+    {
+      "id": "cs1",
+      "ownerId": "V1",
+      "score": 82,
+      "factors": {
+        "txCount30Days": 142,
+        "depositFrequency": 0,
+        "repaymentHistory": "Excellent POS consistency"
+      }
+    },
+    {
+      "id": "cs2",
+      "ownerId": "P1",
+      "score": 75,
+      "factors": {
+        "txCount30Days": 12,
+        "depositFrequency": 4,
+        "repaymentHistory": "Consistent Top-ups"
+      }
+    }
+  ],
+  "globalLoansEnabled": true
+}

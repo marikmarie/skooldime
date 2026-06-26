@@ -1,0 +1,11 @@
+# Apache Web Server Rewrite Rules for EduTechMoney Modular PHP API
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Do not rewrite if the requested physical file or directory exists
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Route all other URLs to index.php with query string parameters appended
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
