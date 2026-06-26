@@ -1,0 +1,9 @@
+# EduTechMoney Apache URL Rewriter
+# Routes clean API requests (e.g. /api/parents) to the modular skooldimeapi controller.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Force /api/ requests to route directly into skooldimeapi/index.php
+    RewriteRule ^api/(.*)$ skooldimeapi/index.php [QSA,L]
+</IfModule>
