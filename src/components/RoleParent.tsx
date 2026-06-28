@@ -16,7 +16,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
 
   // Top up states
   const [depositAmt, setDepositAmt] = useState('');
-  const [depositPhone, setDepositPhone] = useState('');
+  const [depositPhone, setDepositPhone] = useState(userPhone);
   const [pollingTxId, setPollingTxId] = useState<string | null>(null);
   const [pollingMsg, setPollingMsg] = useState('');
 

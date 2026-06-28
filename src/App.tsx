@@ -67,17 +67,10 @@ export default function App() {
         <Login onLoginSuccess={handleLoginSuccess} />
       ) : (
         /* ── Logged-in dashboard ─────────────────────────────── */
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 48px' }}>
+        <div className="max-w-[1200px] mx-auto px-4 py-6 md:p-6 pb-12">
 
           {/* Inner Dashboard Header (Subtle, custom-contained, no full navbar) */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 24,
-            paddingBottom: 16,
-            borderBottom: '1px solid rgba(0,0,0,0.06)'
-          }}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-black/5">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <img
                 src="logo.png"
@@ -136,13 +129,13 @@ export default function App() {
 
           {/* Sub-tabs for Parent / Vendor */}
           {(user.role === 'PARENT' || user.role === 'VENDOR') && (
-            <div style={{ display: 'flex', borderBottom: '0.5px solid rgba(0,0,0,0.08)', marginBottom: 20, gap: 2 }}>
+            <div className="flex border-b border-black/10 mb-5 overflow-x-auto scrollbar-none whitespace-nowrap gap-1">
               { SuffixedTabs.map(tab => (
                 <button
                   key={tab}
                   onClick={() => setUserSubTab(tab)}
                   style={{
-                    padding: '10px 20px', fontSize: 12, fontWeight: 500,
+                    padding: '10px 14px', fontSize: 13, fontWeight: 500,
                     border: 'none', background: 'transparent', cursor: 'pointer',
                     fontFamily: 'inherit',
                     borderBottom: `2px solid ${userSubTab === tab ? BRAND : 'transparent'}`,
@@ -165,7 +158,7 @@ export default function App() {
             minHeight: 400, overflow: 'hidden',
           }}>
             <ErrorBoundary key={`${user.role}_${userSubTab}_${resetId}`}>
-              <div style={{ padding: '24px 28px' }}>
+              <div className="p-4 md:p-6 lg:p-8">
                 {user.role === 'SUPER_ADMIN'    && <RoleSuperAdmin />}
                 {user.role === 'BUSINESS_ADMIN' && <RoleBusinessAdmin />}
                 {user.role === 'AGENT'          && <RoleAgent />}
@@ -187,7 +180,7 @@ export default function App() {
           </div>
 
           {/* Footer info strip */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginTop: 20 }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
             {[
               ['Collecto Gateway Protocol', 'All mobile money deposits and payouts initiate asynchronously. Auto-polling prevents blocking and resolves state idempotently.'],
               ['Atomic Ledger Splits', 'Commission allocations (Platform & Institutional School Shares) process instantly upon POS scans, ensuring zero balance drift.'],
