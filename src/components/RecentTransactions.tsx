@@ -5,7 +5,7 @@ import {
   Receipt, Calendar, User, Hash, Percent, Award, ShieldCheck, ArrowRightLeft,
   Coins, ArrowDownCircle, ArrowUpRight
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Transaction, Student, School, Vendor } from '../types';
 
 interface RecentTransactionsProps {
