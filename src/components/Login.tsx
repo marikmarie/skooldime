@@ -63,16 +63,16 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f8fafc' }}>
       
       {/* Main Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', flex: 1 }}>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 flex-1">
+ 
         {/* Hero panel */}
-        <div style={{ position: 'relative', overflow: 'hidden', background: NAVY, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        <div className="hidden md:flex relative overflow-hidden flex-col justify-end" style={{ background: NAVY }}>
           <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(155deg, ${NAVY} 0%, #020220 55%, #0a0a40 100%)` }} />
           <img src="skooldime.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           <div style={{ position: 'absolute', top: -100, right: -100, width: 380, height: 380, borderRadius: '50%', background: 'rgba(237,1,1,0.18)', filter: 'blur(90px)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to top, rgba(2,2,32,0.97) 0%, rgba(2,2,32,0.35) 55%, transparent 100%)` }} />
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${BRAND} 0%, transparent 70%)` }} />
-
+ 
           <div style={{ position: 'relative', zIndex: 2, padding: '36px 36px 44px' }}>
             <div style={{ fontSize: 10, fontWeight: 600, color: BRAND, letterSpacing: '1.6px', textTransform: 'uppercase', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ width: 22, height: 2, background: BRAND, display: 'inline-block', borderRadius: 1 }} />
@@ -102,9 +102,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             </div>
           </div>
         </div>
-
+ 
         {/* Login panel */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 36px', background: '#ffffff', borderLeft: `3px solid ${BRAND}` }}>
+        <div className="flex items-center justify-center p-6 md:p-10 bg-white border-t-4 md:border-t-0 md:border-l-4" style={{ borderColor: BRAND }}>
           <div style={{ width: '100%', maxWidth: 380 }}>
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
