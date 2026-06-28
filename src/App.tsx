@@ -67,7 +67,7 @@ export default function App() {
         <Login onLoginSuccess={handleLoginSuccess} />
       ) : (
         /* ── Logged-in dashboard ─────────────────────────────── */
-        <div className="max-w-[1200px] mx-auto px-4 py-6 md:p-6 pb-12">
+        <div className="max-w-300 mx-auto px-4 py-6 md:p-6 pb-12">
 
           {/* Inner Dashboard Header (Subtle, custom-contained, no full navbar) */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-black/5">
