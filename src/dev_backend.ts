@@ -405,7 +405,7 @@ export function devApiMiddleware(req: any, res: any, next: any) {
               pin: '0000',
               parentPhone,
               isLinked: true,
-              avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120',
+              avatarUrl: 'image',
               noPinLimit: 2000
             };
             db.students.push(newStudent);
