@@ -8,6 +8,7 @@ export default function RoleBusinessAdmin() {
   const [loading, setLoading] = useState(false);
   const [editingCommissionVendorId, setEditingCommissionVendorId] = useState<string | null>(null);
   const [customCommRate, setCustomCommRate] = useState<number>(1.0);
+  const [activeBusinessTab, setActiveBusinessTab] = useState<'COMMISSIONS' | 'RULES'>('COMMISSIONS');
 
   const fetchData = async () => {
     setLoading(true);
@@ -77,10 +78,35 @@ export default function RoleBusinessAdmin() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Commission Configuration Panels */}
-        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl h-fit">
+      {/* Dashboard Sub-Tabs */}
+      <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-md">
+        <button
+          onClick={() => setActiveBusinessTab('COMMISSIONS')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeBusinessTab === 'COMMISSIONS'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+        >
+          <Sliders className="h-4 w-4" />
+          <span>POS Splits</span>
+        </button>
+        <button
+          onClick={() => setActiveBusinessTab('RULES')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeBusinessTab === 'RULES'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+        >
+          <AlertTriangle className="h-4 w-4" />
+          <span>Territory Audit</span>
+        </button>
+      </div>
+
+      {activeBusinessTab === 'COMMISSIONS' && (
+        /* Commission Configuration Panels */
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl max-w-3xl">
           <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-5">
             <div className="flex items-center gap-2.5">
               <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
@@ -96,8 +122,6 @@ export default function RoleBusinessAdmin() {
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-[#c7515e]' : ''}`} />
             </button>
           </div>
-
-
 
           <div className="space-y-4">
             {vendors.map((vendor) => {
@@ -155,9 +179,11 @@ export default function RoleBusinessAdmin() {
             })}
           </div>
         </div>
+      )}
 
-        {/* Territory Guidelines */}
-        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-5 h-fit">
+      {activeBusinessTab === 'RULES' && (
+        /* Territory Guidelines */
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-5 max-w-3xl">
           <div className="flex items-center gap-2.5 border-b border-white/5 pb-4">
             <div className="p-1.5 rounded-lg bg-gray-800">
               <AlertTriangle className="h-4 w-4 text-gray-300" />
@@ -183,8 +209,7 @@ export default function RoleBusinessAdmin() {
             </div>
           </div>
         </div>
-
-      </div>
+      )}
     </div>
   );
 }

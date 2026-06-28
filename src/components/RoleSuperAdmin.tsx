@@ -10,6 +10,7 @@ export default function RoleSuperAdmin() {
   const [loansEnabled, setLoansEnabled] = useState(true);
   const [commissionRate, setCommissionRate] = useState(0.5);
   const [loading, setLoading] = useState(false);
+  const [activeSuperTab, setActiveSuperTab] = useState<'NETWORKS' | 'AUDIT_LOGS'>('NETWORKS');
 
   const fetchData = async () => {
     setLoading(true);
@@ -97,12 +98,36 @@ export default function RoleSuperAdmin() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Schools & Commission configuration */}
-        <div className="lg:col-span-7 space-y-6">
-          
-          <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl">
+      {/* Dashboard Sub-Tabs */}
+      <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-md">
+        <button
+          onClick={() => setActiveSuperTab('NETWORKS')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeSuperTab === 'NETWORKS'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+        >
+          <Landmark className="h-4 w-4" />
+          <span>Networks & Rates</span>
+        </button>
+        <button
+          onClick={() => setActiveSuperTab('AUDIT_LOGS')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeSuperTab === 'AUDIT_LOGS'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+        >
+          <FileText className="h-4 w-4" />
+          <span>Audit Trails</span>
+        </button>
+      </div>
+
+      {activeSuperTab === 'NETWORKS' && (
+        <div className="space-y-6 max-w-3xl">
+          {/* Schools & Commission configuration */}
+          <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl">
             <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-5">
               <div className="flex items-center gap-2.5">
                 <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
@@ -150,7 +175,7 @@ export default function RoleSuperAdmin() {
           </div>
 
           {/* Platform Controls */}
-          <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl">
+          <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl">
             <div className="flex items-center gap-2.5 border-b border-white/5 pb-4 mb-5">
               <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
                 <Shield className="h-5 w-5 text-[#c7515e]" />
@@ -177,44 +202,42 @@ export default function RoleSuperAdmin() {
               </div>
             </div>
           </div>
-
         </div>
+      )}
 
-        {/* Audit Trail Logging */}
-        <div className="lg:col-span-5">
-          <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl h-[650px] flex flex-col">
-            <div className="flex items-center gap-2.5 border-b border-white/5 pb-4 mb-5 shrink-0">
-              <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
-                <FileText className="h-5 w-5 text-[#c7515e]" />
+      {activeSuperTab === 'AUDIT_LOGS' && (
+        /* Audit Trail Logging */
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl max-w-3xl flex flex-col h-[500px]">
+          <div className="flex items-center gap-2.5 border-b border-white/5 pb-4 mb-5 shrink-0">
+            <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
+              <FileText className="h-5 w-5 text-[#c7515e]" />
+            </div>
+            <h3 className="text-sm font-bold text-white tracking-wide">Immutable Audit Ledger</h3>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+            {logs.map((log) => (
+              <div key={log.id} className="p-4 rounded-xl bg-[#06080E]/80 border border-white/5 space-y-1.5 text-xs shadow-inner hover:border-white/10 transition-colors">
+                <div className="flex justify-between items-center text-[10px] text-gray-500 font-mono">
+                  <span>{new Date(log.createdAt).toLocaleTimeString()}</span>
+                  <span className="bg-[#c7515e]/10 text-[#c7515e] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                    {log.role}
+                  </span>
+                </div>
+                <div className="text-gray-200 font-bold">{log.action.replace(/_/g, ' ')}</div>
+                <div className="text-gray-500 text-[10px] font-mono mt-1">
+                  User: {log.userName} <span className="opacity-40 mx-1">|</span> IP: {log.ipAddress}
+                </div>
               </div>
-              <h3 className="text-sm font-bold text-white tracking-wide">Immutable Audit Ledger</h3>
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
-              {logs.map((log) => (
-                <div key={log.id} className="p-4 rounded-xl bg-[#06080E]/80 border border-white/5 space-y-1.5 text-xs shadow-inner hover:border-white/10 transition-colors">
-                  <div className="flex justify-between items-center text-[10px] text-gray-500 font-mono">
-                    <span>{new Date(log.createdAt).toLocaleTimeString()}</span>
-                    <span className="bg-[#c7515e]/10 text-[#c7515e] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
-                      {log.role}
-                    </span>
-                  </div>
-                  <div className="text-gray-200 font-bold">{log.action.replace(/_/g, ' ')}</div>
-                  <div className="text-gray-500 text-[10px] font-mono mt-1">
-                    User: {log.userName} <span className="opacity-40 mx-1">|</span> IP: {log.ipAddress}
-                  </div>
-                </div>
-              ))}
-              {logs.length === 0 && (
-                <div className="h-full flex items-center justify-center text-sm font-medium text-gray-500">
-                  No log records captured yet.
-                </div>
-              )}
-            </div>
+            ))}
+            {logs.length === 0 && (
+              <div className="h-full flex items-center justify-center text-sm font-medium text-gray-500">
+                No log records captured yet.
+              </div>
+            )}
           </div>
         </div>
-
-      </div>
+      )}
     </div>
   );
 }

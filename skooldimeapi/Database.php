@@ -56,6 +56,47 @@ class Database {
         return $this->dbFile;
     }
 
+    public function getEnv($key, $default = null) {
+        // Try native getenv
+        $val = getenv($key);
+        if ($val !== false) return $val;
+        
+        // Try $_ENV
+        if (isset($_ENV[$key])) return $_ENV[$key];
+
+        // Parse .env manually from potential locations
+        $envPaths = [
+            __DIR__ . '/.env',
+            dirname(__DIR__) . '/.env',
+            dirname(dirname(__DIR__)) . '/.env'
+        ];
+
+        foreach ($envPaths as $path) {
+            if (file_exists($path)) {
+                $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    $trimmed = trim($line);
+                    if (empty($trimmed) || strpos($trimmed, '#') === 0) continue;
+                    $parts = explode('=', $trimmed, 2);
+                    if (count($parts) === 2) {
+                        $envKey = trim($parts[0]);
+                        $envVal = trim($parts[1]);
+                        // remove trailing comments and quotes
+                        if (strpos($envVal, '#') !== false) {
+                            $valParts = explode('#', $envVal, 2);
+                            $envVal = trim($valParts[0]);
+                        }
+                        $envVal = trim($envVal, '"\'');
+                        if ($envKey === $key) {
+                            return $envVal;
+                        }
+                    }
+                }
+            }
+        }
+        return $default;
+    }
+
     public function load() {
         if (!file_exists($this->dbFile)) {
             return [];

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, AlertTriangle, Info, X, AlertCircle } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -126,13 +126,13 @@ function ToastCard({ toast, onRemove }: { toast: ToastItem; onRemove: (id: strin
         <Icon className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0 pr-4">
-        <h5 className="text-xs font-bold text-navy tracking-wide uppercase mb-0.5">
+        <h5 className="text-xs font-bold text-[#06065C] tracking-wide uppercase mb-0.5">
           {toast.type === 'success' && 'Success'}
           {toast.type === 'error' && 'Error'}
           {toast.type === 'info' && 'Information'}
           {toast.type === 'warning' && 'Warning'}
         </h5>
-        <p className="text-xs text-[#334155] font-medium leading-relaxed wrap-break-word">{toast.message}</p>
+        <p className="text-xs text-[#334155] font-medium leading-relaxed break-words">{toast.message}</p>
       </div>
       <button
         onClick={() => onRemove(toast.id)}
@@ -155,7 +155,7 @@ function ToastCard({ toast, onRemove }: { toast: ToastItem; onRemove: (id: strin
 
 function ToastContainer({ toasts, onRemove }: { toasts: ToastItem[]; onRemove: (id: string) => void }) {
   return (
-    <div className="fixed top-6 right-6 z-9999 flex flex-col gap-3 pointer-events-none max-w-full" id="toast-container">
+    <div className="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none max-w-full" id="toast-container">
       <AnimatePresence mode="popLayout">
         {toasts.map((toast) => (
           <ToastCard key={toast.id} toast={toast} onRemove={onRemove} />

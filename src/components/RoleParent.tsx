@@ -10,6 +10,7 @@ interface RoleParentProps {
 export default function RoleParent({ userPhone = '+256772444555' }: RoleParentProps) {
   const [parent, setParent] = useState<Parent | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
+  const [activeParentTab, setActiveParentTab] = useState<'CARDS' | 'FUNDS'>('CARDS');
   // const [transactions, setTransactions] = useState<Transaction[]>([]); // Kept for future use
   const [loading, setLoading] = useState(false);
   const toast = useToast();
@@ -260,143 +261,176 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
 
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Linked student ledger controls (8 cols) */}
-        <div className="lg:col-span-8 space-y-6">
-          <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-5">
-            <h3 className="text-sm font-bold text-gray-200 border-b border-white/5 pb-4 flex items-center gap-2">
-              <Smartphone className="h-4 w-4 text-[#c7515e]" />
-              Linked Family Ledger Control
-            </h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {students.map((stud) => (
-                <div key={stud.id} className="p-5 rounded-xl bg-[#06080E]/80 border border-white/5 hover:border-[#c7515e]/20 transition-all space-y-4">
-                  <div className="flex items-center gap-4">
-                    <img src={stud.avatarUrl} alt="" className="w-12 h-12 rounded-full border-2 border-[#c7515e]/30" referrerPolicy="no-referrer" />
-                    <div>
-                      <h4 className="text-sm font-bold text-white">{stud.name}</h4>
-                      <p className="text-[11px] text-[#c7515e] font-medium">{stud.class}</p>
-                    </div>
-                  </div>
+      {/* Dashboard Sub-Tabs */}
+      <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-md">
+        <button
+          onClick={() => setActiveParentTab('CARDS')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeParentTab === 'CARDS'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+        >
+          <Smartphone className="h-4 w-4" />
+          <span>Family Cards</span>
+        </button>
+        <button
+          onClick={() => setActiveParentTab('FUNDS')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeParentTab === 'FUNDS'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+        >
+          <ArrowRightLeft className="h-4 w-4" />
+          <span>Send & Top Up</span>
+        </button>
+      </div>
 
-                  <div className="grid grid-cols-2 gap-3 text-[10px] font-mono py-3 border-y border-white/5">
-                    <div>
-                      <span className="text-gray-500 block mb-1">CARD CODE</span>
-                      <span className="text-gray-200 font-bold text-[11px] bg-white/5 px-2 py-0.5 rounded">{stud.qrHash}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 block mb-1">NO-PIN LIMIT</span>
-                      <span className="text-[#c7515e] font-bold text-[11px] bg-[#c7515e]/10 px-2 py-0.5 rounded">{stud.noPinLimit.toLocaleString()} UGX</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => triggerPinReset(stud.id)}
-                      className="flex-1 rounded-lg border border-white/10 bg-transparent hover:bg-white/5 py-2 text-center text-xs text-gray-300 font-semibold transition-colors"
-                    >
-                      Reset PIN
-                    </button>
-                    <button
-                      onClick={() => triggerLimitModal(stud.id, stud.noPinLimit)}
-                      className="flex-1 rounded-lg border border-[#c7515e]/30 bg-[#c7515e]/10 hover:bg-[#c7515e]/20 py-2 text-center text-xs text-[#c7515e] font-semibold transition-colors"
-                    >
-                      Edit Limits
-                    </button>
+      {activeParentTab === 'CARDS' && (
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-5">
+          <h3 className="text-sm font-bold text-gray-200 border-b border-white/5 pb-4 flex items-center gap-2">
+            <Smartphone className="h-4 w-4 text-[#c7515e]" />
+            Linked Family Ledger Control
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {students.map((stud) => (
+              <div key={stud.id} className="p-4 sm:p-5 rounded-xl bg-[#06080E]/80 border border-white/5 hover:border-[#c7515e]/20 transition-all space-y-4">
+                <div className="flex items-center gap-4">
+                  <img src={stud.avatarUrl} alt="" className="w-12 h-12 rounded-full border-2 border-[#c7515e]/30 shrink-0" referrerPolicy="no-referrer" />
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-bold text-white truncate">{stud.name}</h4>
+                    <p className="text-[11px] text-[#c7515e] font-medium">{stud.class}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Allocate pocket money */}
-          <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-5">
+                <div className="grid grid-cols-2 gap-3 text-[10px] font-mono py-3 border-y border-white/5">
+                  <div className="min-w-0">
+                    <span className="text-gray-500 block mb-1">CARD CODE</span>
+                    <span className="text-gray-200 font-bold text-[10px] sm:text-[11px] bg-white/5 px-2 py-0.5 rounded truncate block">{stud.qrHash}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-gray-500 block mb-1">NO-PIN LIMIT</span>
+                    <span className="text-[#c7515e] font-bold text-[10px] sm:text-[11px] bg-[#c7515e]/10 px-2 py-0.5 rounded truncate block">{stud.noPinLimit.toLocaleString()} UGX</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 sm:gap-3">
+                  <button
+                    onClick={() => triggerPinReset(stud.id)}
+                    className="flex-1 rounded-lg border border-white/10 bg-transparent hover:bg-white/5 py-2 text-center text-xs text-gray-300 font-semibold transition-colors"
+                  >
+                    Reset PIN
+                  </button>
+                  <button
+                    onClick={() => triggerLimitModal(stud.id, stud.noPinLimit)}
+                    className="flex-1 rounded-lg border border-[#c7515e]/30 bg-[#c7515e]/10 hover:bg-[#c7515e]/20 py-2 text-center text-xs text-[#c7515e] font-semibold transition-colors"
+                  >
+                    Edit Limits
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeParentTab === 'FUNDS' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Allocate pocket money (7 cols) */}
+          <div className="lg:col-span-7 rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-5">
             <div className="flex items-center gap-2 border-b border-white/5 pb-4">
               <ArrowRightLeft className="h-5 w-5 text-[#c7515e]" />
               <h3 className="text-sm font-bold text-gray-200">Allocate Pocket Money</h3>
             </div>
 
-            <form onSubmit={handleAllocateSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <select
-                value={selectedStudentId}
-                onChange={(e) => setSelectedStudentId(e.target.value)}
-                className="rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
-              >
-                {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-              <input
-                type="number"
-                required
-                value={allocateAmt}
-                onChange={(e) => setAllocateAmt(e.target.value)}
-                placeholder="Amount (UGX)"
-                className="rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
-              />
+            <form onSubmit={handleAllocateSubmit} className="space-y-4">
+              <div>
+                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Select Student</label>
+                <select
+                  value={selectedStudentId}
+                  onChange={(e) => setSelectedStudentId(e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                >
+                  {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Amount (UGX)</label>
+                <input
+                  type="number"
+                  required
+                  value={allocateAmt}
+                  onChange={(e) => setAllocateAmt(e.target.value)}
+                  placeholder="e.g., 5000"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                />
+              </div>
+
               <button
                 type="submit"
-                className="rounded-lg bg-[#c7515e] hover:bg-[#b04753] px-4 py-2.5 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#c7515e]/20"
+                className="w-full rounded-lg bg-[#c7515e] hover:bg-[#b04753] py-2.5 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#c7515e]/20"
               >
                 Send Funds
               </button>
             </form>
           </div>
+
+          {/* Top-Up via Collecto MoMo Gateway (5 cols) */}
+          <div className="lg:col-span-5 rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl h-fit space-y-5">
+            <h3 className="text-sm font-bold text-gray-200 border-b border-white/5 pb-4 flex items-center gap-2">
+              <RefreshCw className="h-4 w-4 text-[#c7515e]" />
+              Gateway Top-Up (STK Push)
+            </h3>
+            
+            <form onSubmit={handleDepositSubmit} className="space-y-4">
+              <div>
+                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">MoMo Number</label>
+                <input
+                  type="text"
+                  required
+                  value={depositPhone}
+                  onChange={(e) => setDepositPhone(e.target.value)}
+                  placeholder="+256772444555"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 font-mono focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Top up Amount (UGX)</label>
+                <input
+                  type="number"
+                  required
+                  value={depositAmt}
+                  onChange={(e) => setDepositAmt(e.target.value)}
+                  placeholder="0"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 font-mono focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-lg bg-[#c7515e] hover:bg-[#b04753] py-3 text-sm font-bold text-white transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-[#c7515e]/20 disabled:opacity-70 disabled:active:scale-100"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : 'Initiate Secure Deposit'}
+              </button>
+            </form>
+
+            {loading && (
+              <div className="rounded-lg bg-[#06080E] p-4 text-[11px] text-[#c7515e] font-mono border border-[#c7515e]/20 leading-relaxed text-center animate-pulse">
+                {pollingMsg}
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* Top-Up via Collecto MoMo Gateway (4 cols) */}
-        <div className="lg:col-span-4 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl h-fit space-y-5">
-          <h3 className="text-sm font-bold text-gray-200 border-b border-white/5 pb-4 flex items-center gap-2">
-            <RefreshCw className="h-4 w-4 text-[#c7515e]" />
-            Gateway Top-Up (STK Push)
-          </h3>
-          
-          <form onSubmit={handleDepositSubmit} className="space-y-4">
-            <div>
-              <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">MoMo Number</label>
-              <input
-                type="text"
-                required
-                value={depositPhone}
-                onChange={(e) => setDepositPhone(e.target.value)}
-                placeholder="+256772444555"
-                className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 font-mono focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Top up Amount (UGX)</label>
-              <input
-                type="number"
-                required
-                value={depositAmt}
-                onChange={(e) => setDepositAmt(e.target.value)}
-                placeholder="0"
-                className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 font-mono focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-[#c7515e] hover:bg-[#b04753] py-3 text-sm font-bold text-white transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-[#c7515e]/20 disabled:opacity-70 disabled:active:scale-100"
-            >
-              {loading ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : 'Initiate Secure Deposit'}
-            </button>
-          </form>
-
-          {loading && (
-            <div className="rounded-lg bg-[#06080E] p-4 text-[11px] text-[#c7515e] font-mono border border-[#c7515e]/20 leading-relaxed text-center animate-pulse">
-              {pollingMsg}
-            </div>
-          )}
-        </div>
-
-      </div>
+      )}
 
       {/* Edit Spend Limit Modal */}
       {showLimitModal && (

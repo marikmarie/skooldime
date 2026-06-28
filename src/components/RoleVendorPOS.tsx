@@ -20,6 +20,7 @@ interface RoleVendorPOSProps {
 
 export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendorPOSProps) {
   const [vendor, setVendor] = useState<any>(null);
+  const [activeTerminalTab, setActiveTerminalTab] = useState<'POS' | 'ANALYTICS' | 'HISTORY'>('POS');
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [allStudents, setAllStudents] = useState<Student[]>([]);
@@ -620,8 +621,49 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
   return (
     <div className="space-y-6 text-slate-200">
       
-      {/* POS Top Section: Main Work Area */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+      {/* Dashboard Sub-Tabs */}
+      <div className="flex bg-slate-950/40 border border-slate-800/80 p-1 rounded-xl max-w-lg mb-2">
+        <button
+          type="button"
+          onClick={() => setActiveTerminalTab('POS')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeTerminalTab === 'POS'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+          }`}
+        >
+          <ShoppingCart className="h-4.5 w-4.5" />
+          <span>POS Checkout</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTerminalTab('ANALYTICS')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeTerminalTab === 'ANALYTICS'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+          }`}
+        >
+          <BarChart3 className="h-4.5 w-4.5" />
+          <span>Shift Sales</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTerminalTab('HISTORY')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeTerminalTab === 'HISTORY'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+          }`}
+        >
+          <Banknote className="h-4.5 w-4.5" />
+          <span>Ledger & MoMo</span>
+        </button>
+      </div>
+
+      {activeTerminalTab === 'POS' && (
+        /* POS Top Section: Main Work Area */
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         
         {/* LEFT COLUMN: Scanner & Catalog (8 cols) */}
         <div className="xl:col-span-8 flex flex-col gap-6">
@@ -870,9 +912,11 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
           )}
         </div>
       </div>
+      )}
 
-      {/* DAILY TRANSACTION SUMMARY */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900 shadow-xl p-5">
+      {activeTerminalTab === 'ANALYTICS' && (
+        /* DAILY TRANSACTION SUMMARY */
+        <div className="rounded-xl border border-slate-800 bg-slate-900 shadow-xl p-5">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-5">
           <div className="flex items-center gap-3">
@@ -1105,9 +1149,11 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
           )}
         </div>
       </div>
+      )}
 
-      {/* BOTTOM SECTION: Operations & Logs */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-2">
+      {activeTerminalTab === 'HISTORY' && (
+        /* BOTTOM SECTION: Operations & Logs */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-2">
         
         {/* Transaction History (8 cols) */}
         <div className="lg:col-span-8 flex flex-col gap-6">
@@ -1194,6 +1240,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
           </div>
         </div>
       </div>
+      )}
 
       {/* MODALS */}
       
