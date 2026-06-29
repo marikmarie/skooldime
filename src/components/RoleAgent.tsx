@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FileDown, UploadCloud, CheckCircle2, UserPlus, RefreshCw, AlertTriangle, Edit, Trash2, Key, Link2, ShieldAlert } from 'lucide-react';
+import { Users, FileDown, UploadCloud, CheckCircle2, UserPlus, RefreshCw, AlertTriangle, Edit, Trash2, Key, Link2, ShieldAlert, Search } from 'lucide-react';
 import { School, Student, Parent, Vendor } from '../types';
 import { useToast } from './ToastContext';
 
@@ -10,6 +10,10 @@ export default function RoleAgent() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
 
   const [activeAgentTab, setActiveAgentTab] = useState<'REGISTRATION' | 'REGISTRIES' | 'LINKS'>('REGISTRATION');
+  const [activeRegTab, setActiveRegTab] = useState<'SINGLE' | 'BULK'>('SINGLE');
+  const [studentSearch, setStudentSearch] = useState('');
+  const [parentSearch, setParentSearch] = useState('');
+  const [vendorSearch, setVendorSearch] = useState('');
   const [directoryTab, setDirectoryTab] = useState<'STUDENTS' | 'PARENTS' | 'VENDORS'>('STUDENTS');
   const [loading, setLoading] = useState(false);
   const [csvText, setCsvText] = useState('');
@@ -447,160 +451,196 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
       </div>
 
       {activeAgentTab === 'REGISTRATION' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* Bulk Upload CSV Engine */}
-          <div className="lg:col-span-7 rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl flex flex-col justify-between h-fit">
-            <div>
-              <div className="flex items-center gap-2.5 border-b border-white/5 pb-4 mb-5">
-                <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
-                  <UploadCloud className="h-5 w-5 text-[#c7515e]" />
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Sub-tab selection for Single Student vs Bulk Upload */}
+          <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-sm shrink-0">
+            <button
+              onClick={() => setActiveRegTab('SINGLE')}
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                activeRegTab === 'SINGLE'
+                  ? 'bg-[#c7515e]/15 text-[#c7515e] border border-[#c7515e]/20'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              Single Intake Form
+            </button>
+            <button
+              onClick={() => setActiveRegTab('BULK')}
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                activeRegTab === 'BULK'
+                  ? 'bg-[#c7515e]/15 text-[#c7515e] border border-[#c7515e]/20'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              Bulk Upload CSV
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 max-w-3xl">
+            {activeRegTab === 'BULK' && (
+              /* Bulk Upload CSV Engine */
+              <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2.5 border-b border-white/5 pb-4 mb-5">
+                    <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
+                      <UploadCloud className="h-5 w-5 text-[#c7515e]" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white tracking-wide">Bulk Upsert Student CSV Engine</h3>
+                      <p className="text-[11px] text-gray-500 mt-0.5">Import multiple student and parent linkage records instantly</p>
+                    </div>
+                  </div>
+
+                  <div className="text-[11px] font-mono text-gray-400 bg-[#06080E]/80 p-4 rounded-xl border border-white/5 mb-5 leading-relaxed shadow-inner">
+                    <span className="font-bold text-[#c7515e] tracking-widest uppercase text-[10px]">CSV Header Guide:</span><br />
+                    <code className="text-gray-300 mt-1 block overflow-x-auto whitespace-nowrap py-1 scrollbar-thin">
+                      SchoolCode, AdmissionNo, StudentName, Class, GuardianName, GuardianPhone, GuardianNIN
+                    </code>
+                  </div>
+
+                  <form onSubmit={handleCsvSubmit} className="space-y-5">
+                    <textarea
+                      value={csvText}
+                      onChange={(e) => setCsvText(e.target.value)}
+                      rows={6}
+                      placeholder="e.g. KPS01,KPS-2026-004,Joan Kembabazi,Primary 5,Mugisha,+256779998811,..."
+                      className="w-full rounded-lg border border-white/10 bg-[#06080E] p-4 font-mono text-sm text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all placeholder-gray-600"
+                    />
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <button
+                        type="button"
+                        onClick={loadDemoCsv}
+                        className="text-xs text-[#c7515e] hover:text-[#b04753] hover:underline flex items-center gap-1.5 font-bold transition-colors"
+                      >
+                        <FileDown className="h-4 w-4" />
+                        Load Demo School CSV
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading || !csvText.trim()}
+                        className={`w-full sm:w-auto rounded-xl bg-[#c7515e] hover:bg-[#b04753] px-6 py-3 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#c7515e]/20 ${
+                          loading || !csvText.trim() ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      >
+                        {loading ? 'Processing Upload...' : 'Execute Bulk CSV Import'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
-                <h3 className="text-sm font-bold text-white tracking-wide">Bulk Upsert Student CSV Engine</h3>
               </div>
+            )}
 
-              <div className="text-xs font-mono text-gray-400 bg-[#06080E]/80 p-4 rounded-xl border border-white/5 mb-5 leading-relaxed shadow-inner">
-                <span className="font-bold text-[#c7515e] tracking-widest uppercase text-[10px]">CSV Header Guide:</span><br />
-                <code className="text-gray-300 mt-1 block">SchoolCode, AdmissionNo, StudentName, Class, GuardianName, GuardianPhone, GuardianNIN</code>
-              </div>
+            {activeRegTab === 'SINGLE' && (
+              /* Register Single Student */
+              <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl">
+                <div className="flex items-center gap-2.5 border-b border-white/5 pb-4 mb-5">
+                  <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
+                    <UserPlus className="h-5 w-5 text-[#c7515e]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white tracking-wide">Register Student & Parent Link</h3>
+                    <p className="text-[11px] text-gray-500 mt-0.5">Create a single student record with automated SMS PIN delivery</p>
+                  </div>
+                </div>
 
-              <form onSubmit={handleCsvSubmit} className="space-y-5">
-                <textarea
-                  value={csvText}
-                  onChange={(e) => setCsvText(e.target.value)}
-                  rows={6}
-                  placeholder="e.g. KPS01,KPS-2026-004,Joan Kembabazi,Primary 5,Mugisha,+256779998811,..."
-                  className="w-full rounded-lg border border-white/10 bg-[#06080E] p-4 font-mono text-sm text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all placeholder-gray-600"
-                />
+                <form onSubmit={handleSingleSubmit} className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Campus Target</label>
+                    <select
+                      value={schoolId}
+                      onChange={(e) => setSchoolId(e.target.value)}
+                      className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-300 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all appearance-none cursor-pointer"
+                    >
+                      {schools.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
+                    </select>
+                  </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <button
-                    type="button"
-                    onClick={loadDemoCsv}
-                    className="text-sm text-[#c7515e] hover:text-[#b04753] hover:underline flex items-center gap-1.5 font-bold transition-colors"
-                  >
-                    <FileDown className="h-4 w-4" />
-                    Load Demo School CSV
-                  </button>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Student Name</label>
+                      <input
+                        type="text"
+                        value={studentName}
+                        onChange={(e) => setStudentName(e.target.value)}
+                        placeholder="Brian Mukasa"
+                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Admission No.</label>
+                      <input
+                        type="text"
+                        value={admissionNo}
+                        onChange={(e) => setAdmissionNo(e.target.value)}
+                        placeholder="KPS-2026-004"
+                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Class / Grade</label>
+                      <input
+                        type="text"
+                        value={studentClass}
+                        onChange={(e) => setStudentClass(e.target.value)}
+                        placeholder="Primary 5"
+                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Parent Phone</label>
+                      <input
+                        type="text"
+                        value={parentPhone}
+                        onChange={(e) => setParentPhone(e.target.value)}
+                        placeholder="+256772444555"
+                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Parent Name</label>
+                      <input
+                        type="text"
+                        value={parentName}
+                        onChange={(e) => setParentName(e.target.value)}
+                        placeholder="Moses Mukasa"
+                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Parent NIN (KYC 2)</label>
+                      <input
+                        type="text"
+                        value={parentNin}
+                        onChange={(e) => setParentNin(e.target.value)}
+                        placeholder="CM89021102A12"
+                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+
                   <button
                     type="submit"
-                    disabled={loading || !csvText.trim()}
-                    className={`w-full sm:w-auto rounded-xl bg-[#c7515e] hover:bg-[#b04753] px-6 py-3 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#c7515e]/20 ${
-                      loading || !csvText.trim() ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
+                    disabled={loading}
+                    className="w-full mt-6 rounded-xl bg-[#c7515e] hover:bg-[#b04753] py-3 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#c7515e]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? 'Processing Upload...' : 'Execute Bulk CSV Import'}
+                    {loading ? 'Creating Records...' : 'Submit Entry & Link'}
                   </button>
-                </div>
-              </form>
-            </div>
+                </form>
+              </div>
+            )}
           </div>
-
-          {/* Register Single Student */}
-          <div className="lg:col-span-5 rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl h-fit">
-            <div className="flex items-center gap-2.5 border-b border-white/5 pb-4 mb-5">
-              <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
-                <UserPlus className="h-5 w-5 text-[#c7515e]" />
-              </div>
-              <h3 className="text-sm font-bold text-white tracking-wide">Register Student & Parent Link</h3>
-            </div>
-
-            <form onSubmit={handleSingleSubmit} className="space-y-4">
-              <div>
-                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Campus Target</label>
-                <select
-                  value={schoolId}
-                  onChange={(e) => setSchoolId(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-300 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all appearance-none cursor-pointer"
-                >
-                  {schools.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Student Name</label>
-                  <input
-                    type="text"
-                    value={studentName}
-                    onChange={(e) => setStudentName(e.target.value)}
-                    placeholder="Brian Mukasa"
-                    className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Admission No.</label>
-                  <input
-                    type="text"
-                    value={admissionNo}
-                    onChange={(e) => setAdmissionNo(e.target.value)}
-                    placeholder="KPS-2026-004"
-                    className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Class / Grade</label>
-                  <input
-                    type="text"
-                    value={studentClass}
-                    onChange={(e) => setStudentClass(e.target.value)}
-                    placeholder="Primary 5"
-                    className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Parent Phone</label>
-                  <input
-                    type="text"
-                    value={parentPhone}
-                    onChange={(e) => setParentPhone(e.target.value)}
-                    placeholder="+256772444555"
-                    className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Parent Name</label>
-                  <input
-                    type="text"
-                    value={parentName}
-                    onChange={(e) => setParentName(e.target.value)}
-                    placeholder="Moses Mukasa"
-                    className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-bold block mb-2">Parent NIN (KYC 2)</label>
-                  <input
-                    type="text"
-                    value={parentNin}
-                    onChange={(e) => setParentNin(e.target.value)}
-                    placeholder="CM89021102A12"
-                    className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full mt-6 rounded-xl bg-[#c7515e] hover:bg-[#b04753] py-3 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#c7515e]/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Creating Records...' : 'Submit Entry & Link'}
-              </button>
-            </form>
-          </div>
-
         </div>
       )}
 
       {activeAgentTab === 'REGISTRIES' && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-in fade-in duration-200">
           {/* Segmented Directory Switcher */}
           <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-sm shrink-0">
             {(['STUDENTS', 'PARENTS', 'VENDORS'] as const).map((tab) => (
@@ -666,6 +706,33 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
               </div>
             </div>
 
+            {/* Real-time search bar */}
+            <div className="relative pb-2">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
+                <Search className="h-4 w-4" />
+              </span>
+              <input
+                type="text"
+                placeholder={
+                  directoryTab === 'STUDENTS' ? "Search students by name, class, admission code, parent..." :
+                  directoryTab === 'PARENTS' ? "Search parents by name, phone, National ID (NIN)..." :
+                  "Search vendors by name, phone, type..."
+                }
+                value={
+                  directoryTab === 'STUDENTS' ? studentSearch :
+                  directoryTab === 'PARENTS' ? parentSearch :
+                  vendorSearch
+                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (directoryTab === 'STUDENTS') setStudentSearch(val);
+                  else if (directoryTab === 'PARENTS') setParentSearch(val);
+                  else setVendorSearch(val);
+                }}
+                className="w-full pl-9 pr-3 py-2.5 text-xs rounded-xl border border-white/10 bg-[#06080E] text-white placeholder-gray-500 focus:border-[#c7515e] outline-none transition"
+              />
+            </div>
+
             {/* Render selected directory segment */}
             {directoryTab === 'STUDENTS' && (
               <div className="overflow-x-auto max-h-[400px] scrollbar-thin">
@@ -681,42 +748,64 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 text-gray-300">
-                    {students.map((student) => (
-                      <tr key={student.id} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="py-3 font-bold text-white">{student.name}</td>
-                        <td className="py-3 font-mono text-gray-400 text-xs">{student.admissionNo}</td>
-                        <td className="py-3 text-xs">{student.class}</td>
-                        <td className="py-3 text-gray-400 text-xs">{student.parentName} ({student.parentPhone})</td>
-                        <td className="py-3 font-mono text-[#c7515e] text-[10px] font-bold">{student.qrHash}</td>
-                        <td className="py-3 text-right pr-4">
-                          <div className="flex items-center justify-end gap-2.5">
-                            <button
-                              onClick={() => {
-                                setEditingStudent(student);
-                                setSName(student.name);
-                                setSClass(student.class);
-                                setShowStudentModal(true);
-                              }}
-                              className="text-gray-400 hover:text-white"
-                              title="Edit Student"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteStudent(student.id)}
-                              className="text-gray-500 hover:text-rose-500"
-                              title="Delete Student"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {students.length === 0 && (
+                    {students
+                      .filter(s => {
+                        if (!studentSearch) return true;
+                        const q = studentSearch.toLowerCase();
+                        return (
+                          s.name.toLowerCase().includes(q) ||
+                          s.admissionNo.toLowerCase().includes(q) ||
+                          s.class.toLowerCase().includes(q) ||
+                          s.parentPhone?.toLowerCase().includes(q) ||
+                          s.parentName?.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((student) => (
+                        <tr key={student.id} className="hover:bg-white/[0.02] transition-colors">
+                          <td className="py-3 font-bold text-white">{student.name}</td>
+                          <td className="py-3 font-mono text-gray-400 text-xs">{student.admissionNo}</td>
+                          <td className="py-3 text-xs">{student.class}</td>
+                          <td className="py-3 text-gray-400 text-xs">{student.parentName} ({student.parentPhone})</td>
+                          <td className="py-3 font-mono text-[#c7515e] text-[10px] font-bold">{student.qrHash}</td>
+                          <td className="py-3 text-right pr-4">
+                            <div className="flex items-center justify-end gap-2.5">
+                              <button
+                                onClick={() => {
+                                  setEditingStudent(student);
+                                  setSName(student.name);
+                                  setSClass(student.class);
+                                  setShowStudentModal(true);
+                                }}
+                                className="text-gray-400 hover:text-white"
+                                title="Edit Student"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteStudent(student.id)}
+                                className="text-gray-500 hover:text-rose-500"
+                                title="Delete Student"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    {students.filter(s => {
+                      if (!studentSearch) return true;
+                      const q = studentSearch.toLowerCase();
+                      return (
+                        s.name.toLowerCase().includes(q) ||
+                        s.admissionNo.toLowerCase().includes(q) ||
+                        s.class.toLowerCase().includes(q) ||
+                        s.parentPhone?.toLowerCase().includes(q) ||
+                        s.parentName?.toLowerCase().includes(q)
+                      );
+                    }).length === 0 && (
                       <tr>
                         <td colSpan={6} className="py-8 text-center text-sm font-medium text-gray-500">
-                          No student records in database.
+                          No student records matched search query.
                         </td>
                       </tr>
                     )}
@@ -738,44 +827,62 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 text-gray-300">
-                    {parents.map((parent) => (
-                      <tr key={parent.id} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="py-3 font-bold text-white">{parent.name}</td>
-                        <td className="py-3 font-mono text-gray-400 text-xs">{parent.phone}</td>
-                        <td className="py-3 text-xs font-mono">{parent.nin || 'Not Provided'}</td>
-                        <td className="py-3 text-xs font-mono text-[#c7515e] font-bold">
-                          {parent.walletBalance?.toLocaleString() || 0} UGX
-                        </td>
-                        <td className="py-3 text-right pr-4">
-                          <div className="flex items-center justify-end gap-2.5">
-                            <button
-                              onClick={() => {
-                                setEditingParent(parent);
-                                setPName(parent.name);
-                                setPPhone(parent.phone);
-                                setPNin(parent.nin || '');
-                                setShowParentModal(true);
-                              }}
-                              className="text-gray-400 hover:text-white"
-                              title="Edit Parent"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteParent(parent.id)}
-                              className="text-gray-500 hover:text-rose-500"
-                              title="Delete Parent"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {parents.length === 0 && (
+                    {parents
+                      .filter(p => {
+                        if (!parentSearch) return true;
+                        const q = parentSearch.toLowerCase();
+                        return (
+                          p.name.toLowerCase().includes(q) ||
+                          p.phone?.toLowerCase().includes(q) ||
+                          (p.nin && p.nin.toLowerCase().includes(q))
+                        );
+                      })
+                      .map((parent) => (
+                        <tr key={parent.id} className="hover:bg-white/[0.02] transition-colors">
+                          <td className="py-3 font-bold text-white">{parent.name}</td>
+                          <td className="py-3 font-mono text-gray-400 text-xs">{parent.phone}</td>
+                          <td className="py-3 text-xs font-mono">{parent.nin || 'Not Provided'}</td>
+                          <td className="py-3 text-xs font-mono text-[#c7515e] font-bold">
+                            {parent.walletBalance?.toLocaleString() || 0} UGX
+                          </td>
+                          <td className="py-3 text-right pr-4">
+                            <div className="flex items-center justify-end gap-2.5">
+                              <button
+                                onClick={() => {
+                                  setEditingParent(parent);
+                                  setPName(parent.name);
+                                  setPPhone(parent.phone);
+                                  setPNin(parent.nin || '');
+                                  setShowParentModal(true);
+                                }}
+                                className="text-gray-400 hover:text-white"
+                                title="Edit Parent"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteParent(parent.id)}
+                                className="text-gray-500 hover:text-rose-500"
+                                title="Delete Parent"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    {parents.filter(p => {
+                      if (!parentSearch) return true;
+                      const q = parentSearch.toLowerCase();
+                      return (
+                        p.name.toLowerCase().includes(q) ||
+                        p.phone?.toLowerCase().includes(q) ||
+                        (p.nin && p.nin.toLowerCase().includes(q))
+                      );
+                    }).length === 0 && (
                       <tr>
                         <td colSpan={5} className="py-8 text-center text-sm font-medium text-gray-500">
-                          No parent records found.
+                          No parent records matched search query.
                         </td>
                       </tr>
                     )}
@@ -797,50 +904,72 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 text-gray-300">
-                    {vendors.map((vendor) => {
-                      const associatedSchool = schools.find((s) => s.id === vendor.schoolId);
+                    {vendors
+                      .filter(v => {
+                        if (!vendorSearch) return true;
+                        const q = vendorSearch.toLowerCase();
+                        const associatedSchool = schools.find((s) => s.id === v.schoolId);
+                        return (
+                          v.name.toLowerCase().includes(q) ||
+                          v.phone?.toLowerCase().includes(q) ||
+                          v.type?.toLowerCase().includes(q) ||
+                          (associatedSchool && associatedSchool.name.toLowerCase().includes(q))
+                        );
+                      })
+                      .map((vendor) => {
+                        const associatedSchool = schools.find((s) => s.id === vendor.schoolId);
+                        return (
+                          <tr key={vendor.id} className="hover:bg-white/[0.02] transition-colors">
+                            <td className="py-3 font-bold text-white">{vendor.name}</td>
+                            <td className="py-3 text-xs">{associatedSchool?.name || 'Unknown Campus'}</td>
+                            <td className="py-3 font-mono text-gray-400 text-xs">{vendor.phone}</td>
+                            <td className="py-3 text-xs">
+                              <span className="bg-[#c7515e]/10 text-[#c7515e] px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
+                                {vendor.type || 'CANTEEN'}
+                              </span>
+                            </td>
+                            <td className="py-3 text-right pr-4">
+                              <div className="flex items-center justify-end gap-2.5">
+                                <button
+                                  onClick={() => {
+                                    setEditingVendor(vendor);
+                                    setVName(vendor.name);
+                                    setVSchoolId(vendor.schoolId);
+                                    setVPhone(vendor.phone);
+                                    setVType(vendor.type || 'CANTEEN');
+                                    setShowVendorModal(true);
+                                  }}
+                                  className="text-gray-400 hover:text-white"
+                                  title="Edit Vendor"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteVendor(vendor.id)}
+                                  className="text-gray-500 hover:text-rose-500"
+                                  title="Delete Vendor"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    {vendors.filter(v => {
+                      if (!vendorSearch) return true;
+                      const q = vendorSearch.toLowerCase();
+                      const associatedSchool = schools.find((s) => s.id === v.schoolId);
                       return (
-                        <tr key={vendor.id} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="py-3 font-bold text-white">{vendor.name}</td>
-                          <td className="py-3 text-xs">{associatedSchool?.name || 'Unknown Campus'}</td>
-                          <td className="py-3 font-mono text-gray-400 text-xs">{vendor.phone}</td>
-                          <td className="py-3 text-xs">
-                            <span className="bg-[#c7515e]/10 text-[#c7515e] px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
-                              {vendor.type || 'CANTEEN'}
-                            </span>
-                          </td>
-                          <td className="py-3 text-right pr-4">
-                            <div className="flex items-center justify-end gap-2.5">
-                              <button
-                                onClick={() => {
-                                  setEditingVendor(vendor);
-                                  setVName(vendor.name);
-                                  setVSchoolId(vendor.schoolId);
-                                  setVPhone(vendor.phone);
-                                  setVType(vendor.type || 'CANTEEN');
-                                  setShowVendorModal(true);
-                                }}
-                                className="text-gray-400 hover:text-white"
-                                title="Edit Vendor"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteVendor(vendor.id)}
-                                className="text-gray-500 hover:text-rose-500"
-                                title="Delete Vendor"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                        v.name.toLowerCase().includes(q) ||
+                        v.phone?.toLowerCase().includes(q) ||
+                        v.type?.toLowerCase().includes(q) ||
+                        (associatedSchool && associatedSchool.name.toLowerCase().includes(q))
                       );
-                    })}
-                    {vendors.length === 0 && (
+                    }).length === 0 && (
                       <tr>
                         <td colSpan={5} className="py-8 text-center text-sm font-medium text-gray-500">
-                          No merchant vendors registered in this region.
+                          No merchant vendors matched search query.
                         </td>
                       </tr>
                     )}

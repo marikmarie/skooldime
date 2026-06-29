@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Smartphone, Shield, ArrowRightLeft, Landmark, RefreshCw, Key, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Smartphone, Shield, ArrowRightLeft, Landmark, RefreshCw, Key, CheckCircle2, AlertTriangle, History, Search, ListFilter } from 'lucide-react';
 import { Parent, Student, Transaction } from '../types';
 import { useToast } from './ToastContext';
 
@@ -10,8 +10,11 @@ interface RoleParentProps {
 export default function RoleParent({ userPhone = '+256772444555' }: RoleParentProps) {
   const [parent, setParent] = useState<Parent | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
-  const [activeParentTab, setActiveParentTab] = useState<'CARDS' | 'FUNDS'>('CARDS');
-  // const [transactions, setTransactions] = useState<Transaction[]>([]); // Kept for future use
+  const [activeParentTab, setActiveParentTab] = useState<'CARDS' | 'FUNDS' | 'TRANSACTIONS'>('CARDS');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [txSearchQuery, setTxSearchQuery] = useState('');
+  const [txStatusFilter, setTxStatusFilter] = useState<'ALL' | 'SUCCESS' | 'PENDING' | 'FAILED'>('ALL');
+  const [txChildFilter, setTxChildFilter] = useState<string>('ALL');
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
@@ -46,10 +49,28 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         if (currentParent) {
           const studRes = await fetch('/api/students');
           const studData = await studRes.json();
+          let linkedStudents: Student[] = [];
           if (Array.isArray(studData)) {
-            const linked = studData.filter((s: Student) => s.parentPhone === currentParent.phone);
-            setStudents(linked);
-            if (linked.length > 0) setSelectedStudentId(linked[0].id);
+            linkedStudents = studData.filter((s: Student) => s.parentPhone === currentParent.phone);
+            setStudents(linkedStudents);
+            if (linkedStudents.length > 0) setSelectedStudentId(linkedStudents[0].id);
+          }
+
+          // Fetch all transactions
+          const txRes = await fetch('/api/transactions');
+          const txData = await txRes.json();
+          if (Array.isArray(txData)) {
+            // Filter transactions that belong to parent or linked students
+            const filteredTx = txData.filter((t: any) => {
+              const isParentWallet = t.senderWalletId === `W_${currentParent.id}` || t.receiverWalletId === `W_${currentParent.id}`;
+              const isChildWallet = linkedStudents.some(s => t.senderWalletId === `W_${s.id}` || t.receiverWalletId === `W_${s.id}`);
+              const mentionsParent = t.description?.toLowerCase().includes(currentParent.name.toLowerCase()) || t.description?.toLowerCase().includes(userPhone);
+              const mentionsChild = linkedStudents.some(s => t.description?.toLowerCase().includes(s.name.toLowerCase()));
+              return isParentWallet || isChildWallet || mentionsParent || mentionsChild;
+            });
+            // Sort by date descending
+            filteredTx.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setTransactions(filteredTx);
           }
         }
       }
@@ -262,7 +283,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
       </div>
 
       {/* Dashboard Sub-Tabs */}
-      <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-md">
+      <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-xl">
         <button
           onClick={() => setActiveParentTab('CARDS')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
@@ -284,6 +305,17 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         >
           <ArrowRightLeft className="h-4 w-4" />
           <span>Send & Top Up</span>
+        </button>
+        <button
+          onClick={() => setActiveParentTab('TRANSACTIONS')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeParentTab === 'TRANSACTIONS'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+        >
+          <History className="h-4 w-4" />
+          <span>Ledger History</span>
         </button>
       </div>
 
@@ -428,6 +460,176 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                 {pollingMsg}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {activeParentTab === 'TRANSACTIONS' && (
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-5 animate-in fade-in duration-250">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+            <div className="flex items-center gap-2">
+              <History className="h-5 w-5 text-[#c7515e]" />
+              <h3 className="text-sm font-bold text-gray-200 uppercase tracking-wider">
+                Family Transactions Ledger
+              </h3>
+            </div>
+            <button
+              onClick={fetchParentAndChildren}
+              className="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/5 bg-white/5 text-xs text-gray-400 hover:text-white transition"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              <span>Sync Ledger</span>
+            </button>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Search Input */}
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
+                <Search className="h-4 w-4" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search description, reference..."
+                value={txSearchQuery}
+                onChange={(e) => setTxSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#06080E] text-white placeholder-gray-500 focus:border-[#c7515e] outline-none transition"
+              />
+            </div>
+
+            {/* Child Filter */}
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
+                <ListFilter className="h-4 w-4" />
+              </span>
+              <select
+                value={txChildFilter}
+                onChange={(e) => setTxChildFilter(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#06080E] text-white focus:border-[#c7515e] outline-none transition appearance-none cursor-pointer"
+              >
+                <option value="ALL">All Family Members</option>
+                {students.map(s => (
+                  <option key={s.id} value={s.id}>{s.name} ({s.class})</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Status Filter */}
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
+                <ListFilter className="h-4 w-4" />
+              </span>
+              <select
+                value={txStatusFilter}
+                onChange={(e) => setTxStatusFilter(e.target.value as any)}
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#06080E] text-white focus:border-[#c7515e] outline-none transition appearance-none cursor-pointer"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="SUCCESS">Success Only</option>
+                <option value="PENDING">Pending Only</option>
+                <option value="FAILED">Failed Only</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Transactions Table */}
+          <div className="overflow-x-auto rounded-xl border border-white/5 max-h-[400px] scrollbar-thin">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-white/5 bg-white/[0.01] text-gray-500 font-mono uppercase tracking-wider text-[10px]">
+                  <th className="py-3 px-4">Date / Time</th>
+                  <th className="py-3 px-4">Description</th>
+                  <th className="py-3 px-4">Reference</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-gray-300">
+                {transactions
+                  .filter(t => {
+                    // Status Filter
+                    if (txStatusFilter !== 'ALL' && t.status !== txStatusFilter) return false;
+                    
+                    // Child Filter
+                    if (txChildFilter !== 'ALL') {
+                      const isChildWallet = t.senderWalletId === `W_${txChildFilter}` || t.receiverWalletId === `W_${txChildFilter}`;
+                      const childObj = students.find(s => s.id === txChildFilter);
+                      const childName = childObj ? childObj.name.toLowerCase() : '';
+                      const mentionsChild = childName && t.description?.toLowerCase().includes(childName);
+                      if (!isChildWallet && !mentionsChild) return false;
+                    }
+                    
+                    // Search Query
+                    if (txSearchQuery) {
+                      const q = txSearchQuery.toLowerCase();
+                      const matchDesc = t.description?.toLowerCase().includes(q);
+                      const matchId = t.id?.toLowerCase().includes(q) || t.referenceCode?.toLowerCase().includes(q);
+                      const matchAmt = t.amount?.toString().includes(q);
+                      if (!matchDesc && !matchId && !matchAmt) return false;
+                    }
+                    
+                    return true;
+                  })
+                  .map((tx) => {
+                    const isCredit = tx.receiverWalletId === `W_${parent?.id}` || tx.description?.toLowerCase().includes('deposit');
+                    return (
+                      <tr key={tx.id} className="hover:bg-white/[0.01] transition-colors">
+                        <td className="py-3.5 px-4 font-mono text-gray-500 text-[10px] whitespace-nowrap">
+                          {new Date(tx.createdAt).toLocaleString()}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="font-medium text-white max-w-xs sm:max-w-md truncate" title={tx.description}>
+                            {tx.description}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 font-mono text-gray-500 select-all">
+                          {tx.referenceCode || tx.id}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase ${
+                            tx.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15' :
+                            tx.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/15' :
+                            'bg-rose-500/10 text-rose-400 border border-rose-500/15'
+                          }`}>
+                            {tx.status}
+                          </span>
+                        </td>
+                        <td className={`py-3.5 px-4 text-right font-mono font-bold ${
+                          isCredit ? 'text-emerald-400' : 'text-gray-200'
+                        }`}>
+                          {isCredit ? '+' : '-'}{tx.amount.toLocaleString()} UGX
+                        </td>
+                      </tr>
+                    );
+                  })}
+                {transactions
+                  .filter(t => {
+                    if (txStatusFilter !== 'ALL' && t.status !== txStatusFilter) return false;
+                    if (txChildFilter !== 'ALL') {
+                      const isChildWallet = t.senderWalletId === `W_${txChildFilter}` || t.receiverWalletId === `W_${txChildFilter}`;
+                      const childObj = students.find(s => s.id === txChildFilter);
+                      const childName = childObj ? childObj.name.toLowerCase() : '';
+                      const mentionsChild = childName && t.description?.toLowerCase().includes(childName);
+                      if (!isChildWallet && !mentionsChild) return false;
+                    }
+                    if (txSearchQuery) {
+                      const q = txSearchQuery.toLowerCase();
+                      const matchDesc = t.description?.toLowerCase().includes(q);
+                      const matchId = t.id?.toLowerCase().includes(q) || t.referenceCode?.toLowerCase().includes(q);
+                      const matchAmt = t.amount?.toString().includes(q);
+                      if (!matchDesc && !matchId && !matchAmt) return false;
+                    }
+                    return true;
+                  }).length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-sm text-gray-500 font-medium">
+                        No transactions matching the criteria.
+                      </td>
+                    </tr>
+                  )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

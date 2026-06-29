@@ -5,19 +5,99 @@ import url from 'url';
 const DB_FILE = path.resolve(process.cwd(), 'db.json');
 const TEMPLATE_FILE = path.resolve(process.cwd(), 'db.template.json');
 
+const DEFAULT_SCHOOLS = [
+  { id: 'S1', name: 'Kampala Parents Primary', region: 'Central', code: 'KPS', commissionRate: 1.0 },
+  { id: 'S2', name: 'Nakasero Model School', region: 'Central', code: 'NMS', commissionRate: 1.2 },
+  { id: 'S3', name: 'Gayaza High School', region: 'Central', code: 'GHS', commissionRate: 0.8 }
+];
+
+const DEFAULT_VENDORS = [
+  { id: 'V1', name: 'Mama Betty Canteen', schoolId: 'S1', phone: '+256700000005', type: 'CANTEEN', commissionRate: 98.5, deviceBound: true },
+  { id: 'V2', name: 'Elite Bookshop', schoolId: 'S1', phone: '+256700000101', type: 'BOOKSHOP', commissionRate: 98.0, deviceBound: true },
+  { id: 'V3', name: 'Nakasero Snacks', schoolId: 'S2', phone: '+256700000202', type: 'CANTEEN', commissionRate: 99.0, deviceBound: true }
+];
+
+const DEFAULT_USERS = [
+  { id: 'U1', username: 'superadmin', role: 'SUPER_ADMIN', name: 'Alinda Robert (HQ)', phone: '+256700000001' },
+  { id: 'U2', username: 'central_admin', role: 'BUSINESS_ADMIN', name: 'Nakimbugwe Stella', phone: '+256700000002', region: 'Central' },
+  { id: 'U3', username: 'agent_peter', role: 'AGENT', name: 'Peter Ssekabira', phone: '+256700000003', region: 'Central' },
+  { id: 'U4', username: 'kps_bursar', role: 'SCHOOL_ADMIN', name: 'Kato Charles (Bursar)', phone: '+256700000004', schoolId: 'S1' },
+  { id: 'U5', username: 'kps_canteen', role: 'VENDOR', name: 'Mama Betty Canteen', phone: '+256700000005', schoolId: 'S1', vendorId: 'V1' },
+  { id: 'U6', username: 'moses_parent', role: 'PARENT', name: 'Moses Mukasa', phone: '+256772444555' }
+];
+
+const DEFAULT_LOAN_PRODUCTS = [
+  { id: 'lp1', name: 'School Fees Advance', description: 'Urgent funding to cover school fees with quick repayment terms.', minAmount: 50000, maxAmount: 500000, interestRate: 5, durationDays: 30, targetRole: 'PARENT' },
+  { id: 'lp2', name: 'Merchant Inventory Capital', description: 'Stock finance for registered canteens and bookstores.', minAmount: 100000, maxAmount: 1000000, interestRate: 3, durationDays: 15, targetRole: 'VENDOR' },
+  { id: 'lp3', name: 'Staff Salary Advance', description: 'Emergency salary loan for registered teachers and administration.', minAmount: 50000, maxAmount: 300000, interestRate: 4, durationDays: 30, targetRole: 'STAFF' }
+];
+
+const DEFAULT_STAFF = [
+  { id: 'STF1', name: 'Nalwanga Florence', role: 'TEACHER', email: 'florence@kps.ac.ug', phone: '+256771122334', status: 'ACTIVE' },
+  { id: 'STF2', name: 'Otim Douglas', role: 'WARDEN', email: 'douglas@kps.ac.ug', phone: '+256781234567', status: 'ACTIVE' },
+  { id: 'STF3', name: 'Kato Charles', role: 'BURSAR', email: 'charles@kps.ac.ug', phone: '+256700000004', status: 'ACTIVE' }
+];
+
+const DEFAULT_SYSTEM_SETTINGS = {
+  loansEnabled: true,
+  commissionRate: 0.5
+};
+
 function load_db() {
-  if (!fs.existsSync(DB_FILE)) {
-    if (fs.existsSync(TEMPLATE_FILE)) {
+  let db: any = {};
+  if (fs.existsSync(DB_FILE)) {
+    try {
+      db = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
+    } catch (e) {
+      db = {};
+    }
+  } else if (fs.existsSync(TEMPLATE_FILE)) {
+    try {
       fs.copyFileSync(TEMPLATE_FILE, DB_FILE);
-    } else {
-      return {};
+      db = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
+    } catch (e) {
+      db = {};
+    }
+  } else {
+    // Attempt fallback from data.json or data.template.json
+    const sourceData = path.resolve(process.cwd(), 'data.json');
+    const sourceTemplate = path.resolve(process.cwd(), 'data.template.json');
+    if (fs.existsSync(sourceData)) {
+      try {
+        fs.copyFileSync(sourceData, DB_FILE);
+        db = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
+      } catch (e) {
+        db = {};
+      }
+    } else if (fs.existsSync(sourceTemplate)) {
+      try {
+        fs.copyFileSync(sourceTemplate, DB_FILE);
+        db = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
+      } catch (e) {
+        db = {};
+      }
     }
   }
-  try {
-    return JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
-  } catch (e) {
-    return {};
+
+  // Self-heal and seed all missing properties
+  let changed = false;
+  if (!db.schools || db.schools.length === 0) { db.schools = DEFAULT_SCHOOLS; changed = true; }
+  if (!db.vendors || db.vendors.length === 0) { db.vendors = DEFAULT_VENDORS; changed = true; }
+  if (!db.users || db.users.length === 0) { db.users = DEFAULT_USERS; changed = true; }
+  if (!db.loanProducts || db.loanProducts.length === 0) { db.loanProducts = DEFAULT_LOAN_PRODUCTS; changed = true; }
+  if (!db.staff || db.staff.length === 0) { db.staff = DEFAULT_STAFF; changed = true; }
+  if (!db.systemSettings) { db.systemSettings = DEFAULT_SYSTEM_SETTINGS; changed = true; }
+  if (!db.parents) { db.parents = []; changed = true; }
+  if (!db.students) { db.students = []; changed = true; }
+  if (!db.wallets) { db.wallets = []; changed = true; }
+  if (!db.auditLogs) { db.auditLogs = []; changed = true; }
+  if (!db.creditScores) { db.creditScores = []; changed = true; }
+  if (!db.transactions) { db.transactions = []; changed = true; }
+
+  if (changed) {
+    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
   }
+  return db;
 }
 
 function save_db(data: any) {
@@ -121,6 +201,26 @@ export function devApiMiddleware(req: any, res: any, next: any) {
     if (pathname === '/api/students') {
       const db = load_db();
       return sendJson(db.students || []);
+    }
+
+    if (pathname === '/api/system/settings') {
+      const db = load_db();
+      return sendJson(db.systemSettings || { loansEnabled: true, commissionRate: 0.5 });
+    }
+
+    if (pathname === '/api/users') {
+      const db = load_db();
+      return sendJson(db.users || []);
+    }
+
+    if (pathname === '/api/transactions') {
+      const db = load_db();
+      return sendJson(db.transactions || []);
+    }
+
+    if (pathname === '/api/staff') {
+      const db = load_db();
+      return sendJson(db.staff || []);
     }
 
     if (pathname.startsWith('/api/pos/scan/')) {
@@ -332,6 +432,327 @@ export function devApiMiddleware(req: any, res: any, next: any) {
         }
       }
 
+      if (pathname === '/api/system/settings') {
+        const db = load_db();
+        const { loansEnabled, commissionRate } = input;
+        db.systemSettings = {
+          loansEnabled: loansEnabled !== undefined ? loansEnabled : db.systemSettings.loansEnabled,
+          commissionRate: commissionRate !== undefined ? Number(commissionRate) : db.systemSettings.commissionRate
+        };
+        save_db(db);
+        audit('SUPER_ADMIN', 'Alinda Robert (HQ)', 'SUPER_ADMIN', 'UPDATE_GLOBAL_SETTINGS', null, db.systemSettings);
+        return sendJson({ success: true, message: 'Global system parameters updated.' });
+      }
+
+      if (pathname === '/api/users/create') {
+        const db = load_db();
+        const { name, username, phone, role, region, schoolId } = input;
+        if (!username || !role || !name) {
+          return sendError('Name, username and role are required.', 400);
+        }
+        const exists = (db.users || []).some((u: any) => u.username === username);
+        if (exists) {
+          return sendError('Username already taken.', 400);
+        }
+        const newUser = {
+          id: `U_${Date.now()}`,
+          name,
+          username,
+          phone: phone || '',
+          role,
+          region,
+          schoolId
+        };
+        if (!db.users) db.users = [];
+        db.users.push(newUser);
+        save_db(db);
+        audit('SUPER_ADMIN', 'Alinda Robert (HQ)', 'SUPER_ADMIN', `CREATE_USER_${role}`, null, newUser);
+        return sendJson({ success: true, user: newUser, message: `Account created successfully.` });
+      }
+
+      if (pathname === '/api/schools') {
+        const db = load_db();
+        const { name, region, code, commissionRate } = input;
+        if (!name || !code) {
+          return sendError('School name and code are required.', 400);
+        }
+        const id = `SCH_${Date.now()}`;
+        const newSchool = {
+          id,
+          name,
+          region: region || 'Central',
+          code,
+          commissionRate: commissionRate !== undefined ? Number(commissionRate) : 1.0
+        };
+        if (!db.schools) db.schools = [];
+        db.schools.push(newSchool);
+
+        // Create school wallet
+        if (!db.wallets) db.wallets = [];
+        db.wallets.push({
+          id: `W_${id}`,
+          ownerId: id,
+          ownerType: 'SCHOOL',
+          balance: 0,
+          status: 'ACTIVE',
+          lastTransactionDate: new Date().toISOString()
+        });
+
+        // Create school admin login user automatically
+        const adminUsername = `${code.toLowerCase()}_bursar`;
+        const exists = (db.users || []).some((u: any) => u.username === adminUsername);
+        if (!exists) {
+          const newSchoolUser = {
+            id: `U_${Date.now()}_sch`,
+            username: adminUsername,
+            role: 'SCHOOL_ADMIN',
+            name: `${name} Bursar`,
+            phone: '+256700000000',
+            schoolId: id
+          };
+          if (!db.users) db.users = [];
+          db.users.push(newSchoolUser);
+        }
+
+        save_db(db);
+        audit('BUSINESS_ADMIN', 'Nakimbugwe Stella', 'BUSINESS_ADMIN', 'CREATE_SCHOOL', null, newSchool);
+        return sendJson({ success: true, school: newSchool, message: `School ${name} created successfully.` });
+      }
+
+      if (pathname === '/api/agents') {
+        const db = load_db();
+        const { name, username, phone, region } = input;
+        if (!name || !username) {
+          return sendError('Agent name and username are required.', 400);
+        }
+        const id = `U_${Date.now()}`;
+        const newAgent = {
+          id,
+          username,
+          role: 'AGENT',
+          name,
+          phone: phone || '',
+          region: region || 'Central'
+        };
+        if (!db.users) db.users = [];
+        db.users.push(newAgent);
+        save_db(db);
+        audit('BUSINESS_ADMIN', 'Nakimbugwe Stella', 'BUSINESS_ADMIN', 'CREATE_AGENT', null, newAgent);
+        return sendJson({ success: true, agent: newAgent, message: `Agent ${name} registered successfully.` });
+      }
+
+      if (pathname === '/api/vendors/update-commission') {
+        const db = load_db();
+        const { vendorId, schoolCommissionRate } = input;
+        if (!vendorId) {
+          return sendError('Vendor ID is required.', 400);
+        }
+        const idx = (db.vendors || []).findIndex((v: any) => v.id === vendorId);
+        if (idx === -1) {
+          return sendError('Vendor not found.', 404);
+        }
+        db.vendors[idx].commissionRate = 100 - Number(schoolCommissionRate);
+        save_db(db);
+        audit('BUSINESS_ADMIN', 'Nakimbugwe Stella', 'BUSINESS_ADMIN', 'UPDATE_VENDOR_COMMISSION', null, { vendorId, schoolCommissionRate });
+        return sendJson({ success: true, message: `Commission split updated successfully.` });
+      }
+
+      if (pathname === '/api/staff') {
+        const db = load_db();
+        const { name, role, email, phone } = input;
+        if (!name || !role) {
+          return sendError('Staff name and role are required.', 400);
+        }
+        const newStaff = {
+          id: `STF_${Date.now()}`,
+          name,
+          role,
+          email: email || '',
+          phone: phone || '',
+          status: 'ACTIVE'
+        };
+        if (!db.staff) db.staff = [];
+        db.staff.push(newStaff);
+        save_db(db);
+        audit('SCHOOL_ADMIN', 'Kato Charles (Bursar)', 'SCHOOL_ADMIN', 'ADD_STAFF', null, newStaff);
+        return sendJson({ success: true, staff: newStaff, message: `Staff member ${name} registered successfully.` });
+      }
+
+      if (pathname === '/api/parents/create-or-update') {
+        const db = load_db();
+        const { id, name, phone, nin } = input;
+        if (!name || !phone) return sendError('Name and Phone are required.', 400);
+
+        if (id) {
+          const idx = (db.parents || []).findIndex((p: any) => p.id === id);
+          if (idx !== -1) {
+            db.parents[idx] = { ...db.parents[idx], name, phone, nin: nin || db.parents[idx].nin, kycTier: nin ? 2 : db.parents[idx].kycTier };
+            save_db(db);
+            audit('AGENT', 'Peter Ssekabira', 'AGENT', 'UPDATE_PARENT', null, db.parents[idx]);
+            return sendJson({ success: true, message: 'Parent updated successfully.', parent: db.parents[idx] });
+          }
+          return sendError('Parent not found.', 404);
+        } else {
+          const parentId = `P_${Date.now()}`;
+          const newParent = {
+            id: parentId,
+            name,
+            phone,
+            nin: nin || '',
+            kycTier: nin ? 2 : 1,
+            walletBalance: 0
+          };
+          if (!db.parents) db.parents = [];
+          db.parents.push(newParent);
+          if (!db.wallets) db.wallets = [];
+          db.wallets.push({
+            id: `W_${parentId}`,
+            ownerId: parentId,
+            ownerType: 'PARENT',
+            balance: 0,
+            status: 'ACTIVE',
+            lastTransactionDate: new Date().toISOString()
+          });
+
+          // Automatically provision a PARENT login user in db.users
+          const parentUsername = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+          const uExists = (db.users || []).some((u: any) => u.username === parentUsername);
+          if (!uExists) {
+            const newParentUser = {
+              id: `U_${Date.now()}_p`,
+              username: parentUsername,
+              role: 'PARENT',
+              name,
+              phone
+            };
+            if (!db.users) db.users = [];
+            db.users.push(newParentUser);
+          }
+
+          save_db(db);
+          audit('AGENT', 'Peter Ssekabira', 'AGENT', 'CREATE_PARENT', null, newParent);
+          return sendJson({ success: true, message: 'Parent created successfully.', parent: newParent });
+        }
+      }
+
+      if (pathname === '/api/vendors/create-or-update') {
+        const db = load_db();
+        const { id, name, schoolId, phone, type, commissionRate } = input;
+        if (!name || !schoolId || !phone) return sendError('Name, School, and Phone are required.', 400);
+
+        if (id) {
+          const idx = (db.vendors || []).findIndex((v: any) => v.id === id);
+          if (idx !== -1) {
+            db.vendors[idx] = { ...db.vendors[idx], name, schoolId, phone, type: type || 'CANTEEN', commissionRate: commissionRate !== undefined ? Number(commissionRate) : db.vendors[idx].commissionRate };
+            save_db(db);
+            audit('AGENT', 'Peter Ssekabira', 'AGENT', 'UPDATE_VENDOR', null, db.vendors[idx]);
+            return sendJson({ success: true, message: 'Vendor updated successfully.', vendor: db.vendors[idx] });
+          }
+          return sendError('Vendor not found.', 404);
+        } else {
+          const vendorId = `V_${Date.now()}`;
+          const newVendor = {
+            id: vendorId,
+            name,
+            schoolId,
+            phone,
+            type: type || 'CANTEEN',
+            commissionRate: commissionRate !== undefined ? Number(commissionRate) : 98.5,
+            deviceBound: true
+          };
+          if (!db.vendors) db.vendors = [];
+          db.vendors.push(newVendor);
+          if (!db.wallets) db.wallets = [];
+          db.wallets.push({
+            id: `W_${vendorId}`,
+            ownerId: vendorId,
+            ownerType: 'VENDOR',
+            balance: 0,
+            status: 'ACTIVE',
+            lastTransactionDate: new Date().toISOString()
+          });
+
+          // Automatically provision a VENDOR login user in db.users
+          const vendorUsername = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+          const uExists = (db.users || []).some((u: any) => u.username === vendorUsername);
+          if (!uExists) {
+            const newVendorUser = {
+              id: `U_${Date.now()}_v`,
+              username: vendorUsername,
+              role: 'VENDOR',
+              name,
+              phone,
+              schoolId,
+              vendorId
+            };
+            if (!db.users) db.users = [];
+            db.users.push(newVendorUser);
+          }
+
+          save_db(db);
+          audit('AGENT', 'Peter Ssekabira', 'AGENT', 'CREATE_VENDOR', null, newVendor);
+          return sendJson({ success: true, message: 'Vendor created successfully.', vendor: newVendor });
+        }
+      }
+
+      if (pathname === '/api/parents/delete') {
+        const db = load_db();
+        const { id } = input;
+        const idx = (db.parents || []).findIndex((p: any) => p.id === id);
+        if (idx !== -1) {
+          const removed = db.parents.splice(idx, 1)[0];
+          save_db(db);
+          audit('AGENT', 'Peter Ssekabira', 'AGENT', 'DELETE_PARENT', removed, null);
+          return sendJson({ success: true, message: 'Parent deleted successfully.' });
+        }
+        return sendError('Parent not found.', 404);
+      }
+
+      if (pathname === '/api/vendors/delete') {
+        const db = load_db();
+        const { id } = input;
+        const idx = (db.vendors || []).findIndex((v: any) => v.id === id);
+        if (idx !== -1) {
+          const removed = db.vendors.splice(idx, 1)[0];
+          save_db(db);
+          audit('AGENT', 'Peter Ssekabira', 'AGENT', 'DELETE_VENDOR', removed, null);
+          return sendJson({ success: true, message: 'Vendor deleted successfully.' });
+        }
+        return sendError('Vendor not found.', 404);
+      }
+
+      if (pathname === '/api/students/delete') {
+        const db = load_db();
+        const { id } = input;
+        const idx = (db.students || []).findIndex((s: any) => s.id === id);
+        if (idx !== -1) {
+          const removed = db.students.splice(idx, 1)[0];
+          save_db(db);
+          audit('AGENT', 'Peter Ssekabira', 'AGENT', 'DELETE_STUDENT', removed, null);
+          return sendJson({ success: true, message: 'Student deleted successfully.' });
+        }
+        return sendError('Student not found.', 404);
+      }
+
+      if (pathname === '/api/students/update-link-status') {
+        const db = load_db();
+        const { studentId, isLinked, otpChallenge } = input;
+        if (!studentId) return sendError('Student ID is required.', 400);
+
+        if (otpChallenge !== '1234' && otpChallenge !== '4321') {
+          return sendError('Invalid guardian approval OTP challenge code. Enter 1234 or 4321.', 400);
+        }
+
+        const idx = (db.students || []).findIndex((s: any) => s.id === studentId);
+        if (idx === -1) return sendError('Student not found.', 404);
+
+        const oldStatus = db.students[idx].isLinked;
+        db.students[idx].isLinked = !!isLinked;
+        save_db(db);
+        audit('AGENT', 'Peter Ssekabira', 'AGENT', 'MODIFY_PARENT_STUDENT_LINK', { studentId, oldStatus }, { isLinked });
+        return sendJson({ success: true, message: `Student link updated to ${isLinked ? 'LINKED' : 'UNLINKED'} successfully.` });
+      }
+
       if (pathname === '/api/setup/reset') {
         if (fs.existsSync(TEMPLATE_FILE)) {
           fs.copyFileSync(TEMPLATE_FILE, DB_FILE);
@@ -405,7 +826,7 @@ export function devApiMiddleware(req: any, res: any, next: any) {
               pin: '0000',
               parentPhone,
               isLinked: true,
-              avatarUrl: 'imagephoto-1544005313-94ddf0286df2?w=120',
+              avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120',
               noPinLimit: 2000
             };
             db.students.push(newStudent);
@@ -763,13 +1184,13 @@ export function devApiMiddleware(req: any, res: any, next: any) {
                 fee: 1000,
                 type: 'DEPOSIT',
                 status: 'PENDING',
-                description: 'Pending Collecto MTN/Airtel STK Push',
+                description: 'Pending Collecto MTN/Airtel Push',
                 createdAt: new Date().toISOString(),
                 realIntegration: true
               });
 
               save_db(db);
-              audit('PARENT', parent.name, 'PARENT', 'COLLECTO_REAL_STK_PUSH_INITIATED', null, { refCode, amount: amt, collectoTxId: collectoId });
+              audit('PARENT', parent.name, 'PARENT', 'COLLECTO_REAL_PUSH_INITIATED', null, { refCode, amount: amt, collectoTxId: collectoId });
 
               return sendJson({
                 success: true,
@@ -777,7 +1198,7 @@ export function devApiMiddleware(req: any, res: any, next: any) {
                 referenceCode: refCode,
                 collectoTxId: collectoId,
                 realIntegration: true,
-                message: 'STK push successfully initiated via Collecto. Please enter your mobile money PIN to authorize.'
+                message: 'Collecto push successfully initiated. Please enter your mobile money PIN to authorize.'
               });
             } else {
               return sendError(resData.message || `Collecto gateway returned error state (HTTP ${response.status})`, 400);
@@ -798,18 +1219,18 @@ export function devApiMiddleware(req: any, res: any, next: any) {
           fee: 1000,
           type: 'DEPOSIT',
           status: 'PENDING',
-          description: 'Pending Collecto MTN/Airtel STK Push',
+          description: 'Pending Collecto MTN/Airtel Push',
           createdAt: new Date().toISOString()
         });
 
         save_db(db);
-        audit('PARENT', parent.name, 'PARENT', 'COLLECTO_STK_PUSH_INITIATED', null, { refCode, amount: amt });
+        audit('PARENT', parent.name, 'PARENT', 'COLLECTO_PUSH_INITIATED', null, { refCode, amount: amt });
 
         return sendJson({
           success: true,
           transactionId: txId,
           referenceCode: refCode,
-          message: 'STK push sent to your mobile phone. Enter MTN/Airtel PIN to authorize.'
+          message: 'Collecto push sent to your mobile phone. Enter MTN/Airtel PIN to authorize.'
         });
       }
 
