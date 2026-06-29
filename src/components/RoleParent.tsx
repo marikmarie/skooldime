@@ -559,10 +559,10 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
           </div>
 
           {/* Transactions Table */}
-          <div className="overflow-x-auto rounded-xl border border-white/5 max-h-[400px] scrollbar-thin">
+          <div className="overflow-x-auto rounded-xl border border-white/5 max-h-100 scrollbar-thin">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-white/5 bg-white/[0.01] text-gray-500 font-mono uppercase tracking-wider text-[10px]">
+                <tr className="border-b border-white/5 bg-white/1 text-gray-500 font-mono uppercase tracking-wider text-[10px]">
                   <th className="py-3 px-4">Date / Time</th>
                   <th className="py-3 px-4">Description</th>
                   <th className="py-3 px-4">Reference</th>
@@ -599,7 +599,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                   .map((tx) => {
                     const isCredit = tx.receiverWalletId === `W_${parent?.id}` || tx.description?.toLowerCase().includes('deposit');
                     return (
-                      <tr key={tx.id} className="hover:bg-white/[0.01] transition-colors">
+                      <tr key={tx.id} className="hover:bg-white/1 transition-colors">
                         <td className="py-3.5 px-4 font-mono text-gray-500 text-[10px] whitespace-nowrap">
                           {new Date(tx.createdAt).toLocaleString()}
                         </td>

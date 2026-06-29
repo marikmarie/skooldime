@@ -452,7 +452,7 @@ export default function RoleBusinessAdmin() {
                 <span className="text-[10px] font-mono font-bold bg-[#c7515e]/10 text-[#c7515e] px-2 py-0.5 rounded">{schools.length} Campuses</span>
               </div>
 
-              <div className="space-y-2 max-h-[220px] overflow-y-auto scrollbar-thin">
+              <div className="space-y-2 max-h-55 overflow-y-auto scrollbar-thin">
                 {schools.map((sch) => (
                   <div key={sch.id} className="p-3 rounded-xl bg-[#06080E]/80 border border-white/5 flex items-center justify-between text-xs hover:border-white/10 transition-colors">
                     <div>
@@ -475,7 +475,7 @@ export default function RoleBusinessAdmin() {
                 <span className="text-[10px] font-mono font-bold bg-[#c7515e]/10 text-[#c7515e] px-2 py-0.5 rounded">{agents.length} Agents</span>
               </div>
 
-              <div className="space-y-2 max-h-[220px] overflow-y-auto scrollbar-thin">
+              <div className="space-y-2 max-h-55 overflow-y-auto scrollbar-thin">
                 {agents.map((ag) => (
                   <div key={ag.id} className="p-3 rounded-xl bg-[#06080E]/80 border border-white/5 flex items-center justify-between text-xs hover:border-white/10 transition-colors">
                     <div>

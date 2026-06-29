@@ -13,7 +13,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useToast } from './ToastContext';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface StudentBulkUploaderProps {
   onUploadSuccess: () => void;
@@ -562,7 +562,7 @@ KPS/2026/154,Kato Derrick,Primary 3,Nalule Florence,0701445566,`;
               {headers.map((h, i) => (
                 <div key={i} className="bg-[#0B0F19]/80 border border-white/5 rounded-xl p-2.5 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 font-bold truncate max-w-[120px]" title={h.csvHeader}>
+                    <span className="text-[10px] text-gray-500 font-bold truncate max-w-30" title={h.csvHeader}>
                       CSV Header: "{h.csvHeader}"
                     </span>
                     {h.mappedField ? (
@@ -610,7 +610,7 @@ KPS/2026/154,Kato Derrick,Primary 3,Nalule Florence,0701445566,`;
               </div>
             </div>
 
-            <div className="overflow-x-auto rounded-xl border border-white/5 bg-[#06080E]/20 max-h-[300px] overflow-y-auto">
+            <div className="overflow-x-auto rounded-xl border border-white/5 bg-[#06080E]/20 max-h-75 overflow-y-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-[#0B0F19] text-gray-400 border-b border-white/5 font-bold">
@@ -627,7 +627,7 @@ KPS/2026/154,Kato Derrick,Primary 3,Nalule Florence,0701445566,`;
                   {parsedRows.map((row, index) => (
                     <tr 
                       key={index} 
-                      className={`hover:bg-white/[0.02] transition-colors ${
+                      className={`hover:bg-white/2 transition-colors ${
                         !row.isValid ? 'bg-rose-500/5' : ''
                       }`}
                     >

@@ -676,7 +676,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
             {/* 1. EMBEDDED DUAL-STREAM IDENTITY SCANNER */}
             <div className="rounded-2xl border border-slate-800 bg-[#0c111e]/80 backdrop-blur-md shadow-2xl overflow-hidden">
               {/* Header */}
-              <div className="bg-gradient-to-r from-slate-900 via-[#0f172a] to-slate-900 border-b border-slate-800/80 px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="bg-linear-to-r from-slate-900 via-[#0f172a] to-slate-900 border-b border-slate-800/80 px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 rounded-xl bg-[#c7515e]/10 border border-[#c7515e]/20">
                     <Camera className="h-5 w-5 text-[#c7515e] animate-pulse" />
@@ -698,7 +698,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               <div className="grid grid-cols-1 lg:grid-cols-12 border-b border-slate-800/60">
                 
                 {/* A. LIVE CAMERA VIEWFINDER (5 cols) */}
-                <div className={`lg:col-span-5 bg-slate-950/90 relative flex flex-col justify-between p-5 min-h-[300px] overflow-hidden transition-colors duration-300 ${scanFlash ? 'flash-active' : ''}`}>
+                <div className={`lg:col-span-5 bg-slate-950/90 relative flex flex-col justify-between p-5 min-h-75 overflow-hidden transition-colors duration-300 ${scanFlash ? 'flash-active' : ''}`}>
                   {/* Status Indicator overlay */}
                   <div className="flex items-center justify-between z-10">
                     <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/5">
@@ -733,7 +733,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
 
                       {/* Laser Sweep Line */}
                       {scannerStatus !== 'SUCCESS' && (
-                        <div className="absolute left-3 right-3 h-0.5 bg-gradient-to-r from-transparent via-[#c7515e] to-transparent shadow-[0_0_8px_#c7515e] laser-sweep z-10"></div>
+                        <div className="absolute left-3 right-3 h-0.5 bg-linear-to-r from-transparent via-[#c7515e] to-transparent shadow-[0_0_8px_#c7515e] laser-sweep z-10"></div>
                       )}
 
                       {/* Content based on Scanner State */}
@@ -763,7 +763,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                         <div className="text-center p-3 space-y-1.5 z-10 animate-in zoom-in-75 duration-150">
                           <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
                           <p className="text-xs font-bold text-emerald-400">Match Succeeded!</p>
-                          <p className="text-[9px] font-mono text-slate-400 truncate max-w-[150px]">
+                          <p className="text-[9px] font-mono text-slate-400 truncate max-w-37.5">
                             {detectedStudent ? detectedStudent.name : detectedParent?.name}
                           </p>
                         </div>
@@ -780,7 +780,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                 </div>
 
                 {/* B. SIMULATION CANDIDATES CONTROLLER PANEL (7 cols) */}
-                <div className="lg:col-span-7 bg-[#070b13] p-5 flex flex-col justify-between min-h-[300px]">
+                <div className="lg:col-span-7 bg-[#070b13] p-5 flex flex-col justify-between min-h-75">
                   <div className="space-y-4 flex-1 flex flex-col">
                     {/* Header & Tabs */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/60 pb-3">
@@ -833,7 +833,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                     </div>
 
                     {/* Candidate Lists */}
-                    <div className="flex-1 overflow-y-auto max-h-[190px] pr-1 space-y-2 scrollbar-thin">
+                    <div className="flex-1 overflow-y-auto max-h-47.5 pr-1 space-y-2 scrollbar-thin">
                       {scannerTab === 'STUDENT' ? (
                         allStudents.filter(stud => 
                           stud.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
@@ -975,7 +975,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               </div>
 
               {/* Verified Profile Card display underneath active scanner */}
-              <div className="p-5 bg-gradient-to-r from-[#0a0f1d] to-[#0e172a]">
+              <div className="p-5 bg-linear-to-r from-[#0a0f1d] to-[#0e172a]">
                 {scannedStudent ? (
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-5 bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
                     <div className="flex items-center gap-4">
@@ -998,12 +998,12 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                     </div>
 
                     <div className="flex items-center gap-4 w-full sm:w-auto">
-                      <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800/80 rounded-lg px-3.5 py-2 text-center sm:text-right min-w-[120px]">
+                      <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800/80 rounded-lg px-3.5 py-2 text-center sm:text-right min-w-30">
                         <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-0.5">Card Balance</span>
                         <span className="text-emerald-400 font-mono font-bold text-sm">{(scannedStudent.balance || 0).toLocaleString()} UGX</span>
                       </div>
 
-                      <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800/80 rounded-lg px-3.5 py-2 text-center sm:text-right min-w-[120px]">
+                      <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800/80 rounded-lg px-3.5 py-2 text-center sm:text-right min-w-30">
                         <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-0.5">PIN-Less Limit</span>
                         <span className="text-rose-400 font-mono font-bold text-sm">{(scannedStudent.noPinLimit || 0).toLocaleString()} UGX</span>
                       </div>
@@ -1105,7 +1105,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                         className="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-800/40 hover:bg-[#c7515e]/5 hover:border-[#c7515e]/50 p-3.5 text-left transition-all duration-200 active:scale-95 group flex flex-col justify-between h-24 shadow-sm"
                       >
                         {/* Soft visual glow on hover */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#c7515e]/0 via-[#c7515e]/0 to-[#c7515e]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="absolute inset-0 bg-linear-to-br from-[#c7515e]/0 via-[#c7515e]/0 to-[#c7515e]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         
                         <span className="text-xs font-bold text-slate-200 group-hover:text-white truncate w-full relative z-10">{item.name}</span>
                         <div className="flex items-center justify-between w-full relative z-10">
@@ -1161,7 +1161,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
           </div>
 
         {/* RIGHT COLUMN: Basket & Checkout (4 cols) */}
-        <div className="xl:col-span-4 rounded-xl border border-slate-800 bg-slate-900 shadow-xl flex flex-col h-full min-h-[500px] max-h-[800px]">
+        <div className="xl:col-span-4 rounded-xl border border-slate-800 bg-slate-900 shadow-xl flex flex-col h-full min-h-125 max-h-200">
           {activeQrCode ? (
             <div className="p-6 flex flex-col items-center justify-between h-full flex-1 space-y-6">
               <div className="text-center w-full">
@@ -1396,7 +1396,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                 return (
                   <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end relative group px-1">
                     {/* Tooltip */}
-                    <div className="absolute -top-6 bg-slate-950 border border-slate-800 text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-10 shadow-xl text-center min-w-[120px]">
+                    <div className="absolute -top-6 bg-slate-950 border border-slate-800 text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-10 shadow-xl text-center min-w-30">
                       <p className="text-slate-400 font-bold font-mono text-[9px] mb-0.5">{d.label}</p>
                       <p className="text-emerald-400 font-bold font-mono">Live: {d.live.toLocaleString()} UGX</p>
                       {showBenchmark && <p className="text-slate-500 font-mono">Bench: {d.benchmark.toLocaleString()} UGX</p>}
@@ -1460,7 +1460,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                 return (
                   <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end relative group px-1">
                     {/* Tooltip */}
-                    <div className="absolute -top-6 bg-slate-950 border border-slate-800 text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-10 shadow-xl text-center min-w-[120px]">
+                    <div className="absolute -top-6 bg-slate-950 border border-slate-800 text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-10 shadow-xl text-center min-w-30">
                       <p className="text-slate-400 font-bold font-mono text-[9px] mb-0.5">{d.label}</p>
                       <p className="text-sky-400 font-bold font-mono">Live: {d.live} Students</p>
                       {showBenchmark && <p className="text-slate-500 font-mono">Bench: {d.benchmark} Students</p>}
@@ -1622,7 +1622,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
       {/* PIN Authorization Modal */}
       {showPinModal && scannedStudent && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-[340px] rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-85 rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="text-center mb-6">
               <div className="mx-auto bg-[#c7515e]/10 w-12 h-12 rounded-full flex items-center justify-center mb-3">
                 <ShieldCheck className="h-6 w-6 text-[#c7515e]" />
@@ -1729,14 +1729,14 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
       {/* Dynamic QR Customer Mobile Scanner Simulation Modal */}
       {showSimModal && activeQrCode && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-sm rounded-[3rem] border-[12px] border-slate-800 bg-slate-950 shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-300 ring-4 ring-slate-900/40">
+          <div className="w-full max-w-sm rounded-[3rem] border-12 border-slate-800 bg-slate-950 shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-300 ring-4 ring-slate-900/40">
             {/* Phone Speaker & Camera Cutout (Dynamic Notch) */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-50 flex items-center justify-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-slate-700"></span>
               <span className="w-12 h-1 bg-slate-700 rounded-full"></span>
             </div>
 
-            <div className="p-6 pt-10 text-slate-200 min-h-[520px] flex flex-col justify-between">
+            <div className="p-6 pt-10 text-slate-200 min-h-130 flex flex-col justify-between">
               {/* Simulated Phone Status Bar */}
               <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4 border-b border-white/5 pb-2">
                 <span>MTN-UG / Airtel</span>
@@ -1933,7 +1933,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
             }
           `}</style>
 
-          <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200 flex flex-col lg:flex-row h-[650px] lg:h-[550px]">
+          <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200 flex flex-col lg:flex-row h-162.5 lg:h-137.5">
             
             {/* LEFT SIDE: VIEW FINDER (MIMIC CAMERA INTERFACE) */}
             <div className={`lg:w-1/2 bg-slate-950 relative flex flex-col justify-between p-6 overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-800 transition-colors duration-300 ${scanFlash ? 'flash-active' : ''}`}>
@@ -1972,7 +1972,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
 
                   {/* Laser Sweeper Line */}
                   {scannerStatus !== 'SUCCESS' && (
-                    <div className="absolute left-4 right-4 h-1 bg-gradient-to-r from-transparent via-[#c7515e] to-transparent shadow-[0_0_12px_#c7515e] laser-sweep z-10"></div>
+                    <div className="absolute left-4 right-4 h-1 bg-linear-to-r from-transparent via-[#c7515e] to-transparent shadow-[0_0_12px_#c7515e] laser-sweep z-10"></div>
                   )}
 
                   {/* Content based on Scanner State */}
@@ -2006,7 +2006,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                     <div className="text-center p-4 space-y-2 z-10 animate-in zoom-in-50 duration-200">
                       <CheckCircle2 className="h-14 w-14 text-emerald-400 mx-auto" />
                       <p className="text-sm font-bold text-emerald-400">Optical Match Succeeded!</p>
-                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 max-w-[200px] mx-auto">
+                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 max-w-50 mx-auto">
                         <p className="text-xs font-bold text-white truncate">{detectedStudent ? detectedStudent.name : detectedParent?.name}</p>
                         <p className="text-[10px] text-slate-400 font-mono mt-0.5">
                           {detectedStudent ? `CARD: ${detectedStudent.qrHash}` : `PHONE: ${detectedParent?.phone}`}
@@ -2089,7 +2089,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                 </div>
 
                 {/* Tab Content body (Scrollable list of candidates) */}
-                <div className="flex-1 overflow-y-auto pr-1 space-y-3.5 scrollbar-thin max-h-[280px]">
+                <div className="flex-1 overflow-y-auto pr-1 space-y-3.5 scrollbar-thin max-h-70">
                   {scannerTab === 'STUDENT' ? (
                     <div className="space-y-2">
                       <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest block mb-1">Select card candidate to scan:</span>

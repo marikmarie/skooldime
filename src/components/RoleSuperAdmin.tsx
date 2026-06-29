@@ -126,7 +126,7 @@ export default function RoleSuperAdmin() {
       
       {/* Overview stats bento */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between transition-all hover:bg-white/[0.02]">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between transition-all hover:bg-white/2">
           <div>
             <span className="text-[10px] font-mono text-[#c7515e] uppercase font-bold tracking-widest">Platform Escrow</span>
             <h4 className="text-xl font-bold text-white mt-1">103,200 <span className="text-sm text-gray-500 font-mono">UGX</span></h4>
@@ -136,7 +136,7 @@ export default function RoleSuperAdmin() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between transition-all hover:bg-white/[0.02]">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between transition-all hover:bg-white/2">
           <div>
             <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Active Schools</span>
             <h4 className="text-xl font-bold text-white mt-1">{schools.length} <span className="text-sm text-gray-500 font-normal">Institutions</span></h4>
@@ -146,7 +146,7 @@ export default function RoleSuperAdmin() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between transition-all hover:bg-white/[0.02]">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between transition-all hover:bg-white/2">
           <div>
             <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Merchants</span>
             <h4 className="text-xl font-bold text-white mt-1">{vendors.length} <span className="text-sm text-gray-500 font-normal">POS Outlets</span></h4>
@@ -156,7 +156,7 @@ export default function RoleSuperAdmin() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between transition-all hover:bg-white/[0.02]">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between transition-all hover:bg-white/2">
           <div>
             <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Global Micro-Loans</span>
             <h4 className="text-xl font-bold text-white mt-1">{loansEnabled ? 'Enabled' : 'Disabled'}</h4>
@@ -221,7 +221,7 @@ export default function RoleSuperAdmin() {
                 </button>
               </div>
 
-              <div className="overflow-x-auto max-h-[250px] scrollbar-thin">
+              <div className="overflow-x-auto max-h-62.5 scrollbar-thin">
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
                     <tr className="border-b border-white/5 text-gray-500 font-mono text-[10px] uppercase tracking-wider">
@@ -233,7 +233,7 @@ export default function RoleSuperAdmin() {
                   </thead>
                   <tbody className="divide-y divide-white/5 text-gray-300">
                     {schools.map((school) => (
-                      <tr key={school.id} className="hover:bg-white/[0.02] transition-colors">
+                      <tr key={school.id} className="hover:bg-white/2 transition-colors">
                         <td className="py-3 font-bold text-white">{school.name}</td>
                         <td className="py-3 text-xs">{school.region}</td>
                         <td className="py-3 font-mono text-gray-400 text-xs">{school.code}</td>
@@ -381,7 +381,7 @@ export default function RoleSuperAdmin() {
                 <h3 className="text-xs font-bold text-white tracking-wide">Registered Franchise Admins</h3>
               </div>
 
-              <div className="space-y-2.5 max-h-[220px] overflow-y-auto scrollbar-thin">
+              <div className="space-y-2.5 max-h-55 overflow-y-auto scrollbar-thin">
                 {businessAdmins.map((ba) => (
                   <div key={ba.id} className="p-3 rounded-xl bg-[#06080E]/80 border border-white/5 flex items-center justify-between text-xs hover:border-white/10 transition-colors shadow-inner">
                     <div>
@@ -402,7 +402,7 @@ export default function RoleSuperAdmin() {
 
       {activeSuperTab === 'AUDIT_LOGS' && (
         /* Audit Trail Logging */
-        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl max-w-3xl flex flex-col h-[500px]">
+        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl max-w-3xl flex flex-col h-125">
           <div className="flex items-center gap-2.5 border-b border-white/5 pb-4 mb-5 shrink-0">
             <div className="p-1.5 rounded-lg bg-[#c7515e]/10">
               <FileText className="h-5 w-5 text-[#c7515e]" />
