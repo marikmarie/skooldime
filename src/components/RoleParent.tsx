@@ -372,40 +372,65 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Allocate pocket money (7 cols) */}
           <div className="lg:col-span-7 rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-5">
-            <div className="flex items-center gap-2 border-b border-white/5 pb-4">
-              <ArrowRightLeft className="h-5 w-5 text-[#c7515e]" />
-              <h3 className="text-sm font-bold text-gray-200">Allocate Pocket Money</h3>
+            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+              <div className="flex items-center gap-2">
+                <ArrowRightLeft className="h-5 w-5 text-[#c7515e]" />
+                <h3 className="text-sm font-bold text-gray-200">Credit Child's Card from Wallet</h3>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-gray-500 uppercase font-mono block">Your Wallet Balance</span>
+                <span className="text-sm font-bold text-emerald-500 font-mono">
+                  {parent ? parent.walletBalance.toLocaleString() : '0'} UGX
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-[#c7515e]/5 rounded-xl border border-[#c7515e]/15 p-3.5 mb-4">
+              <p className="text-xs text-gray-400 leading-relaxed">
+                🚀 <strong className="text-[#c7515e]">Direct Card Crediting:</strong> Allocate funds instantly from your personal <strong>Parent Wallet</strong> to credit your child's physical <strong>NFC Wallet Card</strong>. This transaction is free, safe, and immediate.
+              </p>
             </div>
 
             <form onSubmit={handleAllocateSubmit} className="space-y-4">
               <div>
-                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Select Student</label>
+                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Select Kid's Card</label>
                 <select
                   value={selectedStudentId}
                   onChange={(e) => setSelectedStudentId(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all font-sans"
                 >
-                  {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  {students.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.class}) — Card: {s.qrHash} (Limit: {s.noPinLimit.toLocaleString()} UGX)
+                    </option>
+                  ))}
                 </select>
+                {selectedStudentId && (
+                  <div className="mt-2 text-xs text-gray-400 flex justify-between px-1">
+                    <span>Card Limit: <strong>{students.find(s => s.id === selectedStudentId)?.noPinLimit.toLocaleString()} UGX</strong></span>
+                    <span>Card Identifier: <strong className="font-mono">{students.find(s => s.id === selectedStudentId)?.qrHash}</strong></span>
+                  </div>
+                )}
               </div>
 
               <div>
-                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Amount (UGX)</label>
+                <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Amount to Credit (UGX)</label>
                 <input
                   type="number"
                   required
                   value={allocateAmt}
                   onChange={(e) => setAllocateAmt(e.target.value)}
                   placeholder="e.g., 5000"
-                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all font-mono"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full rounded-lg bg-[#c7515e] hover:bg-[#b04753] py-2.5 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#c7515e]/20"
+                className="w-full rounded-lg bg-[#c7515e] hover:bg-[#b04753] py-2.5 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#c7515e]/20 flex items-center justify-center gap-2"
               >
-                Send Funds
+                <ArrowRightLeft className="h-4 w-4" />
+                <span>Credit Kid's Card Now</span>
               </button>
             </form>
           </div>

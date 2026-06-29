@@ -1,8 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   --color-brand: #ED0101;
   --color-brand-hover: #c90000;
@@ -16,6 +16,7 @@ body {
   font-family: var(--font-sans);
   background-color: #f8fafc !important; /* Slate 50 background */
   color: #1e293b !important; /* Slate 800 */
+  font-size: 15px !important; /* Scaled up default system text size */
 }
 
 /* --- BRAND COLOR ASSIGNMENTS --- */
@@ -209,17 +210,29 @@ input::placeholder {
 }
 
 /* --- UNIFORM & LEGIBLE FONTS --- */
-/* Scale up all extremely small text (10px, 11px) to a highly readable, uniform 13px */
-[class*="text-[10px]"], 
-[class*="text-xs"], 
-.text-xs, 
-.text-\[10px\] {
-  font-size: 13px !important;
+/* Scale up all system text sizes to make them highly legible and professional */
+[class*="text-[10px]"], .text-xs, [class*="text-xs"], .text-\[10px\] {
+  font-size: 13.5px !important;
   font-weight: 500 !important;
 }
 [class*="text-[11px]"] {
-  font-size: 13px !important;
+  font-size: 13.5px !important;
   font-weight: 500 !important;
+}
+.text-sm, [class*="text-sm"] {
+  font-size: 15px !important;
+}
+.text-base, [class*="text-base"] {
+  font-size: 17px !important;
+}
+.text-lg, [class*="text-lg"] {
+  font-size: 19px !important;
+}
+.text-xl, [class*="text-xl"] {
+  font-size: 21px !important;
+}
+.text-2xl, [class*="text-2xl"] {
+  font-size: 25px !important;
 }
 
 /* Standardize table sizes and padding for modern corporate feel */
@@ -256,4 +269,65 @@ button:hover {
 }
 button:active {
   transform: translateY(0);
+}
+
+/* --- PRINT STUDENT CARDS --- */
+@media print {
+  /* Set pure white backgrounds and crisp black details */
+  html, body {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Completely hide all elements in the interactive app */
+  body > * {
+    display: none !important;
+  }
+  
+  /* Show only the printable cards container */
+  #printable-cards-container {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: #ffffff !important;
+    visibility: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  #printable-cards-container * {
+    visibility: visible !important;
+  }
+
+  /* Grid layout for cards on A4 / Portrait paper */
+  .print-card-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 20px !important;
+    padding: 20px !important;
+  }
+  
+  /* Professional card boundary adjust for real printers */
+  .print-card {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    border: 2px solid #06065C !important;
+    border-radius: 16px !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* Ensure the hidden print output container never shows on the normal dashboard screen */
+#printable-cards-container {
+  display: none;
 }

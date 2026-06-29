@@ -25,6 +25,7 @@ export interface Student {
   avatarUrl: string;
   noPinLimit: number; // Max UGX spend per day/txn without a PIN
   parentName?: string;
+  balance?: number;
 }
 
 export interface Parent {

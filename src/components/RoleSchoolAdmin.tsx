@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Landmark, Key, BarChart3, ShieldCheck, RefreshCw, Smartphone, AlertTriangle, Users, UserPlus, Mail, Phone, CheckCircle, Trash2, Search } from 'lucide-react';
+import { Landmark, Key, BarChart3, ShieldCheck, RefreshCw, Smartphone, AlertTriangle, Users, UserPlus, Mail, Phone, CheckCircle, Trash2, Search, CreditCard, Printer, CheckSquare, Square } from 'lucide-react';
 import { Student } from '../types';
 import { useToast } from './ToastContext';
+import StudentBulkUploader from './StudentBulkUploader';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function RoleSchoolAdmin() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -15,7 +17,8 @@ export default function RoleSchoolAdmin() {
   const [enteredOtp, setEnteredOtp] = useState('');
   
   // School Admin sub-tab
-  const [activeTab, setActiveTab] = useState<'STUDENTS' | 'STAFF'>('STUDENTS');
+  const [activeTab, setActiveTab] = useState<'STUDENTS' | 'STAFF' | 'CARDS'>('STUDENTS');
+  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
 
   // Staff creation form states
@@ -33,7 +36,9 @@ export default function RoleSchoolAdmin() {
       const data = await res.json();
       if (Array.isArray(data)) {
         // Filter students by school S1 (Kampala Parents) for this School Admin
-        setStudents(data.filter((s: Student) => s.schoolId === 'S1'));
+        const filtered = data.filter((s: Student) => s.schoolId === 'S1');
+        setStudents(filtered);
+        setSelectedCardIds(filtered.map(s => s.id));
       }
     } catch (e) {
       console.error(e);
@@ -193,10 +198,10 @@ export default function RoleSchoolAdmin() {
       </div>
 
       {/* Campus Sub-Tabs Switcher */}
-      <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-sm shrink-0">
+      <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-md shrink-0">
         <button
           onClick={() => setActiveTab('STUDENTS')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
             activeTab === 'STUDENTS'
               ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
@@ -207,7 +212,7 @@ export default function RoleSchoolAdmin() {
         </button>
         <button
           onClick={() => setActiveTab('STAFF')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
             activeTab === 'STAFF'
               ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
@@ -215,6 +220,17 @@ export default function RoleSchoolAdmin() {
         >
           <Users className="h-4 w-4" />
           <span>Manage Staff</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('CARDS')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeTab === 'CARDS'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+        >
+          <CreditCard className="h-4 w-4" />
+          <span>Student Cards</span>
         </button>
       </div>
 
@@ -330,6 +346,11 @@ export default function RoleSchoolAdmin() {
                 <li>Admin inputs OTP and types the new 4-digit PIN.</li>
               </ol>
             </div>
+          </div>
+
+          {/* Bulk Student Enrollment CSV Center */}
+          <div className="lg:col-span-12">
+            <StudentBulkUploader onUploadSuccess={fetchStudents} />
           </div>
 
         </div>
@@ -469,6 +490,176 @@ export default function RoleSchoolAdmin() {
         </div>
       )}
 
+      {activeTab === 'CARDS' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+              <div>
+                <h3 className="text-sm font-bold text-gray-200 flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-[#c7515e]" />
+                  NFC QR Card Generator & Publisher
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">Batch print cards with unique secure scan QR codes and student photographs.</p>
+              </div>
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => {
+                    if (selectedCardIds.length === students.length) {
+                      setSelectedCardIds([]);
+                    } else {
+                      setSelectedCardIds(students.map(s => s.id));
+                    }
+                  }}
+                  className="rounded-lg border border-white/10 hover:bg-white/5 px-3 py-2 text-xs text-gray-300 font-semibold transition"
+                >
+                  {selectedCardIds.length === students.length ? "Deselect All" : "Select All"}
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedCardIds.length === 0) {
+                      toast.error("Please select at least one card to print.");
+                      return;
+                    }
+                    window.print();
+                  }}
+                  disabled={selectedCardIds.length === 0}
+                  className="rounded-lg bg-[#c7515e] hover:bg-[#b04753] disabled:opacity-40 disabled:hover:bg-[#c7515e] px-4 py-2 text-xs font-bold text-white transition flex items-center gap-1.5 shadow-md shadow-[#c7515e]/20"
+                >
+                  <Printer className="h-4 w-4" />
+                  <span>Print Selected ({selectedCardIds.length})</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick search inside Card Generator */}
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
+                <Search className="h-4 w-4" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search students to generate cards..."
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#06080E] text-white placeholder-gray-500 focus:border-[#c7515e] outline-none transition"
+              />
+            </div>
+
+            {/* Grid of Card Previews */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {students
+                .filter(s => {
+                  if (!studentSearch) return true;
+                  const q = studentSearch.toLowerCase();
+                  return (
+                    s.name.toLowerCase().includes(q) ||
+                    s.admissionNo.toLowerCase().includes(q) ||
+                    s.class.toLowerCase().includes(q)
+                  );
+                })
+                .map((student) => {
+                  const isSelected = selectedCardIds.includes(student.id);
+                  return (
+                    <div 
+                      key={student.id} 
+                      className={`relative rounded-2xl p-2 transition-all ${
+                        isSelected 
+                          ? 'bg-[#c7515e]/5 border-2 border-[#c7515e]' 
+                          : 'bg-white border border-white/5 hover:border-white/10'
+                      }`}
+                    >
+                      {/* Selection indicator & overlay controls */}
+                      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setSelectedCardIds(prev => 
+                              prev.includes(student.id) 
+                                ? prev.filter(id => id !== student.id)
+                                : [...prev, student.id]
+                            );
+                          }}
+                          className="p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm transition active:scale-95"
+                          title={isSelected ? "Deselect Card" : "Select Card"}
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="h-4 w-4 text-emerald-400" />
+                          ) : (
+                            <Square className="h-4 w-4 text-slate-400" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedCardIds([student.id]);
+                            setTimeout(() => {
+                              window.print();
+                            }, 100);
+                          }}
+                          className="p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm transition active:scale-95"
+                          title="Print Single Card"
+                        >
+                          <Printer className="h-4 w-4 text-[#c7515e]" />
+                        </button>
+                      </div>
+
+                      {/* Card Content Mockup */}
+                      <div className="w-full h-[210px] rounded-xl bg-gradient-to-br from-[#06065C] to-[#040440] text-white p-4 flex flex-col justify-between relative overflow-hidden select-none">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#ED0101]/10 rounded-full blur-2xl pointer-events-none" />
+                        <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-white/5 rounded-full pointer-events-none" />
+                        
+                        {/* Header */}
+                        <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                          <div className="flex items-center gap-1">
+                            <div className="w-4 h-4 rounded-full bg-[#ED0101] flex items-center justify-center font-bold text-[8px] text-white">K</div>
+                            <div>
+                              <h5 className="text-[8px] font-bold uppercase tracking-widest text-white leading-none">Kampala Parents</h5>
+                              <span className="text-[6px] text-[#ED0101] tracking-wider uppercase font-bold leading-none">Primary School</span>
+                            </div>
+                          </div>
+                          <span className="text-[7px] bg-[#ED0101] text-white font-bold px-1.5 py-0.5 rounded-full tracking-wider uppercase">
+                            Student Wallet
+                          </span>
+                        </div>
+
+                        {/* Middle photo/info */}
+                        <div className="flex items-center gap-3 py-1.5 flex-1">
+                          <div className="w-14 h-14 rounded-lg border border-white/20 bg-white/5 overflow-hidden shrink-0 flex items-center justify-center shadow-inner relative">
+                            <img src={student.avatarUrl} alt="" className="w-full h-full object-cover animate-fade-in" referrerPolicy="no-referrer" />
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <h4 className="text-xs font-bold text-white leading-tight truncate">{student.name}</h4>
+                            <div className="space-y-0.5 text-[9px] text-slate-300 font-mono">
+                              <div><span className="text-slate-400">CLASS:</span> <span className="text-white font-semibold">{student.class}</span></div>
+                              <div><span className="text-slate-400">ADM:</span> <span className="text-white font-semibold">{student.admissionNo}</span></div>
+                            </div>
+                          </div>
+                          <div className="bg-white p-1 rounded-lg shrink-0 border border-white/20 flex items-center justify-center" style={{ width: '48px', height: '48px' }}>
+                            <QRCodeSVG value={student.qrHash} size={40} level="H" />
+                          </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="border-t border-white/15 pt-1 flex items-center justify-between text-[7px] font-mono text-slate-400">
+                          <div className="flex items-center gap-1">
+                            <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>NFC / SCAN READY</span>
+                          </div>
+                          <span className="text-white font-bold">{student.qrHash}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              
+              {students.length === 0 && (
+                <div className="col-span-full py-12 text-center text-slate-500 text-xs">
+                  No students registered to generate cards for.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* PIN Reset Modal (Simulated with OTP helper) */}
       {showPinModal && selectedStudent && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -536,6 +727,76 @@ export default function RoleSchoolAdmin() {
           </div>
         </div>
       )}
+
+      {/* HIDDEN PRINT TARGET CONTAINER */}
+      <div id="printable-cards-container">
+        <div className="print-card-grid">
+          {students
+            .filter(s => selectedCardIds.includes(s.id))
+            .map(student => (
+              <div 
+                key={student.id} 
+                className="print-card p-4 border-2 border-[#06065C] rounded-2xl bg-white w-[350px] h-[220px] flex flex-col justify-between overflow-hidden"
+                style={{
+                  printColorAdjust: 'exact',
+                  WebkitPrintColorAdjust: 'exact',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {/* Card header */}
+                <div className="flex items-center justify-between border-b-2 border-[#06065C]/20 pb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-[#ED0101] flex items-center justify-center font-bold text-[10px] text-white">K</div>
+                    <div>
+                      <h5 className="text-[10px] font-bold uppercase tracking-widest text-[#06065C] leading-none" style={{ margin: 0 }}>Kampala Parents</h5>
+                      <span className="text-[7px] text-[#ED0101] tracking-wider uppercase font-bold leading-none" style={{ display: 'block', marginTop: '2px' }}>Primary School</span>
+                    </div>
+                  </div>
+                  <span className="text-[8px] bg-[#ED0101] text-white font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">
+                    Student Wallet
+                  </span>
+                </div>
+
+                {/* Card content */}
+                <div className="flex items-center gap-4 py-2 flex-1">
+                  <div className="w-16 h-16 rounded-xl border-2 border-[#06065C]/20 bg-slate-50 overflow-hidden shrink-0 flex items-center justify-center">
+                    <img 
+                      src={student.avatarUrl} 
+                      alt="" 
+                      className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer"
+                      style={{ display: 'block', width: '100%', height: '100%' }} 
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <h4 className="text-sm font-extrabold text-[#06065C] leading-tight truncate" style={{ margin: 0 }}>{student.name}</h4>
+                    <div className="space-y-0.5 text-[10px] text-[#334155] font-mono">
+                      <div><span style={{ color: '#64748b' }}>CLASS:</span> <strong className="text-[#06065C]">{student.class}</strong></div>
+                      <div><span style={{ color: '#64748b' }}>ADM NO:</span> <strong className="text-[#06065C]">{student.admissionNo}</strong></div>
+                    </div>
+                  </div>
+                  <div className="bg-white p-1 rounded-lg shrink-0 border-2 border-[#06065C]/10 flex items-center justify-center" style={{ width: '64px', height: '64px' }}>
+                    <QRCodeSVG 
+                      value={student.qrHash} 
+                      size={56} 
+                      level="H"
+                      style={{ display: 'block' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Card footer */}
+                <div className="border-t-2 border-[#06065C]/15 pt-2 flex items-center justify-between text-[8px] font-mono text-[#475569]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600" style={{ display: 'inline-block' }} />
+                    <span className="font-bold text-[#06065C]">NFC / SECURE CARD</span>
+                  </div>
+                  <span className="text-[#ED0101] font-bold font-mono">{student.qrHash}</span>
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
 
     </div>
   );

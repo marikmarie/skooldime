@@ -7,6 +7,7 @@ import {
 import { Student, CatalogItem, Transaction } from '../types';
 import { useToast } from './ToastContext';
 import { RecentTransactions } from './RecentTransactions';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface CartItem {
   name: string;
@@ -29,6 +30,10 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
   // Custom manual item input
   const [customName, setCustomName] = useState('');
   const [customPrice, setCustomPrice] = useState('');
+  
+  // Catalog search & Simulation candidates search
+  const [searchCatalogQuery, setSearchCatalogQuery] = useState('');
+  const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
   
   // POS scanning state
   const [scannedStudent, setScannedStudent] = useState<any | null>(null);
@@ -665,124 +670,495 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
         /* POS Top Section: Main Work Area */
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         
-        {/* LEFT COLUMN: Scanner & Catalog (8 cols) */}
-        <div className="xl:col-span-8 flex flex-col gap-6">
-          
-          {/* 1. Student Identity Scanner */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900 shadow-xl overflow-hidden">
-            <div className="bg-slate-800/50 border-b border-slate-800 p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-              <div className="flex items-center gap-2">
-                <QrCode className="h-5 w-5 text-[#c7515e]" />
-                <h3 className="font-semibold text-slate-100">Customer Details</h3>
-              </div>
-              <div className="w-full sm:w-2/3 max-w-md flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                  <select
-                    value={searchQr}
-                    onChange={(e) => handleScanQr(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-slate-700 bg-slate-950 py-2.5 pl-9 pr-3 text-sm text-slate-300 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] transition-colors"
-                  >
-                    <option value="">Scan or Select Student QR...</option>
-                    {allStudents.map((s) => (
-                      <option key={s.id} value={s.qrHash}>{s.name} ({s.class})</option>
-                    ))}
-                  </select>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowScannerModal(true)}
-                  className="rounded-lg bg-[#c7515e] hover:bg-[#b04753] px-3.5 py-2.5 text-xs font-bold text-white flex items-center gap-1.5 transition-all duration-150 active:scale-95 shadow-md shadow-[#c7515e]/15 border border-[#c7515e]/10 whitespace-nowrap"
-                >
-                  <QrCode className="h-4 w-4 animate-pulse" />
-                  <span>Scan QR Card</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="p-5">
-              {scannedStudent ? (
-                <div className="flex flex-col sm:flex-row items-center gap-6">
-                  <img src={scannedStudent.avatarUrl} alt="" className="w-16 h-16 rounded-full border-2 border-[#c7515e]/30 shadow-lg" referrerPolicy="no-referrer" />
-                  <div className="flex-1 text-center sm:text-left">
-                    <h4 className="text-lg font-bold text-white">{scannedStudent.name}</h4>
-                    <p className="text-sm text-slate-400">{scannedStudent.class}</p>
-                  </div>
-                  <div className="flex gap-4 w-full sm:w-auto">
-                    <div className="bg-slate-950 rounded-lg p-3 flex-1 border border-slate-800">
-                      <span className="text-[10px] text-slate-500 font-bold tracking-wider block mb-1 uppercase">Available Balance</span>
-                      <span className="text-emerald-400 font-mono font-bold text-lg">{scannedStudent.balance.toLocaleString()} UGX</span>
-                    </div>
-                    <div className="bg-slate-950 rounded-lg p-3 flex-1 border border-slate-800">
-                      <span className="text-[10px] text-slate-500 font-bold tracking-wider block mb-1 uppercase">PIN-less Limit</span>
-                      <span className="text-[#c7515e] font-mono font-bold text-lg">{scannedStudent.noPinLimit.toLocaleString()} UGX</span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="py-6 flex flex-col items-center justify-center text-slate-500 text-sm gap-3">
-                  <div className="h-12 w-12 rounded-full bg-slate-800 flex items-center justify-center">
-                    <UserCheck className="h-6 w-6 text-slate-400" />
-                  </div>
-                  <p>Awaiting customer card scan...</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 2. Fast-Tap Catalog */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900 shadow-xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-slate-100 flex items-center gap-2">
-                <Plus className="h-5 w-5 text-[#c7515e]" /> Quick Add Items
-              </h3>
-            </div>
+          {/* LEFT COLUMN: Embedded Camera Scanner & Searchable Catalog (8 cols) */}
+          <div className="xl:col-span-8 flex flex-col gap-6">
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {catalog.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleAddToCart(item.name, item.price)}
-                  className="relative overflow-hidden rounded-xl border border-slate-700 bg-slate-800 hover:bg-[#c7515e]/10 hover:border-[#c7515e]/50 p-4 text-left transition-all duration-200 active:scale-95 group flex flex-col justify-between h-24 shadow-sm"
-                >
-                  <span className="text-sm font-semibold text-slate-200 group-hover:text-[#c7515e] truncate w-full">{item.name}</span>
-                  <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-400/10 self-start px-2 py-1 rounded">{item.price.toLocaleString()} UGX</span>
-                </button>
-              ))}
+            {/* 1. EMBEDDED DUAL-STREAM IDENTITY SCANNER */}
+            <div className="rounded-2xl border border-slate-800 bg-[#0c111e]/80 backdrop-blur-md shadow-2xl overflow-hidden">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-slate-900 via-[#0f172a] to-slate-900 border-b border-slate-800/80 px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-[#c7515e]/10 border border-[#c7515e]/20">
+                    <Camera className="h-5 w-5 text-[#c7515e] animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-100 tracking-tight text-sm">Active RFID / QR Optical Terminal</h3>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Dual-lens live viewfinder and instant local roster simulation</p>
+                  </div>
+                </div>
+                
+                {/* Active/Online telemetry label */}
+                <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800/60">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
+                  <span className="text-[10px] font-mono text-emerald-400 font-bold tracking-wider">TERMINAL_ONLINE</span>
+                </div>
+              </div>
+
+              {/* Core Scanner Workspace (Split layout: Viewfinder Left, Candidates Right) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 border-b border-slate-800/60">
+                
+                {/* A. LIVE CAMERA VIEWFINDER (5 cols) */}
+                <div className={`lg:col-span-5 bg-slate-950/90 relative flex flex-col justify-between p-5 min-h-[300px] overflow-hidden transition-colors duration-300 ${scanFlash ? 'flash-active' : ''}`}>
+                  {/* Status Indicator overlay */}
+                  <div className="flex items-center justify-between z-10">
+                    <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/5">
+                      <span className={`h-2 w-2 rounded-full ${
+                        scannerStatus === 'SUCCESS' ? 'bg-emerald-500 animate-ping' :
+                        scannerStatus === 'DECODING' ? 'bg-amber-500 animate-spin' :
+                        scannerStatus === 'SCANNING' ? 'bg-[#c7515e] animate-pulse' :
+                        'bg-emerald-500 animate-pulse'
+                      }`}></span>
+                      <span className="text-[9px] font-mono text-slate-300 uppercase tracking-widest font-black">
+                        {scannerStatus === 'READY' && 'CAMERA_LIVE'}
+                        {scannerStatus === 'SCANNING' && 'CAPTURING...'}
+                        {scannerStatus === 'DECODING' && 'DECODING...'}
+                        {scannerStatus === 'SUCCESS' && 'VERIFIED!'}
+                      </span>
+                    </div>
+
+                    <div className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-mono text-slate-500">
+                      60FPS • 1080P
+                    </div>
+                  </div>
+
+                  {/* Viewfinder Target Reticle */}
+                  <div className="absolute inset-0 flex items-center justify-center p-4">
+                    <div className="w-48 h-48 border border-dashed border-slate-800/50 rounded-2xl relative flex flex-col items-center justify-center bg-black/30">
+                      
+                      {/* Viewfinder Corners styled elegantly */}
+                      <div className="viewfinder-corner top-0 left-0 border-t-4 border-l-4 rounded-tl-xl" style={{ borderColor: '#c7515e' }}></div>
+                      <div className="viewfinder-corner top-0 right-0 border-t-4 border-r-4 rounded-tr-xl" style={{ borderColor: '#c7515e' }}></div>
+                      <div className="viewfinder-corner bottom-0 left-0 border-b-4 border-l-4 rounded-bl-xl" style={{ borderColor: '#c7515e' }}></div>
+                      <div className="viewfinder-corner bottom-0 right-0 border-b-4 border-r-4 rounded-br-xl" style={{ borderColor: '#c7515e' }}></div>
+
+                      {/* Laser Sweep Line */}
+                      {scannerStatus !== 'SUCCESS' && (
+                        <div className="absolute left-3 right-3 h-0.5 bg-gradient-to-r from-transparent via-[#c7515e] to-transparent shadow-[0_0_8px_#c7515e] laser-sweep z-10"></div>
+                      )}
+
+                      {/* Content based on Scanner State */}
+                      {scannerStatus === 'READY' && (
+                        <div className="text-center p-3 space-y-1.5 z-10">
+                          <QrCode className="h-8 w-8 text-slate-700 mx-auto animate-pulse" />
+                          <p className="text-[11px] font-bold text-slate-300">Awaiting QR Card</p>
+                          <p className="text-[9px] text-slate-500 leading-tight">Click on a simulation card on the right to trigger optical swipe</p>
+                        </div>
+                      )}
+
+                      {scannerStatus === 'SCANNING' && (
+                        <div className="text-center p-3 space-y-2 z-10">
+                          <div className="w-8 h-8 rounded-full border-2 border-[#c7515e]/30 border-t-[#c7515e] animate-spin mx-auto"></div>
+                          <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest animate-pulse">Scanning...</p>
+                        </div>
+                      )}
+
+                      {scannerStatus === 'DECODING' && (
+                        <div className="text-center p-3 space-y-2 z-10">
+                          <RefreshCw className="h-8 w-8 text-amber-400 mx-auto animate-spin" />
+                          <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Decoding...</p>
+                        </div>
+                      )}
+
+                      {scannerStatus === 'SUCCESS' && (
+                        <div className="text-center p-3 space-y-1.5 z-10 animate-in zoom-in-75 duration-150">
+                          <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
+                          <p className="text-xs font-bold text-emerald-400">Match Succeeded!</p>
+                          <p className="text-[9px] font-mono text-slate-400 truncate max-w-[150px]">
+                            {detectedStudent ? detectedStudent.name : detectedParent?.name}
+                          </p>
+                        </div>
+                      )}
+
+                    </div>
+                  </div>
+
+                  {/* Telemetry info */}
+                  <div className="flex justify-between items-end text-[8px] font-mono text-slate-600 z-10 border-t border-white/5 pt-2">
+                    <span>RFID_SYS_ACTIVE</span>
+                    <span>OP_V2_MIMIC</span>
+                  </div>
+                </div>
+
+                {/* B. SIMULATION CANDIDATES CONTROLLER PANEL (7 cols) */}
+                <div className="lg:col-span-7 bg-[#070b13] p-5 flex flex-col justify-between min-h-[300px]">
+                  <div className="space-y-4 flex-1 flex flex-col">
+                    {/* Header & Tabs */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/60 pb-3">
+                      <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800/80 w-full sm:w-auto">
+                        <button
+                          onClick={() => {
+                            setScannerTab('STUDENT');
+                            setDetectedParent(null);
+                            setScannerStatus('READY');
+                            setCandidateSearchQuery('');
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                            scannerTab === 'STUDENT'
+                              ? 'bg-[#c7515e] text-white shadow-md'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                          }`}
+                        >
+                          <User className="h-3.5 w-3.5" />
+                          Students
+                        </button>
+                        <button
+                          onClick={() => {
+                            setScannerTab('PARENT');
+                            setDetectedParent(null);
+                            setScannerStatus('READY');
+                            setCandidateSearchQuery('');
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                            scannerTab === 'PARENT'
+                              ? 'bg-[#c7515e] text-white shadow-md'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                          }`}
+                        >
+                          <Smartphone className="h-3.5 w-3.5" />
+                          Parents
+                        </button>
+                      </div>
+
+                      {/* candidate search field */}
+                      <div className="relative w-full sm:w-44">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                        <input
+                          type="text"
+                          value={candidateSearchQuery}
+                          onChange={(e) => setCandidateSearchQuery(e.target.value)}
+                          placeholder="Search profile..."
+                          className="w-full rounded-lg border border-slate-800 bg-slate-950 py-1.5 pl-8 pr-2.5 text-xs text-slate-300 placeholder-slate-600 focus:border-[#c7515e] outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Candidate Lists */}
+                    <div className="flex-1 overflow-y-auto max-h-[190px] pr-1 space-y-2 scrollbar-thin">
+                      {scannerTab === 'STUDENT' ? (
+                        allStudents.filter(stud => 
+                          stud.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
+                          stud.class.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
+                          stud.admissionNo.toLowerCase().includes(candidateSearchQuery.toLowerCase())
+                        ).length === 0 ? (
+                          <div className="text-center py-8 text-slate-500 text-xs italic">
+                            No students match "{candidateSearchQuery}"
+                          </div>
+                        ) : (
+                          allStudents
+                            .filter(stud => 
+                              stud.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
+                              stud.class.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
+                              stud.admissionNo.toLowerCase().includes(candidateSearchQuery.toLowerCase())
+                            )
+                            .map((stud) => {
+                              const isScanningThis = detectedStudent?.id === stud.id;
+                              return (
+                                <button
+                                  key={stud.id}
+                                  disabled={scannerStatus !== 'READY'}
+                                  onClick={() => startStudentScan(stud)}
+                                  className={`w-full text-left rounded-xl border p-2.5 flex items-center justify-between transition-all duration-150 ${
+                                    isScanningThis
+                                      ? 'bg-[#c7515e]/10 border-[#c7515e] ring-1 ring-[#c7515e]'
+                                      : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700/80 hover:bg-slate-900/40'
+                                  } ${scannerStatus !== 'READY' && !isScanningThis ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <img src={stud.avatarUrl} alt="" className="w-8 h-8 rounded-full border border-slate-800" referrerPolicy="no-referrer" />
+                                    <div>
+                                      <h4 className="text-xs font-bold text-white leading-tight">{stud.name}</h4>
+                                      <p className="text-[10px] text-slate-400 mt-0.5">{stud.class} • Balance: {(stud.balance || 0).toLocaleString()} UGX</p>
+                                    </div>
+                                  </div>
+                                  <span className="font-mono text-[9px] font-bold bg-[#c7515e]/10 text-[#c7515e] px-1.5 py-0.5 rounded border border-[#c7515e]/15">
+                                    {stud.qrHash}
+                                  </span>
+                                </button>
+                              );
+                            })
+                        )
+                      ) : (
+                        detectedParent && scannerStatus === 'SUCCESS' ? (
+                          // Parent scanned successfully, choose child
+                          <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                            <div className="bg-slate-950 rounded-xl p-3 border border-emerald-500/20 flex items-center justify-between">
+                              <div>
+                                <span className="text-[8px] text-emerald-400 font-bold uppercase tracking-wider block">Parent Identified</span>
+                                <h4 className="text-xs font-bold text-white">{detectedParent.name}</h4>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setDetectedParent(null);
+                                  setScannerStatus('READY');
+                                }}
+                                className="text-[10px] text-slate-500 hover:text-white"
+                              >
+                                [Change]
+                              </button>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Select linked student child:</span>
+                              {allStudents.filter(s => s.parentPhone === detectedParent.phone).length === 0 ? (
+                                <p className="text-xs text-slate-500 italic p-2 bg-slate-950/40 rounded border border-slate-800">No students linked to this account.</p>
+                              ) : (
+                                allStudents
+                                  .filter(s => s.parentPhone === detectedParent.phone)
+                                  .map((s) => (
+                                    <button
+                                      key={s.id}
+                                      onClick={() => selectParentChild(s)}
+                                      className="w-full text-left bg-slate-950 hover:bg-[#c7515e]/10 hover:border-[#c7515e]/50 border border-slate-800 rounded-lg p-2.5 flex items-center justify-between transition-colors"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <img src={s.avatarUrl} alt="" className="w-7 h-7 rounded-full border border-slate-800" referrerPolicy="no-referrer" />
+                                        <div>
+                                          <h5 className="text-xs font-bold text-slate-200">{s.name}</h5>
+                                          <p className="text-[9px] text-slate-400">{s.class}</p>
+                                        </div>
+                                      </div>
+                                      <span className="text-emerald-400 font-mono text-[10px] font-bold">Select Child &gt;</span>
+                                    </button>
+                                  ))
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          allParents.filter(p => 
+                            p.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
+                            p.phone.includes(candidateSearchQuery)
+                          ).length === 0 ? (
+                            <div className="text-center py-8 text-slate-500 text-xs italic">
+                              No parents match "{candidateSearchQuery}"
+                            </div>
+                          ) : (
+                            allParents
+                              .filter(p => 
+                                p.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
+                                p.phone.includes(candidateSearchQuery)
+                              )
+                              .map((parent) => {
+                                const isScanningThis = detectedParent?.id === parent.id;
+                                return (
+                                  <button
+                                    key={parent.id}
+                                    disabled={scannerStatus !== 'READY'}
+                                    onClick={() => startParentScan(parent)}
+                                    className={`w-full text-left rounded-xl border p-2.5 flex items-center justify-between transition-all duration-150 ${
+                                      isScanningThis
+                                        ? 'bg-[#c7515e]/10 border-[#c7515e]'
+                                        : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700/80 hover:bg-slate-900/40'
+                                    } ${scannerStatus !== 'READY' && !isScanningThis ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                  >
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center border border-slate-800">
+                                        <User className="h-4 w-4 text-slate-400" />
+                                      </div>
+                                      <div>
+                                        <h4 className="text-xs font-bold text-white leading-tight">{parent.name}</h4>
+                                        <p className="text-[10px] text-slate-400 mt-0.5">{parent.phone}</p>
+                                      </div>
+                                    </div>
+                                    <span className="font-mono text-[9px] font-bold bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/15">
+                                      APP QR
+                                    </span>
+                                  </button>
+                                );
+                              })
+                          )
+                        )
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Verified Profile Card display underneath active scanner */}
+              <div className="p-5 bg-gradient-to-r from-[#0a0f1d] to-[#0e172a]">
+                {scannedStudent ? (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-5 bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <img src={scannedStudent.avatarUrl} alt="" className="w-14 h-14 rounded-full border-2 border-emerald-500/30 shadow-md" referrerPolicy="no-referrer" />
+                        <span className="absolute bottom-0 right-0 h-4 w-4 bg-emerald-500 border-2 border-[#0c111e] rounded-full flex items-center justify-center">
+                          <UserCheck className="h-2 w-2 text-white" />
+                        </span>
+                      </div>
+                      
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-black text-white leading-tight">{scannedStudent.name}</h4>
+                          <span className="bg-emerald-400/10 text-emerald-400 font-mono font-bold text-[9px] px-1.5 py-0.5 rounded-full">
+                            VERIFIED_ID
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">{scannedStudent.class} • ADM: <span className="font-mono font-bold text-slate-300">{scannedStudent.admissionNo}</span></p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                      <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800/80 rounded-lg px-3.5 py-2 text-center sm:text-right min-w-[120px]">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-0.5">Card Balance</span>
+                        <span className="text-emerald-400 font-mono font-bold text-sm">{(scannedStudent.balance || 0).toLocaleString()} UGX</span>
+                      </div>
+
+                      <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800/80 rounded-lg px-3.5 py-2 text-center sm:text-right min-w-[120px]">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-0.5">PIN-Less Limit</span>
+                        <span className="text-rose-400 font-mono font-bold text-sm">{(scannedStudent.noPinLimit || 0).toLocaleString()} UGX</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setScannedStudent(null);
+                          setSearchQr('');
+                          toast.info('Student session cleared.');
+                        }}
+                        className="p-2.5 rounded-lg border border-slate-800/80 hover:bg-rose-500/10 hover:border-rose-500/20 text-slate-500 hover:text-rose-400 transition-colors"
+                        title="Eject student card"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-3 py-4 text-slate-500 text-xs border border-dashed border-slate-800/50 rounded-xl bg-slate-950/30">
+                    <UserCheck className="h-4 w-4 text-slate-600 animate-pulse" />
+                    <span>Awaiting customer RFID card or family device scanning simulation...</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="mt-6 pt-5 border-t border-slate-800">
-              <form onSubmit={handleCustomAddToCart} className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1 relative">
+            {/* 2. PREMIUM SEARCHABLE POS CATALOG */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 shadow-xl p-5 space-y-5">
+              
+              {/* Header with real-time searching input */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-[#c7515e]/10 text-[#c7515e]">
+                    <ShoppingCart className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-100 tracking-tight">Canteen Inventory & Quick-Tap Menu</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">Filter items in real-time or add custom tap amounts instantly</p>
+                  </div>
+                </div>
+
+                {/* Styled Search Bar */}
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input
                     type="text"
-                    required
-                    value={customName}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    placeholder="Enter custom item name..."
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-slate-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none"
+                    value={searchCatalogQuery}
+                    onChange={(e) => {
+                      setSearchCatalogQuery(e.target.value);
+                      // If typing, auto-populate custom item name as a convenience helper
+                      setCustomName(e.target.value);
+                    }}
+                    placeholder="Search catalog items..."
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2 pl-9 pr-8 text-xs text-slate-200 placeholder-slate-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-colors"
                   />
+                  {searchCatalogQuery && (
+                    <button
+                      onClick={() => {
+                        setSearchCatalogQuery('');
+                        setCustomName('');
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white text-xs font-bold"
+                    >
+                      X
+                    </button>
+                  )}
                 </div>
-                <div className="w-full sm:w-40 relative">
-                  <input
-                    type="number"
-                    required
-                    value={customPrice}
-                    onChange={(e) => setCustomPrice(e.target.value)}
-                    placeholder="Price (UGX)"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-slate-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none"
-                  />
+              </div>
+
+              {/* Dynamic Items Grid */}
+              {catalog.filter(item => item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase())).length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-800 p-8 text-center space-y-4">
+                  <p className="text-xs text-slate-400">No registered menu items match "{searchCatalogQuery}".</p>
+                  {searchCatalogQuery && (
+                    <div className="max-w-xs mx-auto p-3 bg-slate-950 rounded-lg border border-slate-800">
+                      <p className="text-[11px] text-slate-500 mb-2">Instantly add a custom ticket for this search:</p>
+                      <button
+                        onClick={() => {
+                          const priceNum = parseInt(customPrice) || 1000;
+                          handleAddToCart(searchCatalogQuery, priceNum);
+                          toast.success(`Custom item "${searchCatalogQuery}" added to basket.`);
+                        }}
+                        className="w-full py-1.5 bg-[#c7515e] hover:bg-[#b04753] text-white text-[10px] font-bold rounded-md transition"
+                      >
+                        Add "{searchCatalogQuery}" to Basket (1,000 UGX)
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <button
-                  type="submit"
-                  className="rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 px-6 py-2.5 text-sm font-semibold text-white transition duration-200 whitespace-nowrap"
-                >
-                  Add Custom
-                </button>
-              </form>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {catalog
+                    .filter(item => item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase()))
+                    .map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleAddToCart(item.name, item.price)}
+                        className="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-800/40 hover:bg-[#c7515e]/5 hover:border-[#c7515e]/50 p-3.5 text-left transition-all duration-200 active:scale-95 group flex flex-col justify-between h-24 shadow-sm"
+                      >
+                        {/* Soft visual glow on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#c7515e]/0 via-[#c7515e]/0 to-[#c7515e]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        
+                        <span className="text-xs font-bold text-slate-200 group-hover:text-white truncate w-full relative z-10">{item.name}</span>
+                        <div className="flex items-center justify-between w-full relative z-10">
+                          <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-md">
+                            {item.price.toLocaleString()} UGX
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-extrabold opacity-0 group-hover:opacity-100 transition-opacity">
+                            + ADD
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              )}
+
+              {/* Manual Inline Custom Item Form */}
+              <div className="pt-4 border-t border-slate-800/80">
+                <div className="bg-slate-950/40 rounded-xl border border-slate-800/60 p-4">
+                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Custom / PIN-Less Tap Overrides</h4>
+                  <form onSubmit={handleCustomAddToCart} className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        required
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        placeholder="Custom item name or purpose (e.g., Samosa Set)..."
+                        className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-slate-200 placeholder-slate-600 focus:border-[#c7515e] outline-none transition-colors"
+                      />
+                    </div>
+                    <div className="w-full sm:w-44 relative">
+                      <input
+                        type="number"
+                        required
+                        value={customPrice}
+                        onChange={(e) => setCustomPrice(e.target.value)}
+                        placeholder="Price (UGX)..."
+                        className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-slate-200 placeholder-slate-600 focus:border-[#c7515e] outline-none transition-colors"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="rounded-xl bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700/80 px-5 py-2 text-xs font-bold text-slate-200 transition-colors whitespace-nowrap"
+                    >
+                      + Add Custom
+                    </button>
+                  </form>
+                </div>
+              </div>
+
             </div>
+
           </div>
-        </div>
 
         {/* RIGHT COLUMN: Basket & Checkout (4 cols) */}
         <div className="xl:col-span-4 rounded-xl border border-slate-800 bg-slate-900 shadow-xl flex flex-col h-full min-h-[500px] max-h-[800px]">
@@ -797,14 +1173,13 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               </div>
 
               <div className="bg-white p-4 rounded-2xl shadow-xl flex flex-col items-center border-4 border-slate-800 animate-in fade-in duration-300">
-                <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(activeQrCode.paymentUrl)}`} 
-                  alt="Dynamic Payment QR Code" 
-                  className="w-48 h-48"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://placehold.co/220x220/ffffff/000000?text=QR+Code";
-                  }}
-                />
+                <div className="w-48 h-48 flex items-center justify-center">
+                  <QRCodeSVG 
+                    value={activeQrCode.paymentUrl} 
+                    size={176} 
+                    level="H"
+                  />
+                </div>
                 <div className="mt-3 text-slate-900 font-mono font-bold text-xs tracking-wider bg-slate-100 px-3 py-1 rounded">
                   {activeQrCode.referenceCode}
                 </div>
