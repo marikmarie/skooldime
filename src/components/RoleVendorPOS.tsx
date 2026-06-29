@@ -1364,7 +1364,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
             <div className="p-6 pt-10 text-slate-200 min-h-[520px] flex flex-col justify-between">
               {/* Simulated Phone Status Bar */}
               <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4 border-b border-white/5 pb-2">
-                <span>MTN-UG / Airtel</span>
+                <span>Collecto</span>
                 <span>12:00 PM</span>
               </div>
 
@@ -1650,7 +1650,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                   <p>LENS_FOCUS: AUTOFOCUS</p>
                 </div>
                 <div className="text-right">
-                  <p>STK_PUSH_TRIGGER: AUTO</p>
+                  <p>Collecto_PUSH_TRIGGER: AUTO</p>
                   <p>AUDIO_GATEWAY: ACTIVE</p>
                 </div>
               </div>

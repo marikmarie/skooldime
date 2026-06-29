@@ -68,7 +68,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
     if (!depositAmt || !depositPhone) return;
 
     setLoading(true);
-    setPollingMsg('Initiating Collecto STK Push... Check phone screen.');
+    setPollingMsg('Initiating Collecto Collecto Push... Check phone screen.');
 
     try {
       const res = await fetch('/api/collecto/deposit', {
@@ -110,7 +110,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
           clearInterval(interval);
           setPollingTxId(null);
           setLoading(false);
-          toast.error('STK Push polling timed out. No approval received.');
+          toast.error('Collecto Push polling timed out. No approval received.');
         }
       } catch (e) {
         clearInterval(interval);
@@ -382,7 +382,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
           <div className="lg:col-span-5 rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl h-fit space-y-5">
             <h3 className="text-sm font-bold text-gray-200 border-b border-white/5 pb-4 flex items-center gap-2">
               <RefreshCw className="h-4 w-4 text-[#c7515e]" />
-              Gateway Top-Up (STK Push)
+              Gateway Top-Up (Collecto Push)
             </h3>
             
             <form onSubmit={handleDepositSubmit} className="space-y-4">

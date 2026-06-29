@@ -130,7 +130,7 @@ Prevents API manipulation via Browser Network Tabs.
 
 *   **Money IN (Deposits):**
     1. Parent initiates via UI. PHP creates `transactions` row as `PENDING`.
-    2. PHP triggers Collecto API (STK Push to MoMo).
+    2. PHP triggers Collecto API (Collecto Push to MoMo).
     3. UI loader polls PHP every 5 seconds. PHP polls Collecto.
     4. On `SUCCESS`, PHP applies an **Idempotent Lock** (verifies transaction is still `PENDING`), updates status, and credits wallet.
 *   **Money OUT (Withdrawals):**

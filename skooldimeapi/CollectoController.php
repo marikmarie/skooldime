@@ -1,7 +1,7 @@
 <?php
 /**
  * CollectoController Class
- * Simulates mobile money payment gateway features: MTN/Airtel deposit STK pushes,
+ * Simulates mobile money payment gateway features: MTN/Airtel deposit Collecto pushes,
  * transaction status polling approvals, and secure payouts.
  */
 
@@ -98,12 +98,12 @@ class CollectoController {
                     'fee' => 1000,
                     'type' => 'DEPOSIT',
                     'status' => 'PENDING',
-                    'description' => 'Pending Collecto MTN/Airtel STK Push',
+                    'description' => 'Pending Collecto MTN/Airtel Collecto Push',
                     'createdAt' => date('c'),
                     'realIntegration' => true
                 ];
                 $this->db->save($db);
-                $this->db->audit('PARENT', $parent['name'], 'PARENT', 'COLLECTO_REAL_STK_PUSH_INITIATED', null, ['refCode' => $refCode, 'amount' => $amount, 'collectoTxId' => $collectoId]);
+                $this->db->audit('PARENT', $parent['name'], 'PARENT', 'COLLECTO_REAL_Collecto_PUSH_INITIATED', null, ['refCode' => $refCode, 'amount' => $amount, 'collectoTxId' => $collectoId]);
 
                 echo json_encode([
                     'success' => true,
@@ -111,7 +111,7 @@ class CollectoController {
                     'referenceCode' => $refCode,
                     'collectoTxId' => $collectoId,
                     'realIntegration' => true,
-                    'message' => 'STK push successfully initiated via Collecto. Please enter your mobile money PIN to authorize.'
+                    'message' => 'Collecto push successfully initiated via Collecto. Please enter your mobile money PIN to authorize.'
                 ]);
                 return;
             } else {
@@ -136,18 +136,18 @@ class CollectoController {
             'fee' => 1000,
             'type' => 'DEPOSIT',
             'status' => 'PENDING',
-            'description' => 'Pending Collecto MTN/Airtel STK Push',
+            'description' => 'Pending Collecto MTN/Airtel Collecto Push',
             'createdAt' => date('c')
         ];
 
         $this->db->save($db);
-        $this->db->audit('PARENT', $parent['name'], 'PARENT', 'COLLECTO_STK_PUSH_INITIATED', null, ['refCode' => $refCode, 'amount' => $amount]);
+        $this->db->audit('PARENT', $parent['name'], 'PARENT', 'COLLECTO_Collecto_PUSH_INITIATED', null, ['refCode' => $refCode, 'amount' => $amount]);
 
         echo json_encode([
             'success' => true,
             'transactionId' => $txId,
             'referenceCode' => $refCode,
-            'message' => 'STK push sent to your mobile phone. Enter MTN/Airtel PIN to authorize.'
+            'message' => 'Collecto push sent to your mobile phone. Enter MTN/Airtel PIN to authorize.'
         ]);
     }
 
