@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Landmark, Key, BarChart3, ShieldCheck, RefreshCw, Smartphone, AlertTriangle } from 'lucide-react';
+import { Landmark, Key, BarChart3, ShieldCheck, RefreshCw, Smartphone, AlertTriangle, Users, UserPlus, Mail, Phone, CheckCircle, Trash2 } from 'lucide-react';
 import { Student } from '../types';
 import { useToast } from './ToastContext';
 
@@ -12,6 +12,17 @@ export default function RoleSchoolAdmin() {
   const [simulatedOtp, setSimulatedOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [enteredOtp, setEnteredOtp] = useState('');
+  
+  // School Admin sub-tab
+  const [activeTab, setActiveTab] = useState<'STUDENTS' | 'STAFF'>('STUDENTS');
+  const [staff, setStaff] = useState<any[]>([]);
+
+  // Staff creation form states
+  const [staffName, setStaffName] = useState('');
+  const [staffRole, setStaffRole] = useState('Bursar');
+  const [staffPhone, setStaffPhone] = useState('');
+  const [staffEmail, setStaffEmail] = useState('');
+
   const toast = useToast();
 
   const fetchStudents = async () => {
@@ -30,8 +41,21 @@ export default function RoleSchoolAdmin() {
     }
   };
 
+  const fetchStaff = async () => {
+    try {
+      const res = await fetch('/api/staff');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setStaff(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     fetchStudents();
+    fetchStaff();
   }, []);
 
   const triggerOtp = (student: Student) => {
@@ -79,6 +103,58 @@ export default function RoleSchoolAdmin() {
     }
   };
 
+  const handleCreateStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!staffName || !staffPhone) {
+      toast.error('Staff Name and Phone number are required.');
+      return;
+    }
+    try {
+      const res = await fetch('/api/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: staffName,
+          role: staffRole,
+          phone: staffPhone,
+          email: staffEmail
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Staff member "${staffName}" registered successfully.`);
+        setStaffName('');
+        setStaffPhone('');
+        setStaffEmail('');
+        fetchStaff();
+      } else {
+        toast.error(data.error || 'Failed to add staff member.');
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleDeleteStaff = async (id: string) => {
+    if (!window.confirm('Are you sure you want to dismiss this staff member?')) return;
+    try {
+      const res = await fetch('/api/staff/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Staff member removed successfully.');
+        fetchStaff();
+      } else {
+        toast.error(data.error || 'Failed to remove staff member.');
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto font-sans">
       
@@ -115,86 +191,248 @@ export default function RoleSchoolAdmin() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Student Spend Analytics Table */}
-        <div className="lg:col-span-8 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl">
-          <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-[#c7515e]" />
-              Pocket Money Registry & PIN Monitor
-            </h3>
-            <button 
-              onClick={fetchStudents} 
-              className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition"
-              title="Refresh Registry"
-            >
-              <RefreshCw className={`h-4.5 w-4.5 ${loading ? 'animate-spin text-[#c7515e]' : ''}`} />
-            </button>
-          </div>
-
-          <div className="overflow-x-auto min-h-[300px]">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/5 text-[10px] text-gray-500 uppercase tracking-wider font-bold">
-                  <th className="pb-3 px-2">Student</th>
-                  <th className="pb-3 px-2">Admission #</th>
-                  <th className="pb-3 px-2">Class</th>
-                  <th className="pb-3 px-2">Limit Setting</th>
-                  <th className="pb-3 px-2">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 text-sm text-gray-300">
-                {students.map((stud) => (
-                  <tr key={stud.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="py-4 px-2 flex items-center gap-3">
-                      <img src={stud.avatarUrl} alt="" className="w-8 h-8 rounded-full border border-white/10" referrerPolicy="no-referrer" />
-                      <span className="font-semibold text-white">{stud.name}</span>
-                    </td>
-                    <td className="py-4 px-2 font-mono text-gray-400 text-xs">{stud.admissionNo}</td>
-                    <td className="py-4 px-2 text-xs">{stud.class}</td>
-                    <td className="py-4 px-2 font-mono text-emerald-400 text-xs">{stud.noPinLimit.toLocaleString()} UGX</td>
-                    <td className="py-4 px-2">
-                      <button
-                        onClick={() => triggerOtp(stud)}
-                        className="rounded-lg border border-[#c7515e]/30 bg-[#c7515e]/10 hover:bg-[#c7515e] hover:text-white px-3 py-1.5 text-[#c7515e] text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5"
-                      >
-                        <Key className="h-3.5 w-3.5" />
-                        Reset PIN
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {students.length === 0 && !loading && (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-gray-500 text-xs">No students registered to this campus.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Operational Security Guide */}
-        <div className="lg:col-span-4 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-4 h-fit">
-          <div className="flex items-center gap-2 border-b border-white/5 pb-4">
-            <ShieldCheck className="h-5 w-5 text-amber-400" />
-            <h3 className="text-sm font-bold text-white">Institutional PIN Security</h3>
-          </div>
-          <p className="text-xs text-gray-400 leading-relaxed">
-            In compliance with student financial privacy guidelines, School Admins are strictly forbidden from manual overrides.
-          </p>
-          <div className="rounded-xl bg-[#06080E] border border-white/5 p-5 space-y-3">
-            <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold block border-b border-white/5 pb-2 mb-3">Regulatory Sequence</span>
-            <ol className="list-decimal pl-4 space-y-2 text-xs text-gray-300">
-              <li>Admin clicks <span className="font-semibold text-white">"Reset PIN"</span> which sends an encrypted OTP via Collecto SMS to the registered Parent phone number.</li>
-              <li>Parent reads OTP to School Admin (verifying identity).</li>
-              <li>Admin inputs OTP and types the new 4-digit PIN.</li>
-            </ol>
-          </div>
-        </div>
-
+      {/* Campus Sub-Tabs Switcher */}
+      <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-sm shrink-0">
+        <button
+          onClick={() => setActiveTab('STUDENTS')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeTab === 'STUDENTS'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+        >
+          <Smartphone className="h-4 w-4" />
+          <span>Students & PINs</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('STAFF')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeTab === 'STAFF'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+        >
+          <Users className="h-4 w-4" />
+          <span>Manage Staff</span>
+        </button>
       </div>
+
+      {activeTab === 'STUDENTS' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Student Spend Analytics Table */}
+          <div className="lg:col-span-8 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-[#c7515e]" />
+                Pocket Money Registry & PIN Monitor
+              </h3>
+              <button 
+                onClick={fetchStudents} 
+                className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition"
+                title="Refresh Registry"
+              >
+                <RefreshCw className={`h-4.5 w-4.5 ${loading ? 'animate-spin text-[#c7515e]' : ''}`} />
+              </button>
+            </div>
+
+            <div className="overflow-x-auto min-h-[300px]">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/5 text-[10px] text-gray-500 uppercase tracking-wider font-bold">
+                    <th className="pb-3 px-2">Student</th>
+                    <th className="pb-3 px-2">Admission #</th>
+                    <th className="pb-3 px-2">Class</th>
+                    <th className="pb-3 px-2">Limit Setting</th>
+                    <th className="pb-3 px-2">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 text-sm text-gray-300">
+                  {students.map((stud) => (
+                    <tr key={stud.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-4 px-2 flex items-center gap-3">
+                        <img src={stud.avatarUrl} alt="" className="w-8 h-8 rounded-full border border-white/10" referrerPolicy="no-referrer" />
+                        <span className="font-semibold text-white">{stud.name}</span>
+                      </td>
+                      <td className="py-4 px-2 font-mono text-gray-400 text-xs">{stud.admissionNo}</td>
+                      <td className="py-4 px-2 text-xs">{stud.class}</td>
+                      <td className="py-4 px-2 font-mono text-emerald-400 text-xs">{stud.noPinLimit.toLocaleString()} UGX</td>
+                      <td className="py-4 px-2">
+                        <button
+                          onClick={() => triggerOtp(stud)}
+                          className="rounded-lg border border-[#c7515e]/30 bg-[#c7515e]/10 hover:bg-[#c7515e] hover:text-white px-3 py-1.5 text-[#c7515e] text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5"
+                        >
+                          <Key className="h-3.5 w-3.5" />
+                          Reset PIN
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {students.length === 0 && !loading && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-gray-500 text-xs">No students registered to this campus.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Operational Security Guide */}
+          <div className="lg:col-span-4 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-4 h-fit">
+            <div className="flex items-center gap-2 border-b border-white/5 pb-4">
+              <ShieldCheck className="h-5 w-5 text-amber-400" />
+              <h3 className="text-sm font-bold text-white">Institutional PIN Security</h3>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              In compliance with student financial privacy guidelines, School Admins are strictly forbidden from manual overrides.
+            </p>
+            <div className="rounded-xl bg-[#06080E] border border-white/5 p-5 space-y-3">
+              <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold block border-b border-white/5 pb-2 mb-3">Regulatory Sequence</span>
+              <ol className="list-decimal pl-4 space-y-2 text-xs text-gray-300">
+                <li>Admin clicks <span className="font-semibold text-white">"Reset PIN"</span> which sends an encrypted OTP via Collecto SMS to the registered Parent phone number.</li>
+                <li>Parent reads OTP to School Admin (verifying identity).</li>
+                <li>Admin inputs OTP and types the new 4-digit PIN.</li>
+              </ol>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {activeTab === 'STAFF' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fadeIn">
+          {/* Staff List Table */}
+          <div className="lg:col-span-8 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Users className="h-5 w-5 text-[#c7515e]" />
+                Institutional Staff & Faculty Directory
+              </h3>
+              <button 
+                onClick={fetchStaff} 
+                className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition"
+                title="Refresh Staff"
+              >
+                <RefreshCw className="h-4.5 w-4.5" />
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/5 text-[10px] text-gray-500 uppercase tracking-wider font-bold">
+                    <th className="pb-3 px-2">Staff Member</th>
+                    <th className="pb-3 px-2">Assigned Role</th>
+                    <th className="pb-3 px-2">Primary Phone</th>
+                    <th className="pb-3 px-2">Email Address</th>
+                    <th className="pb-3 px-2 text-right pr-4">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 text-sm text-gray-300">
+                  {staff.map((s) => (
+                    <tr key={s.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-4 px-2 font-semibold text-white">{s.name}</td>
+                      <td className="py-4 px-2 text-xs">
+                        <span className="bg-[#c7515e]/15 text-[#c7515e] border border-[#c7515e]/10 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                          {s.role}
+                        </span>
+                      </td>
+                      <td className="py-4 px-2 font-mono text-gray-400 text-xs">{s.phone}</td>
+                      <td className="py-4 px-2 text-xs text-gray-400">{s.email || 'N/A'}</td>
+                      <td className="py-4 px-2 text-right pr-4">
+                        <button
+                          onClick={() => handleDeleteStaff(s.id)}
+                          className="text-gray-500 hover:text-rose-500 transition-colors p-1"
+                          title="Dismiss Staff"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {staff.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-gray-500 text-xs">No registered institutional staff members.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Add Staff Member Form */}
+          <div className="lg:col-span-4 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-4 h-fit">
+            <div className="flex items-center gap-2 border-b border-white/5 pb-4">
+              <UserPlus className="h-5 w-5 text-[#c7515e]" />
+              <h3 className="text-sm font-bold text-white">Enroll Staff Member</h3>
+            </div>
+            
+            <form onSubmit={handleCreateStaff} className="space-y-4">
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Full Name</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    value={staffName}
+                    onChange={(e) => setStaffName(e.target.value)}
+                    placeholder="e.g. Juliet Nabassa"
+                    className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Campus Role</label>
+                <select
+                  value={staffRole}
+                  onChange={(e) => setStaffRole(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-gray-300 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition cursor-pointer appearance-none"
+                >
+                  <option value="Bursar">School Bursar</option>
+                  <option value="Teacher">Senior Teacher</option>
+                  <option value="Registrar">Campus Registrar</option>
+                  <option value="Dean">Dean of Students</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Phone Line</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-3.5 text-xs font-mono text-gray-500">+256</span>
+                  <input
+                    type="text"
+                    required
+                    value={staffPhone}
+                    onChange={(e) => setStaffPhone(e.target.value)}
+                    placeholder="772345678"
+                    className="w-full rounded-xl border border-white/10 bg-[#06080E] pl-12 pr-4 py-2.5 text-xs text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Email Address (Optional)</label>
+                <input
+                  type="email"
+                  value={staffEmail}
+                  onChange={(e) => setStaffEmail(e.target.value)}
+                  placeholder="juliet@school.ac.ug"
+                  className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full rounded-xl bg-[#c7515e] hover:bg-[#b04753] py-2.5 text-xs font-bold text-white transition active:scale-95 shadow-lg shadow-[#c7515e]/20"
+              >
+                Add Staff to Roster
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* PIN Reset Modal (Simulated with OTP helper) */}
       {showPinModal && selectedStudent && (

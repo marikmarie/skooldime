@@ -170,7 +170,7 @@ export default function QuickActionsFAB({ user }: QuickActionsFABProps) {
                 </div>
                 <div>
                   <div className="group-hover:text-[#c7515e] transition-colors">Top Up Funds</div>
-                  <div className="text-[9px] text-slate-500 font-medium">MoMo Collecto Gateway</div>
+                  <div className="text-[9px] text-slate-500 font-medium">MoMo STK Gateway</div>
                 </div>
               </button>
 
@@ -374,7 +374,7 @@ export default function QuickActionsFAB({ user }: QuickActionsFABProps) {
                     <Smartphone className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">Mobile Money Collecto Push Gateway</h3>
+                    <h3 className="text-sm font-bold text-white">Mobile Money STK Push Gateway</h3>
                     <p className="text-[10px] text-slate-400 font-mono">Collecto Sandbox Protocol</p>
                   </div>
                 </div>

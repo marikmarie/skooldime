@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Landmark, Users, Sliders, RefreshCw, AlertTriangle, MapPin } from 'lucide-react';
+import { Landmark, Users, Sliders, RefreshCw, AlertTriangle, MapPin, UserPlus, Building, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
 import { School, Vendor } from '../types';
 
 export default function RoleBusinessAdmin() {
@@ -8,7 +8,23 @@ export default function RoleBusinessAdmin() {
   const [loading, setLoading] = useState(false);
   const [editingCommissionVendorId, setEditingCommissionVendorId] = useState<string | null>(null);
   const [customCommRate, setCustomCommRate] = useState<number>(1.0);
-  const [activeBusinessTab, setActiveBusinessTab] = useState<'COMMISSIONS' | 'RULES'>('COMMISSIONS');
+  const [activeBusinessTab, setActiveBusinessTab] = useState<'COMMISSIONS' | 'FRANCHISE_ADMIN' | 'RULES'>('COMMISSIONS');
+
+  // Franchise Region is "Central"
+  const region = 'Central';
+
+  // Creation states
+  const [agents, setAgents] = useState<any[]>([]);
+  const [schoolName, setSchoolName] = useState('');
+  const [schoolCode, setSchoolCode] = useState('');
+  const [schoolComm, setSchoolComm] = useState(1.0);
+
+  const [agentName, setAgentName] = useState('');
+  const [agentUsername, setAgentUsername] = useState('');
+  const [agentPhone, setAgentPhone] = useState('');
+
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -20,6 +36,10 @@ export default function RoleBusinessAdmin() {
       const vendRes = await fetch('/api/vendors');
       const vendData = await vendRes.json();
       setVendors(vendData);
+
+      const usersRes = await fetch('/api/users');
+      const usersData = await usersRes.json();
+      setAgents((usersData || []).filter((u: any) => u.role === 'AGENT' && u.region === region));
     } catch (e) {
       console.error(e);
     } finally {
@@ -36,10 +56,98 @@ export default function RoleBusinessAdmin() {
     setCustomCommRate(currentRate);
   };
 
-  const handleSaveCommission = (vendorId: string) => {
-    setVendors(prev => prev.map(v => v.id === vendorId ? { ...v, commissionRate: 100 - customCommRate } : v));
-    setEditingCommissionVendorId(null);
-    console.log(`[Business Admin] Vendor commission split adjusted. School share set to ${customCommRate}%`);
+  const handleSaveCommission = async (vendorId: string) => {
+    try {
+      const res = await fetch('/api/vendors/update-commission', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendorId, schoolCommissionRate: customCommRate })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setVendors(prev => prev.map(v => v.id === vendorId ? { ...v, commissionRate: 100 - customCommRate } : v));
+        setEditingCommissionVendorId(null);
+        setSuccessMsg('Vendor commission matrix split updated successfully.');
+        setTimeout(() => setSuccessMsg(''), 3000);
+      } else {
+        setErrorMsg(data.error || 'Failed to update commission.');
+        setTimeout(() => setErrorMsg(''), 3000);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg('Error saving commission split.');
+      setTimeout(() => setErrorMsg(''), 3000);
+    }
+  };
+
+  const handleCreateSchool = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!schoolName || !schoolCode) {
+      setErrorMsg('School Name and unique School Code are required.');
+      return;
+    }
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const res = await fetch('/api/schools', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: schoolName,
+          code: schoolCode,
+          commissionRate: schoolComm,
+          region
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMsg(`School "${schoolName}" created successfully!`);
+        setSchoolName('');
+        setSchoolCode('');
+        setSchoolComm(1.0);
+        fetchData();
+      } else {
+        setErrorMsg(data.error || 'Failed to create school.');
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Error occurred.');
+    }
+  };
+
+  const handleCreateAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!agentName || !agentUsername || !agentPhone) {
+      setErrorMsg('All Agent fields are required.');
+      return;
+    }
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const res = await fetch('/api/agents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: agentName,
+          username: agentUsername,
+          phone: agentPhone,
+          region
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMsg(`Agent "${agentName}" registered successfully!`);
+        setAgentName('');
+        setAgentUsername('');
+        setAgentPhone('');
+        fetchData();
+      } else {
+        setErrorMsg(data.error || 'Failed to register agent.');
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Error occurred.');
+    }
   };
 
   return (
@@ -79,17 +187,28 @@ export default function RoleBusinessAdmin() {
       </div>
 
       {/* Dashboard Sub-Tabs */}
-      <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-md">
+      <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-lg">
         <button
           onClick={() => setActiveBusinessTab('COMMISSIONS')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
             activeBusinessTab === 'COMMISSIONS'
-              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
-              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+               ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
           }`}
         >
           <Sliders className="h-4 w-4" />
           <span>POS Splits</span>
+        </button>
+        <button
+          onClick={() => setActiveBusinessTab('FRANCHISE_ADMIN')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+            activeBusinessTab === 'FRANCHISE_ADMIN'
+              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+        >
+          <UserPlus className="h-4 w-4" />
+          <span>Franchise Setup</span>
         </button>
         <button
           onClick={() => setActiveBusinessTab('RULES')}
@@ -177,6 +296,200 @@ export default function RoleBusinessAdmin() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {activeBusinessTab === 'FRANCHISE_ADMIN' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Create Forms */}
+          <div className="lg:col-span-6 space-y-6">
+            {/* Create School */}
+            <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-5">
+              <div className="flex items-center gap-2.5 border-b border-white/5 pb-4">
+                <div className="p-1.5 rounded-lg bg-[#c7515e]/10 text-[#c7515e]">
+                  <Building className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white tracking-wide">Register New School Campus</h3>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Enrolls campus node under the {region} Franchise</p>
+                </div>
+              </div>
+
+              {successMsg && (
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 shrink-0" />
+                  <span>{successMsg}</span>
+                </div>
+              )}
+
+              {errorMsg && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleCreateSchool} className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">School Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Nakasero Model School"
+                    value={schoolName}
+                    onChange={(e) => setSchoolName(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Campus Code</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. NMS"
+                      maxLength={5}
+                      value={schoolCode}
+                      onChange={(e) => setSchoolCode(e.target.value.toUpperCase().replace(/\s+/g, ''))}
+                      className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-white font-mono focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Custom Split rate %</label>
+                    <input
+                      type="number"
+                      required
+                      step="0.1"
+                      value={schoolComm}
+                      onChange={(e) => setSchoolComm(Number(e.target.value))}
+                      className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-white font-mono focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full rounded-xl bg-[#c7515e] hover:bg-[#a13f4a] py-2.5 text-xs font-bold text-white transition active:scale-95 shadow-lg shadow-[#c7515e]/15 flex items-center justify-center gap-2"
+                >
+                  <Building className="h-3.5 w-3.5" />
+                  <span>Register Campus Node</span>
+                </button>
+              </form>
+            </div>
+
+            {/* Create Agent */}
+            <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-5">
+              <div className="flex items-center gap-2.5 border-b border-white/5 pb-4">
+                <div className="p-1.5 rounded-lg bg-[#c7515e]/10 text-[#c7515e]">
+                  <UserPlus className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white tracking-wide">Register Field Operations Agent</h3>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Authorizes mobile field operations agent for {region} territory</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleCreateAgent} className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Agent Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Peter Ssekabira"
+                    value={agentName}
+                    onChange={(e) => setAgentName(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Username</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="peter_agent"
+                      value={agentUsername}
+                      onChange={(e) => setAgentUsername(e.target.value.replace(/\s+/g, ''))}
+                      className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block mb-1.5">Phone Number</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="+256700000003"
+                      value={agentPhone}
+                      onChange={(e) => setAgentPhone(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full rounded-xl bg-[#c7515e] hover:bg-[#a13f4a] py-2.5 text-xs font-bold text-white transition active:scale-95 shadow-lg shadow-[#c7515e]/15 flex items-center justify-center gap-2"
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  <span>Register Field Agent</span>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Directory Column */}
+          <div className="lg:col-span-6 space-y-6">
+            {/* Territory Schools */}
+            <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <Building className="h-4.5 w-4.5 text-[#c7515e]" />
+                  <h3 className="text-xs font-bold text-white tracking-wide">Schools in Franchise Region ({region})</h3>
+                </div>
+                <span className="text-[10px] font-mono font-bold bg-[#c7515e]/10 text-[#c7515e] px-2 py-0.5 rounded">{schools.length} Campuses</span>
+              </div>
+
+              <div className="space-y-2 max-h-[220px] overflow-y-auto scrollbar-thin">
+                {schools.map((sch) => (
+                  <div key={sch.id} className="p-3 rounded-xl bg-[#06080E]/80 border border-white/5 flex items-center justify-between text-xs hover:border-white/10 transition-colors">
+                    <div>
+                      <h4 className="font-bold text-white">{sch.name}</h4>
+                      <p className="text-[10px] text-gray-500 font-mono mt-0.5">Code: {sch.code} <span className="opacity-40 mx-1">|</span> Region: {sch.region}</p>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-[#c7515e] bg-[#c7515e]/5 px-2 py-1 rounded">{sch.commissionRate}% split</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Territory Agents */}
+            <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <Users className="h-4.5 w-4.5 text-[#c7515e]" />
+                  <h3 className="text-xs font-bold text-white tracking-wide">Active Operational Field Agents</h3>
+                </div>
+                <span className="text-[10px] font-mono font-bold bg-[#c7515e]/10 text-[#c7515e] px-2 py-0.5 rounded">{agents.length} Agents</span>
+              </div>
+
+              <div className="space-y-2 max-h-[220px] overflow-y-auto scrollbar-thin">
+                {agents.map((ag) => (
+                  <div key={ag.id} className="p-3 rounded-xl bg-[#06080E]/80 border border-white/5 flex items-center justify-between text-xs hover:border-white/10 transition-colors">
+                    <div>
+                      <h4 className="font-bold text-white">{ag.name}</h4>
+                      <p className="text-[10px] text-gray-500 font-mono mt-0.5">Username: {ag.username} <span className="opacity-40 mx-1">|</span> {ag.phone}</p>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold bg-[#c7515e]/10 text-[#c7515e] px-2 py-0.5 rounded uppercase tracking-wider">{ag.region}</span>
+                  </div>
+                ))}
+                {agents.length === 0 && (
+                  <p className="text-center text-xs text-gray-500 py-4">No field agents registered under your franchise.</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

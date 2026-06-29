@@ -1,7 +1,7 @@
 <?php
 /**
  * CollectoController Class
- * Simulates mobile money payment gateway features: MTN/Airtel deposit Collecto pushes,
+ * Simulates mobile money payment gateway features: MTN/Airtel deposit STK pushes,
  * transaction status polling approvals, and secure payouts.
  */
 
@@ -98,12 +98,12 @@ class CollectoController {
                     'fee' => 1000,
                     'type' => 'DEPOSIT',
                     'status' => 'PENDING',
-                    'description' => 'Pending Collecto MTN/Airtel Collecto Push',
+                    'description' => 'Pending Collecto MTN/Airtel Push',
                     'createdAt' => date('c'),
                     'realIntegration' => true
                 ];
                 $this->db->save($db);
-                $this->db->audit('PARENT', $parent['name'], 'PARENT', 'COLLECTO_REAL_Collecto_PUSH_INITIATED', null, ['refCode' => $refCode, 'amount' => $amount, 'collectoTxId' => $collectoId]);
+                $this->db->audit('PARENT', $parent['name'], 'PARENT', 'COLLECTO_REAL_PUSH_INITIATED', null, ['refCode' => $refCode, 'amount' => $amount, 'collectoTxId' => $collectoId]);
 
                 echo json_encode([
                     'success' => true,
@@ -111,7 +111,7 @@ class CollectoController {
                     'referenceCode' => $refCode,
                     'collectoTxId' => $collectoId,
                     'realIntegration' => true,
-                    'message' => 'Collecto push successfully initiated via Collecto. Please enter your mobile money PIN to authorize.'
+                    'message' => 'Collecto push successfully initiated. Please enter your mobile money PIN to authorize.'
                 ]);
                 return;
             } else {
@@ -136,12 +136,12 @@ class CollectoController {
             'fee' => 1000,
             'type' => 'DEPOSIT',
             'status' => 'PENDING',
-            'description' => 'Pending Collecto MTN/Airtel Collecto Push',
+            'description' => 'Pending Collecto MTN/Airtel Push',
             'createdAt' => date('c')
         ];
 
         $this->db->save($db);
-        $this->db->audit('PARENT', $parent['name'], 'PARENT', 'COLLECTO_Collecto_PUSH_INITIATED', null, ['refCode' => $refCode, 'amount' => $amount]);
+        $this->db->audit('PARENT', $parent['name'], 'PARENT', 'COLLECTO_PUSH_INITIATED', null, ['refCode' => $refCode, 'amount' => $amount]);
 
         echo json_encode([
             'success' => true,

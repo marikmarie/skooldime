@@ -44,11 +44,29 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim()) { setAuthError('Enter a username to continue.'); return; }
+    const cleanUsername = username.trim();
+    if (!cleanUsername) { setAuthError('Enter a username to continue.'); return; }
     setAuthLoading(true);
     setAuthError('');
-    const found = mockUsers[username.trim()];
-    onLoginSuccess(found ?? { id: 'U_GUEST', username: username.trim(), role: 'PARENT', name: username.trim(), phone: '' });
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: cleanUsername })
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        onLoginSuccess(data.user);
+        setAuthLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.error('API login error, falling back to local simulation:', err);
+    }
+
+    const found = mockUsers[cleanUsername];
+    onLoginSuccess(found ?? { id: 'U_GUEST', username: cleanUsername, role: 'PARENT', name: cleanUsername.replace('_', ' '), phone: '' });
     setAuthLoading(false);
   };
 

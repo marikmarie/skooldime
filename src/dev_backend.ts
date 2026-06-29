@@ -405,7 +405,7 @@ export function devApiMiddleware(req: any, res: any, next: any) {
               pin: '0000',
               parentPhone,
               isLinked: true,
-              avatarUrl: 'image',
+              avatarUrl: 'imagephoto-1544005313-94ddf0286df2?w=120',
               noPinLimit: 2000
             };
             db.students.push(newStudent);
@@ -763,13 +763,13 @@ export function devApiMiddleware(req: any, res: any, next: any) {
                 fee: 1000,
                 type: 'DEPOSIT',
                 status: 'PENDING',
-                description: 'Pending Collecto MTN/Airtel Collecto Push',
+                description: 'Pending Collecto MTN/Airtel STK Push',
                 createdAt: new Date().toISOString(),
                 realIntegration: true
               });
 
               save_db(db);
-              audit('PARENT', parent.name, 'PARENT', 'COLLECTO_REAL_Collecto_PUSH_INITIATED', null, { refCode, amount: amt, collectoTxId: collectoId });
+              audit('PARENT', parent.name, 'PARENT', 'COLLECTO_REAL_STK_PUSH_INITIATED', null, { refCode, amount: amt, collectoTxId: collectoId });
 
               return sendJson({
                 success: true,
@@ -777,7 +777,7 @@ export function devApiMiddleware(req: any, res: any, next: any) {
                 referenceCode: refCode,
                 collectoTxId: collectoId,
                 realIntegration: true,
-                message: 'Collecto push successfully initiated via Collecto. Please enter your mobile money PIN to authorize.'
+                message: 'STK push successfully initiated via Collecto. Please enter your mobile money PIN to authorize.'
               });
             } else {
               return sendError(resData.message || `Collecto gateway returned error state (HTTP ${response.status})`, 400);
@@ -798,18 +798,18 @@ export function devApiMiddleware(req: any, res: any, next: any) {
           fee: 1000,
           type: 'DEPOSIT',
           status: 'PENDING',
-          description: 'Pending Collecto MTN/Airtel Collecto Push',
+          description: 'Pending Collecto MTN/Airtel STK Push',
           createdAt: new Date().toISOString()
         });
 
         save_db(db);
-        audit('PARENT', parent.name, 'PARENT', 'COLLECTO_Collecto_PUSH_INITIATED', null, { refCode, amount: amt });
+        audit('PARENT', parent.name, 'PARENT', 'COLLECTO_STK_PUSH_INITIATED', null, { refCode, amount: amt });
 
         return sendJson({
           success: true,
           transactionId: txId,
           referenceCode: refCode,
-          message: 'Collecto push sent to your mobile phone. Enter MTN/Airtel PIN to authorize.'
+          message: 'STK push sent to your mobile phone. Enter MTN/Airtel PIN to authorize.'
         });
       }
 

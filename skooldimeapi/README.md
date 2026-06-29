@@ -10,7 +10,7 @@ Welcome to your newly modularized, object-oriented PHP API! Instead of maintaini
 *   **`AuthController.php`**: Manages credentials login, system health metrics, and database resets.
 *   **`StudentController.php`**: Manages student, school, parent registries, bulk student uploads, PIN resets, budgets, and pocket money transfers.
 *   **`POSController.php`**: HandlesPoint of Sale scanning, checkouts with commissions splits, manager refunds, dynamic payment QR codes, and status polling.
-*   **`CollectoController.php`**: Simulates MTN/Airtel Mobile Money deposit Collecto pushes, deposit status polling, and payout withdrawals.
+*   **`CollectoController.php`**: Simulates MTN/Airtel Mobile Money deposit STK pushes, deposit status polling, and payout withdrawals.
 *   **`LoansController.php`**: Oversees the loan credit engine, credit scoring, borrow limits, disbursements, and repayments.
 *   **`index.php`**: The main Front Controller (Router) that dispatches incoming requests to the respective class controllers.
 *   **`.htaccess`**: Automatic URL rewrite rules for Apache servers (WinSCP/cPanel) to enable clean URLs without needing `index.php` in the path.

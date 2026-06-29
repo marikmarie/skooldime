@@ -68,7 +68,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
     if (!depositAmt || !depositPhone) return;
 
     setLoading(true);
-    setPollingMsg('Initiating Collecto Collecto Push... Check phone screen.');
+    setPollingMsg('Initiating Collecto Push... Check phone screen.');
 
     try {
       const res = await fetch('/api/collecto/deposit', {
