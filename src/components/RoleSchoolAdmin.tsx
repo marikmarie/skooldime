@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Landmark, Key, BarChart3, ShieldCheck, RefreshCw, Smartphone, AlertTriangle, Users, UserPlus, Mail, Phone, CheckCircle, Trash2 } from 'lucide-react';
+import { Landmark, Key, BarChart3, ShieldCheck, RefreshCw, Smartphone, AlertTriangle, Users, UserPlus, Mail, Phone, CheckCircle, Trash2, Search } from 'lucide-react';
 import { Student } from '../types';
 import { useToast } from './ToastContext';
 
 export default function RoleSchoolAdmin() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [studentSearch, setStudentSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showPinModal, setShowPinModal] = useState(false);
@@ -236,6 +237,20 @@ export default function RoleSchoolAdmin() {
               </button>
             </div>
 
+            {/* Real-time search bar */}
+            <div className="relative mb-4">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
+                <Search className="h-4 w-4" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search students by name, admission #, class..."
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#06080E] text-white placeholder-gray-500 focus:border-[#c7515e] outline-none transition"
+              />
+            </div>
+
             <div className="overflow-x-auto min-h-[300px]">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -248,29 +263,49 @@ export default function RoleSchoolAdmin() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-sm text-gray-300">
-                  {students.map((stud) => (
-                    <tr key={stud.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-4 px-2 flex items-center gap-3">
-                        <img src={stud.avatarUrl} alt="" className="w-8 h-8 rounded-full border border-white/10" referrerPolicy="no-referrer" />
-                        <span className="font-semibold text-white">{stud.name}</span>
-                      </td>
-                      <td className="py-4 px-2 font-mono text-gray-400 text-xs">{stud.admissionNo}</td>
-                      <td className="py-4 px-2 text-xs">{stud.class}</td>
-                      <td className="py-4 px-2 font-mono text-emerald-400 text-xs">{stud.noPinLimit.toLocaleString()} UGX</td>
-                      <td className="py-4 px-2">
-                        <button
-                          onClick={() => triggerOtp(stud)}
-                          className="rounded-lg border border-[#c7515e]/30 bg-[#c7515e]/10 hover:bg-[#c7515e] hover:text-white px-3 py-1.5 text-[#c7515e] text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5"
-                        >
-                          <Key className="h-3.5 w-3.5" />
-                          Reset PIN
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {students.length === 0 && !loading && (
+                  {students
+                    .filter(stud => {
+                      if (!studentSearch) return true;
+                      const q = studentSearch.toLowerCase();
+                      return (
+                        stud.name.toLowerCase().includes(q) ||
+                        stud.admissionNo.toLowerCase().includes(q) ||
+                        stud.class.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((stud) => (
+                      <tr key={stud.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-4 px-2 flex items-center gap-3">
+                          <img src={stud.avatarUrl} alt="" className="w-8 h-8 rounded-full border border-white/10" referrerPolicy="no-referrer" />
+                          <span className="font-semibold text-white">{stud.name}</span>
+                        </td>
+                        <td className="py-4 px-2 font-mono text-gray-400 text-xs">{stud.admissionNo}</td>
+                        <td className="py-4 px-2 text-xs">{stud.class}</td>
+                        <td className="py-4 px-2 font-mono text-emerald-400 text-xs">{stud.noPinLimit.toLocaleString()} UGX</td>
+                        <td className="py-4 px-2">
+                          <button
+                            onClick={() => triggerOtp(stud)}
+                            className="rounded-lg border border-[#c7515e]/30 bg-[#c7515e]/10 hover:bg-[#c7515e] hover:text-white px-3 py-1.5 text-[#c7515e] text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5"
+                          >
+                            <Key className="h-3.5 w-3.5" />
+                            Reset PIN
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  {students.filter(stud => {
+                    if (!studentSearch) return true;
+                    const q = studentSearch.toLowerCase();
+                    return (
+                      stud.name.toLowerCase().includes(q) ||
+                      stud.admissionNo.toLowerCase().includes(q) ||
+                      stud.class.toLowerCase().includes(q)
+                    );
+                  }).length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-gray-500 text-xs">No students registered to this campus.</td>
+                      <td colSpan={5} className="py-8 text-center text-gray-500 text-xs">
+                        {students.length === 0 ? "No students registered to this campus." : "No student records matched search query."}
+                      </td>
                     </tr>
                   )}
                 </tbody>
