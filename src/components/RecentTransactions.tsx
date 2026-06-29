@@ -461,7 +461,7 @@ export function RecentTransactions({
                     </td>
 
                     {/* Description & Type */}
-                    <td className="p-3 max-w-[180px]">
+                    <td className="p-3 max-w-45">
                       <div className="font-bold text-slate-200 truncate">{txn.description}</div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                         <span className="text-[9px] font-mono text-slate-500 uppercase tracking-wide">
