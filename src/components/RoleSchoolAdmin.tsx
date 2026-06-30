@@ -267,7 +267,7 @@ export default function RoleSchoolAdmin() {
               />
             </div>
 
-            <div className="overflow-x-auto min-h-75">
+            <div className="overflow-x-auto min-h-[300px]">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-white/5 text-[10px] text-gray-500 uppercase tracking-wider font-bold">
@@ -290,7 +290,7 @@ export default function RoleSchoolAdmin() {
                       );
                     })
                     .map((stud) => (
-                      <tr key={stud.id} className="hover:bg-white/2 transition-colors">
+                      <tr key={stud.id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="py-4 px-2 flex items-center gap-3">
                           <img src={stud.avatarUrl} alt="" className="w-8 h-8 rounded-full border border-white/10" referrerPolicy="no-referrer" />
                           <span className="font-semibold text-white">{stud.name}</span>
@@ -387,7 +387,7 @@ export default function RoleSchoolAdmin() {
                 </thead>
                 <tbody className="divide-y divide-white/5 text-sm text-gray-300">
                   {staff.map((s) => (
-                    <tr key={s.id} className="hover:bg-white/2 transition-colors">
+                    <tr key={s.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-4 px-2 font-semibold text-white">{s.name}</td>
                       <td className="py-4 px-2 text-xs">
                         <span className="bg-[#c7515e]/15 text-[#c7515e] border border-[#c7515e]/10 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
@@ -602,20 +602,20 @@ export default function RoleSchoolAdmin() {
                       </div>
 
                       {/* Card Content Mockup */}
-                      <div className="w-full h-52.5 rounded-xl bg-linear-to-br from-navy to-navy-hover text-white p-4 flex flex-col justify-between relative overflow-hidden select-none">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-brand/10 rounded-full blur-2xl pointer-events-none" />
+                      <div className="w-full h-[210px] rounded-xl bg-gradient-to-br from-[#06065C] to-[#040440] text-white p-4 flex flex-col justify-between relative overflow-hidden select-none">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#ED0101]/10 rounded-full blur-2xl pointer-events-none" />
                         <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-white/5 rounded-full pointer-events-none" />
                         
                         {/* Header */}
                         <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
                           <div className="flex items-center gap-1">
-                            <div className="w-4 h-4 rounded-full bg-brand flex items-center justify-center font-bold text-[8px] text-white">K</div>
+                            <div className="w-4 h-4 rounded-full bg-[#ED0101] flex items-center justify-center font-bold text-[8px] text-white">K</div>
                             <div>
                               <h5 className="text-[8px] font-bold uppercase tracking-widest text-white leading-none">Kampala Parents</h5>
-                              <span className="text-[6px] text-brand tracking-wider uppercase font-bold leading-none">Primary School</span>
+                              <span className="text-[6px] text-[#ED0101] tracking-wider uppercase font-bold leading-none">Primary School</span>
                             </div>
                           </div>
-                          <span className="text-[7px] bg-brand text-white font-bold px-1.5 py-0.5 rounded-full tracking-wider uppercase">
+                          <span className="text-[7px] bg-[#ED0101] text-white font-bold px-1.5 py-0.5 rounded-full tracking-wider uppercase">
                             Student Wallet
                           </span>
                         </div>
@@ -736,7 +736,7 @@ export default function RoleSchoolAdmin() {
             .map(student => (
               <div 
                 key={student.id} 
-                className="print-card p-4 border-2 border-navy rounded-2xl bg-white w-87.5 h-55 flex flex-col justify-between overflow-hidden"
+                className="print-card p-4 border-2 border-[#06065C] rounded-2xl bg-white w-[350px] h-[220px] flex flex-col justify-between overflow-hidden"
                 style={{
                   printColorAdjust: 'exact',
                   WebkitPrintColorAdjust: 'exact',
@@ -744,22 +744,22 @@ export default function RoleSchoolAdmin() {
                 }}
               >
                 {/* Card header */}
-                <div className="flex items-center justify-between border-b-2 border-navy/20 pb-2">
+                <div className="flex items-center justify-between border-b-2 border-[#06065C]/20 pb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-brand flex items-center justify-center font-bold text-[10px] text-white">K</div>
+                    <div className="w-5 h-5 rounded-full bg-[#ED0101] flex items-center justify-center font-bold text-[10px] text-white">K</div>
                     <div>
-                      <h5 className="text-[10px] font-bold uppercase tracking-widest text-navy leading-none" style={{ margin: 0 }}>Kampala Parents</h5>
-                      <span className="text-[7px] text-brand tracking-wider uppercase font-bold leading-none" style={{ display: 'block', marginTop: '2px' }}>Primary School</span>
+                      <h5 className="text-[10px] font-bold uppercase tracking-widest text-[#06065C] leading-none" style={{ margin: 0 }}>Kampala Parents</h5>
+                      <span className="text-[7px] text-[#ED0101] tracking-wider uppercase font-bold leading-none" style={{ display: 'block', marginTop: '2px' }}>Primary School</span>
                     </div>
                   </div>
-                  <span className="text-[8px] bg-brand text-white font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">
+                  <span className="text-[8px] bg-[#ED0101] text-white font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">
                     Student Wallet
                   </span>
                 </div>
 
                 {/* Card content */}
                 <div className="flex items-center gap-4 py-2 flex-1">
-                  <div className="w-16 h-16 rounded-xl border-2 border-navy/20 bg-slate-50 overflow-hidden shrink-0 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-xl border-2 border-[#06065C]/20 bg-slate-50 overflow-hidden shrink-0 flex items-center justify-center">
                     <img 
                       src={student.avatarUrl} 
                       alt="" 
@@ -769,13 +769,13 @@ export default function RoleSchoolAdmin() {
                     />
                   </div>
                   <div className="flex-1 min-w-0 space-y-1">
-                    <h4 className="text-sm font-extrabold text-navy leading-tight truncate" style={{ margin: 0 }}>{student.name}</h4>
+                    <h4 className="text-sm font-extrabold text-[#06065C] leading-tight truncate" style={{ margin: 0 }}>{student.name}</h4>
                     <div className="space-y-0.5 text-[10px] text-[#334155] font-mono">
-                      <div><span style={{ color: '#64748b' }}>CLASS:</span> <strong className="text-navy">{student.class}</strong></div>
-                      <div><span style={{ color: '#64748b' }}>ADM NO:</span> <strong className="text-navy">{student.admissionNo}</strong></div>
+                      <div><span style={{ color: '#64748b' }}>CLASS:</span> <strong className="text-[#06065C]">{student.class}</strong></div>
+                      <div><span style={{ color: '#64748b' }}>ADM NO:</span> <strong className="text-[#06065C]">{student.admissionNo}</strong></div>
                     </div>
                   </div>
-                  <div className="bg-white p-1 rounded-lg shrink-0 border-2 border-navy/10 flex items-center justify-center" style={{ width: '64px', height: '64px' }}>
+                  <div className="bg-white p-1 rounded-lg shrink-0 border-2 border-[#06065C]/10 flex items-center justify-center" style={{ width: '64px', height: '64px' }}>
                     <QRCodeSVG 
                       value={student.qrHash} 
                       size={56} 
@@ -786,12 +786,12 @@ export default function RoleSchoolAdmin() {
                 </div>
 
                 {/* Card footer */}
-                <div className="border-t-2 border-navy/15 pt-2 flex items-center justify-between text-[8px] font-mono text-[#475569]">
+                <div className="border-t-2 border-[#06065C]/15 pt-2 flex items-center justify-between text-[8px] font-mono text-[#475569]">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-600" style={{ display: 'inline-block' }} />
-                    <span className="font-bold text-navy">NFC / SECURE CARD</span>
+                    <span className="font-bold text-[#06065C]">NFC / SECURE CARD</span>
                   </div>
-                  <span className="text-brand font-bold font-mono">{student.qrHash}</span>
+                  <span className="text-[#ED0101] font-bold font-mono">{student.qrHash}</span>
                 </div>
               </div>
             ))}

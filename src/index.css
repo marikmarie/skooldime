@@ -27,38 +27,38 @@ body {
 
 /* --- SYSTEM-WIDE PREMIUM LIGHT MODE OVERRIDES --- */
 
-/* Background Overrides - Make all cards solid crisp white */
-[class*="bg-[#070A13]"], [class*="bg-slate-950"] {
+/* Background Overrides - Make all cards solid crisp white, but do not affect utility buttons */
+div[class*="bg-[#070A13]"], div[class*="bg-slate-950"], section[class*="bg-slate-950"], form[class*="bg-slate-950"] {
   background-color: #f8fafc !important; /* Slate 50 background */
 }
-[class*="bg-[#080B15]"], [class*="bg-[#080B15]"], [class*="bg-slate-900"] {
+div[class*="bg-[#080B15]"], div[class*="bg-slate-900"], section[class*="bg-slate-900"], aside[class*="bg-slate-900"], form[class*="bg-slate-900"] {
   background-color: #ffffff !important;
   box-shadow: 0 4px 12px -2px rgba(6, 6, 92, 0.04), 0 2px 6px -1px rgba(6, 6, 92, 0.02) !important;
   border: 1px solid rgba(6, 6, 92, 0.08) !important;
 }
-[class*="bg-[#0B0F19]"] {
+div[class*="bg-[#0B0F19]"], section[class*="bg-[#0B0F19]"], form[class*="bg-[#0B0F19]"] {
   background-color: #ffffff !important;
   box-shadow: 0 4px 12px -2px rgba(6, 6, 92, 0.04), 0 2px 6px -1px rgba(6, 6, 92, 0.02) !important;
   border: 1px solid rgba(6, 6, 92, 0.08) !important;
 }
-[class*="bg-[#06080E]"], [class*="bg-slate-800"] {
+div[class*="bg-[#06080E]"], div[class*="bg-slate-800"], section[class*="bg-slate-800"], form[class*="bg-slate-800"] {
   background-color: #f8fafc !important; /* Slate 50 background */
   border: 1px solid rgba(6, 6, 92, 0.05) !important;
 }
-[class*="bg-slate-800/50"], [class*="bg-slate-800/30"], [class*="bg-slate-900/50"], [class*="bg-slate-900/80"] {
+div[class*="bg-slate-800/50"], div[class*="bg-slate-800/30"], div[class*="bg-slate-900/50"], div[class*="bg-slate-900/80"] {
   background-color: #fafaf9 !important;
 }
-[class*="bg-[#0D1222]"] {
+div[class*="bg-[#0D1222]"], section[class*="bg-[#0D1222]"] {
   background-color: #ffffff !important;
   box-shadow: 0 4px 12px -2px rgba(6, 6, 92, 0.04), 0 2px 6px -1px rgba(6, 6, 92, 0.02) !important;
   border: 1px solid rgba(6, 6, 92, 0.08) !important;
 }
-[class*="bg-[#0F1424]"] {
+div[class*="bg-[#0F1424]"], section[class*="bg-[#0F1424]"] {
   background-color: #ffffff !important;
   box-shadow: 0 4px 12px -2px rgba(6, 6, 92, 0.04), 0 2px 6px -1px rgba(6, 6, 92, 0.02) !important;
   border: 1px solid rgba(6, 6, 92, 0.08) !important;
 }
-[class*="bg-[#141C2F]"] {
+div[class*="bg-[#141C2F]"], section[class*="bg-[#141C2F]"] {
   background-color: #f1f5f9 !important; /* Slate 100 */
 }
 [class*="bg-black/20"] {
@@ -133,7 +133,7 @@ body {
   color: #334155 !important; /* Slate 700 */
 }
 [class*="text-white"] {
-  color: #06065C !important; /* Dark Navy Blue */
+  color: #ffffff !important; /* Keep text-white pure white for brand colored buttons, badges and active tabs */
 }
 
 /* Specific Restoration: Ensure that buttons, badges, and colored/brand backgrounds with white text keep their crisp white text */

@@ -1,28 +1,36 @@
-import { defineConfig, loadEnv } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import {defineConfig} from 'vite';
+import {devApiMiddleware} from './src/dev_backend';
 
-export default defineConfig(({ mode }) => {
-  // Load env file based on the current mode (development, production, etc.)
-  const env = loadEnv(mode, process.cwd(), '');
-
+export default defineConfig(() => {
   return {
     plugins: [
       react(), 
-      tailwindcss()
+      tailwindcss(),
+      {
+        name: 'dev-api-middleware',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            if (req.url && req.url.startsWith('/api')) {
+              devApiMiddleware(req, res, next);
+            } else {
+              next();
+            }
+          });
+        }
+      }
     ],
     resolve: {
-      // Enables native Vite 8 TypeScript path alias resolution
-      tsconfigPaths: true, 
+      alias: {
+        '@': path.resolve(__dirname, '.'),
+      },
     },
     server: {
-      proxy: {
-        '/api': {
-          // Uses the loaded environment variable safely
-          target: env.VITE_API_URL || 'http://localhost:3000',
-          changeOrigin: true,
-        },
-      },
+      // HMR is disabled in AI Studio via DISABLE_HMR env var.
+      hmr: process.env.DISABLE_HMR !== 'true',
+      watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
   };
 });

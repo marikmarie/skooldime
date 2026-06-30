@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   ShoppingCart, QrCode, ClipboardList, RefreshCw, Key, ArrowRight, 
   UserCheck, AlertTriangle, ShieldCheck, CheckCircle2, Search, Plus, CreditCard, Banknote,
-  Smartphone, Camera, User, TrendingUp, Users, BarChart3
+  Smartphone, Camera, User, TrendingUp, Users, BarChart3, X
 } from 'lucide-react';
 import { Student, CatalogItem, Transaction } from '../types';
 import { useToast } from './ToastContext';
@@ -82,6 +82,13 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
 
   // RecentTransactions component synchronization trigger
   const [txRefreshTrigger, setTxRefreshTrigger] = useState(0);
+
+  // Simplified Card Scan Dialog States
+  const [showScanDialog, setShowScanDialog] = useState(false);
+  const [scanStatus, setScanStatus] = useState<'READY' | 'READING' | 'SUCCESS' | 'DECLINED'>('READY');
+  const [scanDeclineMessage, setScanDeclineMessage] = useState('');
+  const [pinRequiredStudent, setPinRequiredStudent] = useState<Student | null>(null);
+  const [scanSearchQuery, setScanSearchQuery] = useState('');
 
   const fetchBaseData = async () => {
     try {
@@ -250,27 +257,19 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
   const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   const handleCheckout = async () => {
-    if (!scannedStudent) {
-      toast.error('Please scan a Student QR Code card before checkout.');
-      return;
-    }
     if (cartTotal <= 0) {
       toast.error('Cart is empty.');
       return;
     }
-    if (cartTotal > scannedStudent.noPinLimit) {
-      setShowPinModal(true);
-      return;
-    }
-    executeCheckoutRequest(null);
+    setShowScanDialog(true);
   };
 
-  const executeCheckoutRequest = async (pinCode: string | null) => {
+  const executeCheckoutRequest = async (pinCode: string | null, studentToPay: Student) => {
     setLoading(true);
     setPinError('');
 
     const payload = {
-      studentId: scannedStudent.id,
+      studentId: studentToPay.id,
       vendorId: vendor?.id || 'V1',
       items: cart,
       total: cartTotal,
@@ -291,6 +290,8 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
         setSearchQr('');
         setShowPinModal(false);
         setEnteredPin('');
+        setShowScanDialog(false);
+        setScanStatus('READY');
         
         const newTxn: Transaction = {
           id: `tx_pos_${Date.now()}`,
@@ -308,10 +309,16 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
         setMerchantBalance(prev => prev + data.vendorReceived);
         fetchBaseData();
       } else if (data.pinRequired) {
+        setPinRequiredStudent(studentToPay);
         setShowPinModal(true);
       } else {
         setPinError(data.error);
-        if (!pinCode) toast.error(data.error || 'Checkout failed.');
+        if (!pinCode) {
+          setScanDeclineMessage(data.error || 'Checkout failed.');
+          setScanStatus('DECLINED');
+        } else {
+          toast.error(data.error || 'Checkout failed.');
+        }
       }
     } catch (e: any) {
       toast.error(e.message || 'Error occurred during checkout.');
@@ -424,7 +431,9 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
   };
 
   const handleKeyboardSubmit = () => {
-    if (enteredPin.length === 4) executeCheckoutRequest(enteredPin);
+    if (enteredPin.length === 4 && pinRequiredStudent) {
+      executeCheckoutRequest(enteredPin, pinRequiredStudent);
+    }
   };
 
   const handleCloseRegister = () => {
@@ -624,17 +633,17 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
   const peakPeriodLabel = getPeakPeriodLabel();
 
   return (
-    <div className="space-y-6 text-slate-200">
+    <div className="space-y-6 text-slate-800">
       
       {/* Dashboard Sub-Tabs */}
-      <div className="flex bg-slate-950/40 border border-slate-800/80 p-1 rounded-xl max-w-lg mb-2">
+      <div className="flex bg-slate-100 border border-slate-200 p-1 rounded-xl max-w-lg mb-6">
         <button
           type="button"
           onClick={() => setActiveTerminalTab('POS')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
             activeTerminalTab === 'POS'
-              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              ? 'bg-[#06065C] text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
           }`}
         >
           <ShoppingCart className="h-4.5 w-4.5" />
@@ -645,8 +654,8 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
           onClick={() => setActiveTerminalTab('ANALYTICS')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
             activeTerminalTab === 'ANALYTICS'
-              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              ? 'bg-[#06065C] text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
           }`}
         >
           <BarChart3 className="h-4.5 w-4.5" />
@@ -657,8 +666,8 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
           onClick={() => setActiveTerminalTab('HISTORY')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
             activeTerminalTab === 'HISTORY'
-              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              ? 'bg-[#06065C] text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
           }`}
         >
           <Banknote className="h-4.5 w-4.5" />
@@ -667,45 +676,68 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
       </div>
 
       {activeTerminalTab === 'POS' && (
-        /* POS Top Section: Main Work Area */
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        /* POS Top Section: Main Work Area (Scanner on left, Catalog on right) */
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         
-          {/* LEFT COLUMN: Embedded Camera Scanner & Searchable Catalog (8 cols) */}
-          <div className="xl:col-span-8 flex flex-col gap-6">
-            
-            {/* 1. EMBEDDED DUAL-STREAM IDENTITY SCANNER */}
-            <div className="rounded-2xl border border-slate-800 bg-[#0c111e]/80 backdrop-blur-md shadow-2xl overflow-hidden">
+          {/* LEFT COLUMN: Optical Scanner Terminal, Active Student profile, and Shopping Cart (5 cols) */}
+          <div className="xl:col-span-5 flex flex-col gap-6">
+
+            {/* ACTIVE RFID / QR OPTICAL TERMINAL */}
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
+              <style>{`
+                @keyframes scanLaser {
+                  0% { top: 4%; opacity: 0.3; }
+                  50% { top: 96%; opacity: 1; }
+                  100% { top: 4%; opacity: 0.3; }
+                }
+                @keyframes scanBeepFlash {
+                  0% { background-color: rgba(16, 185, 129, 0); }
+                  15% { background-color: rgba(16, 185, 129, 0.35); }
+                  100% { background-color: rgba(16, 185, 129, 0); }
+                }
+                .laser-sweep {
+                  animation: scanLaser 2.2s infinite ease-in-out;
+                }
+                .viewfinder-corner {
+                  width: 20px;
+                  height: 20px;
+                  border-color: #ED0101;
+                  position: absolute;
+                }
+                .flash-active {
+                  animation: scanBeepFlash 0.5s ease-out forwards;
+                }
+              `}</style>
+
               {/* Header */}
-              <div className="bg-linear-to-r from-slate-900 via-[#0f172a] to-slate-900 border-b border-slate-800/80 px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="bg-white border-b border-slate-150 px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-[#c7515e]/10 border border-[#c7515e]/20">
-                    <Camera className="h-5 w-5 text-[#c7515e] animate-pulse" />
+                  <div className="p-2 rounded-xl bg-red-50 text-[#ED0101] border border-red-100">
+                    <Camera className="h-4.5 w-4.5 text-[#ED0101] animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-100 tracking-tight text-sm">Active RFID / QR Optical Terminal</h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Dual-lens live viewfinder and instant local roster simulation</p>
+                    <h3 className="font-bold text-slate-800 tracking-tight text-sm">Active RFID / QR Optical Terminal</h3>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Dual-stream merchant scanner terminal for student cards & parent devices</p>
                   </div>
                 </div>
                 
-                {/* Active/Online telemetry label */}
-                <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800/60">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold tracking-wider">TERMINAL_ONLINE</span>
+                {/* Active telemetry label */}
+                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="text-[10px] font-mono text-slate-700 font-bold tracking-wider">TERMINAL_ACTIVE</span>
                 </div>
               </div>
 
-              {/* Core Scanner Workspace (Split layout: Viewfinder Left, Candidates Right) */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 border-b border-slate-800/60">
-                
-                {/* A. LIVE CAMERA VIEWFINDER (5 cols) */}
-                <div className={`lg:col-span-5 bg-slate-950/90 relative flex flex-col justify-between p-5 min-h-75 overflow-hidden transition-colors duration-300 ${scanFlash ? 'flash-active' : ''}`}>
+              {/* Viewfinder Stream Viewport (Full width inside left col card) */}
+              <div className="p-5 border-b border-slate-100">
+                <div className={`w-full bg-slate-900 rounded-xl relative flex flex-col justify-between p-5 min-h-60 overflow-hidden transition-colors duration-300 ${scanFlash ? 'flash-active' : ''}`}>
                   {/* Status Indicator overlay */}
                   <div className="flex items-center justify-between z-10">
                     <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/5">
-                      <span className={`h-2 w-2 rounded-full ${
+                      <span className={`h-1.5 w-1.5 rounded-full ${
                         scannerStatus === 'SUCCESS' ? 'bg-emerald-500 animate-ping' :
                         scannerStatus === 'DECODING' ? 'bg-amber-500 animate-spin' :
-                        scannerStatus === 'SCANNING' ? 'bg-[#c7515e] animate-pulse' :
+                        scannerStatus === 'SCANNING' ? 'bg-red-500 animate-pulse' :
                         'bg-emerald-500 animate-pulse'
                       }`}></span>
                       <span className="text-[9px] font-mono text-slate-300 uppercase tracking-widest font-black">
@@ -716,46 +748,46 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                       </span>
                     </div>
 
-                    <div className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-mono text-slate-500">
+                    <div className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-mono text-slate-400">
                       60FPS • 1080P
                     </div>
                   </div>
 
                   {/* Viewfinder Target Reticle */}
                   <div className="absolute inset-0 flex items-center justify-center p-4">
-                    <div className="w-48 h-48 border border-dashed border-slate-800/50 rounded-2xl relative flex flex-col items-center justify-center bg-black/30">
+                    <div className="w-40 h-40 border border-dashed border-slate-700 rounded-2xl relative flex flex-col items-center justify-center bg-black/25">
                       
-                      {/* Viewfinder Corners styled elegantly */}
-                      <div className="viewfinder-corner top-0 left-0 border-t-4 border-l-4 rounded-tl-xl" style={{ borderColor: '#c7515e' }}></div>
-                      <div className="viewfinder-corner top-0 right-0 border-t-4 border-r-4 rounded-tr-xl" style={{ borderColor: '#c7515e' }}></div>
-                      <div className="viewfinder-corner bottom-0 left-0 border-b-4 border-l-4 rounded-bl-xl" style={{ borderColor: '#c7515e' }}></div>
-                      <div className="viewfinder-corner bottom-0 right-0 border-b-4 border-r-4 rounded-br-xl" style={{ borderColor: '#c7515e' }}></div>
+                      {/* Viewfinder Corners */}
+                      <div className="viewfinder-corner top-0 left-0 border-t-4 border-l-4 rounded-tl-xl"></div>
+                      <div className="viewfinder-corner top-0 right-0 border-t-4 border-r-4 rounded-tr-xl"></div>
+                      <div className="viewfinder-corner bottom-0 left-0 border-b-4 border-l-4 rounded-bl-xl"></div>
+                      <div className="viewfinder-corner bottom-0 right-0 border-b-4 border-r-4 rounded-br-xl"></div>
 
                       {/* Laser Sweep Line */}
                       {scannerStatus !== 'SUCCESS' && (
-                        <div className="absolute left-3 right-3 h-0.5 bg-linear-to-r from-transparent via-[#c7515e] to-transparent shadow-[0_0_8px_#c7515e] laser-sweep z-10"></div>
+                        <div className="absolute left-3 right-3 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_8px_#ff0000] laser-sweep z-10"></div>
                       )}
 
                       {/* Content based on Scanner State */}
                       {scannerStatus === 'READY' && (
-                        <div className="text-center p-3 space-y-1.5 z-10">
-                          <QrCode className="h-8 w-8 text-slate-700 mx-auto animate-pulse" />
-                          <p className="text-[11px] font-bold text-slate-300">Awaiting QR Card</p>
-                          <p className="text-[9px] text-slate-500 leading-tight">Click on a simulation card on the right to trigger optical swipe</p>
+                        <div className="text-center p-3 space-y-2 z-10">
+                          <QrCode className="h-8 w-8 text-slate-400 mx-auto animate-pulse" />
+                          <p className="text-[11px] font-bold text-slate-200">Ready to Scan</p>
+                          <p className="text-[9px] text-slate-400 leading-tight">Tap the simulation button below to trigger card swiping</p>
                         </div>
                       )}
 
                       {scannerStatus === 'SCANNING' && (
                         <div className="text-center p-3 space-y-2 z-10">
-                          <div className="w-8 h-8 rounded-full border-2 border-[#c7515e]/30 border-t-[#c7515e] animate-spin mx-auto"></div>
-                          <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest animate-pulse">Scanning...</p>
+                          <div className="w-8 h-8 rounded-full border-2 border-red-500/30 border-t-red-500 animate-spin mx-auto"></div>
+                          <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest animate-pulse">Scanning Code...</p>
                         </div>
                       )}
 
                       {scannerStatus === 'DECODING' && (
                         <div className="text-center p-3 space-y-2 z-10">
                           <RefreshCw className="h-8 w-8 text-amber-400 mx-auto animate-spin" />
-                          <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Decoding...</p>
+                          <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Decoding ledger...</p>
                         </div>
                       )}
 
@@ -763,7 +795,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                         <div className="text-center p-3 space-y-1.5 z-10 animate-in zoom-in-75 duration-150">
                           <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
                           <p className="text-xs font-bold text-emerald-400">Match Succeeded!</p>
-                          <p className="text-[9px] font-mono text-slate-400 truncate max-w-37.5">
+                          <p className="text-[9px] font-mono text-slate-300 truncate max-w-36">
                             {detectedStudent ? detectedStudent.name : detectedParent?.name}
                           </p>
                         </div>
@@ -772,521 +804,284 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                     </div>
                   </div>
 
-                  {/* Telemetry info */}
-                  <div className="flex justify-between items-end text-[8px] font-mono text-slate-600 z-10 border-t border-white/5 pt-2">
-                    <span>RFID_SYS_ACTIVE</span>
-                    <span>OP_V2_MIMIC</span>
+                  {/* Simulation Scan Trigger Button Overlaid / Stacked */}
+                  <div className="flex justify-center z-20 pb-1 mt-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowScannerModal(true);
+                        setDetectedStudent(null);
+                        setDetectedParent(null);
+                        setScannerStatus('READY');
+                      }}
+                      className="px-4 py-2 bg-[#06065C] hover:bg-[#040440] text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center gap-1.5 transform active:scale-95"
+                    >
+                      <CreditCard className="h-4 w-4 text-white" />
+                      Simulate Card / QR Tap
+                    </button>
                   </div>
                 </div>
-
-                {/* B. SIMULATION CANDIDATES CONTROLLER PANEL (7 cols) */}
-                <div className="lg:col-span-7 bg-[#070b13] p-5 flex flex-col justify-between min-h-75">
-                  <div className="space-y-4 flex-1 flex flex-col">
-                    {/* Header & Tabs */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/60 pb-3">
-                      <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800/80 w-full sm:w-auto">
-                        <button
-                          onClick={() => {
-                            setScannerTab('STUDENT');
-                            setDetectedParent(null);
-                            setScannerStatus('READY');
-                            setCandidateSearchQuery('');
-                          }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                            scannerTab === 'STUDENT'
-                              ? 'bg-[#c7515e] text-white shadow-md'
-                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                          }`}
-                        >
-                          <User className="h-3.5 w-3.5" />
-                          Students
-                        </button>
-                        <button
-                          onClick={() => {
-                            setScannerTab('PARENT');
-                            setDetectedParent(null);
-                            setScannerStatus('READY');
-                            setCandidateSearchQuery('');
-                          }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                            scannerTab === 'PARENT'
-                              ? 'bg-[#c7515e] text-white shadow-md'
-                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                          }`}
-                        >
-                          <Smartphone className="h-3.5 w-3.5" />
-                          Parents
-                        </button>
-                      </div>
-
-                      {/* candidate search field */}
-                      <div className="relative w-full sm:w-44">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
-                        <input
-                          type="text"
-                          value={candidateSearchQuery}
-                          onChange={(e) => setCandidateSearchQuery(e.target.value)}
-                          placeholder="Search profile..."
-                          className="w-full rounded-lg border border-slate-800 bg-slate-950 py-1.5 pl-8 pr-2.5 text-xs text-slate-300 placeholder-slate-600 focus:border-[#c7515e] outline-none transition-colors"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Candidate Lists */}
-                    <div className="flex-1 overflow-y-auto max-h-47.5 pr-1 space-y-2 scrollbar-thin">
-                      {scannerTab === 'STUDENT' ? (
-                        allStudents.filter(stud => 
-                          stud.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-                          stud.class.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-                          stud.admissionNo.toLowerCase().includes(candidateSearchQuery.toLowerCase())
-                        ).length === 0 ? (
-                          <div className="text-center py-8 text-slate-500 text-xs italic">
-                            No students match "{candidateSearchQuery}"
-                          </div>
-                        ) : (
-                          allStudents
-                            .filter(stud => 
-                              stud.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-                              stud.class.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-                              stud.admissionNo.toLowerCase().includes(candidateSearchQuery.toLowerCase())
-                            )
-                            .map((stud) => {
-                              const isScanningThis = detectedStudent?.id === stud.id;
-                              return (
-                                <button
-                                  key={stud.id}
-                                  disabled={scannerStatus !== 'READY'}
-                                  onClick={() => startStudentScan(stud)}
-                                  className={`w-full text-left rounded-xl border p-2.5 flex items-center justify-between transition-all duration-150 ${
-                                    isScanningThis
-                                      ? 'bg-[#c7515e]/10 border-[#c7515e] ring-1 ring-[#c7515e]'
-                                      : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700/80 hover:bg-slate-900/40'
-                                  } ${scannerStatus !== 'READY' && !isScanningThis ? 'opacity-40 cursor-not-allowed' : ''}`}
-                                >
-                                  <div className="flex items-center gap-2.5">
-                                    <img src={stud.avatarUrl} alt="" className="w-8 h-8 rounded-full border border-slate-800" referrerPolicy="no-referrer" />
-                                    <div>
-                                      <h4 className="text-xs font-bold text-white leading-tight">{stud.name}</h4>
-                                      <p className="text-[10px] text-slate-400 mt-0.5">{stud.class} • Balance: {(stud.balance || 0).toLocaleString()} UGX</p>
-                                    </div>
-                                  </div>
-                                  <span className="font-mono text-[9px] font-bold bg-[#c7515e]/10 text-[#c7515e] px-1.5 py-0.5 rounded border border-[#c7515e]/15">
-                                    {stud.qrHash}
-                                  </span>
-                                </button>
-                              );
-                            })
-                        )
-                      ) : (
-                        detectedParent && scannerStatus === 'SUCCESS' ? (
-                          // Parent scanned successfully, choose child
-                          <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
-                            <div className="bg-slate-950 rounded-xl p-3 border border-emerald-500/20 flex items-center justify-between">
-                              <div>
-                                <span className="text-[8px] text-emerald-400 font-bold uppercase tracking-wider block">Parent Identified</span>
-                                <h4 className="text-xs font-bold text-white">{detectedParent.name}</h4>
-                              </div>
-                              <button
-                                onClick={() => {
-                                  setDetectedParent(null);
-                                  setScannerStatus('READY');
-                                }}
-                                className="text-[10px] text-slate-500 hover:text-white"
-                              >
-                                [Change]
-                              </button>
-                            </div>
-
-                            <div className="space-y-1.5">
-                              <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Select linked student child:</span>
-                              {allStudents.filter(s => s.parentPhone === detectedParent.phone).length === 0 ? (
-                                <p className="text-xs text-slate-500 italic p-2 bg-slate-950/40 rounded border border-slate-800">No students linked to this account.</p>
-                              ) : (
-                                allStudents
-                                  .filter(s => s.parentPhone === detectedParent.phone)
-                                  .map((s) => (
-                                    <button
-                                      key={s.id}
-                                      onClick={() => selectParentChild(s)}
-                                      className="w-full text-left bg-slate-950 hover:bg-[#c7515e]/10 hover:border-[#c7515e]/50 border border-slate-800 rounded-lg p-2.5 flex items-center justify-between transition-colors"
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <img src={s.avatarUrl} alt="" className="w-7 h-7 rounded-full border border-slate-800" referrerPolicy="no-referrer" />
-                                        <div>
-                                          <h5 className="text-xs font-bold text-slate-200">{s.name}</h5>
-                                          <p className="text-[9px] text-slate-400">{s.class}</p>
-                                        </div>
-                                      </div>
-                                      <span className="text-emerald-400 font-mono text-[10px] font-bold">Select Child &gt;</span>
-                                    </button>
-                                  ))
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          allParents.filter(p => 
-                            p.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-                            p.phone.includes(candidateSearchQuery)
-                          ).length === 0 ? (
-                            <div className="text-center py-8 text-slate-500 text-xs italic">
-                              No parents match "{candidateSearchQuery}"
-                            </div>
-                          ) : (
-                            allParents
-                              .filter(p => 
-                                p.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-                                p.phone.includes(candidateSearchQuery)
-                              )
-                              .map((parent) => {
-                                const isScanningThis = detectedParent?.id === parent.id;
-                                return (
-                                  <button
-                                    key={parent.id}
-                                    disabled={scannerStatus !== 'READY'}
-                                    onClick={() => startParentScan(parent)}
-                                    className={`w-full text-left rounded-xl border p-2.5 flex items-center justify-between transition-all duration-150 ${
-                                      isScanningThis
-                                        ? 'bg-[#c7515e]/10 border-[#c7515e]'
-                                        : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700/80 hover:bg-slate-900/40'
-                                    } ${scannerStatus !== 'READY' && !isScanningThis ? 'opacity-40 cursor-not-allowed' : ''}`}
-                                  >
-                                    <div className="flex items-center gap-2.5">
-                                      <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center border border-slate-800">
-                                        <User className="h-4 w-4 text-slate-400" />
-                                      </div>
-                                      <div>
-                                        <h4 className="text-xs font-bold text-white leading-tight">{parent.name}</h4>
-                                        <p className="text-[10px] text-slate-400 mt-0.5">{parent.phone}</p>
-                                      </div>
-                                    </div>
-                                    <span className="font-mono text-[9px] font-bold bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/15">
-                                      APP QR
-                                    </span>
-                                  </button>
-                                );
-                              })
-                          )
-                        )
-                      )}
-                    </div>
-                  </div>
-                </div>
-
               </div>
 
               {/* Verified Profile Card display underneath active scanner */}
-              <div className="p-5 bg-linear-to-r from-[#0a0f1d] to-[#0e172a]">
+              <div className="p-5 bg-slate-50/50">
                 {scannedStudent ? (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-5 bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        <img src={scannedStudent.avatarUrl} alt="" className="w-14 h-14 rounded-full border-2 border-emerald-500/30 shadow-md" referrerPolicy="no-referrer" />
-                        <span className="absolute bottom-0 right-0 h-4 w-4 bg-emerald-500 border-2 border-[#0c111e] rounded-full flex items-center justify-center">
-                          <UserCheck className="h-2 w-2 text-white" />
-                        </span>
-                      </div>
-                      
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-black text-white leading-tight">{scannedStudent.name}</h4>
-                          <span className="bg-emerald-400/10 text-emerald-400 font-mono font-bold text-[9px] px-1.5 py-0.5 rounded-full">
-                            VERIFIED_ID
+                  <div className="flex flex-col items-stretch gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-xs animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={scannedStudent.avatarUrl} 
+                        alt={scannedStudent.name} 
+                        className="w-11 h-11 rounded-full border border-slate-200" 
+                        referrerPolicy="no-referrer" 
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <h4 className="font-bold text-slate-800 text-xs truncate">{scannedStudent.name}</h4>
+                          <span className="text-[9px] bg-red-50 text-[#ED0101] font-mono px-1.5 py-0.5 rounded border border-red-100 font-bold whitespace-nowrap">
+                            LOADED
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">{scannedStudent.class} • ADM: <span className="font-mono font-bold text-slate-300">{scannedStudent.admissionNo}</span></p>
+                        <p className="text-[11px] text-slate-500">{scannedStudent.class} • ID: <span className="font-mono text-slate-700 font-bold">{scannedStudent.qrHash}</span></p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4 w-full sm:w-auto">
-                      <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800/80 rounded-lg px-3.5 py-2 text-center sm:text-right min-w-30">
-                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-0.5">Card Balance</span>
-                        <span className="text-emerald-400 font-mono font-bold text-sm">{(scannedStudent.balance || 0).toLocaleString()} UGX</span>
+                    <div className="border-t border-slate-100 pt-2.5 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Account Balance</span>
+                        <span className="text-sm font-mono font-black text-slate-800">{(scannedStudent.balance || 0).toLocaleString()} UGX</span>
                       </div>
-
-                      <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800/80 rounded-lg px-3.5 py-2 text-center sm:text-right min-w-30">
-                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-0.5">PIN-Less Limit</span>
-                        <span className="text-rose-400 font-mono font-bold text-sm">{(scannedStudent.noPinLimit || 0).toLocaleString()} UGX</span>
-                      </div>
-
                       <button
                         type="button"
                         onClick={() => {
                           setScannedStudent(null);
                           setSearchQr('');
-                          toast.info('Student session cleared.');
+                          toast.success('Student session ended. Terminal cleared.');
                         }}
-                        className="p-2.5 rounded-lg border border-slate-800/80 hover:bg-rose-500/10 hover:border-rose-500/20 text-slate-500 hover:text-rose-400 transition-colors"
-                        title="Eject student card"
+                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-bold transition-colors border border-slate-200"
                       >
-                        <RefreshCw className="h-4 w-4" />
+                        Clear Session
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center gap-3 py-4 text-slate-500 text-xs border border-dashed border-slate-800/50 rounded-xl bg-slate-950/30">
-                    <UserCheck className="h-4 w-4 text-slate-600 animate-pulse" />
-                    <span>Awaiting customer RFID card or family device scanning simulation...</span>
+                  <div className="flex items-center justify-center gap-2.5 py-4 text-slate-500 text-xs border border-dashed border-slate-200 rounded-xl bg-white">
+                    <UserCheck className="h-4 w-4 text-slate-400" />
+                    <span>No active card swiped</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* 2. PREMIUM SEARCHABLE POS CATALOG */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 shadow-xl p-5 space-y-5">
-              
-              {/* Header with real-time searching input */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-lg bg-[#c7515e]/10 text-[#c7515e]">
-                    <ShoppingCart className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-slate-100 tracking-tight">Canteen Inventory & Quick-Tap Menu</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">Filter items in real-time or add custom tap amounts instantly</p>
-                  </div>
+            {/* ORDER BASKET CARD (Positioned elegantly on the left column under scanner) */}
+            <div className="flex flex-col justify-between bg-white border border-slate-200 rounded-2xl p-5 min-h-110 shadow-sm">
+              <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Current Order</span>
+                  <span className="text-[11px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full font-bold">
+                    {cart.reduce((sum, item) => sum + item.quantity, 0)} Items
+                  </span>
                 </div>
-
-                {/* Styled Search Bar */}
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input
-                    type="text"
-                    value={searchCatalogQuery}
-                    onChange={(e) => {
-                      setSearchCatalogQuery(e.target.value);
-                      // If typing, auto-populate custom item name as a convenience helper
-                      setCustomName(e.target.value);
-                    }}
-                    placeholder="Search catalog items..."
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2 pl-9 pr-8 text-xs text-slate-200 placeholder-slate-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-colors"
-                  />
-                  {searchCatalogQuery && (
-                    <button
-                      onClick={() => {
-                        setSearchCatalogQuery('');
-                        setCustomName('');
-                      }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white text-xs font-bold"
-                    >
-                      X
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Dynamic Items Grid */}
-              {catalog.filter(item => item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase())).length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-800 p-8 text-center space-y-4">
-                  <p className="text-xs text-slate-400">No registered menu items match "{searchCatalogQuery}".</p>
-                  {searchCatalogQuery && (
-                    <div className="max-w-xs mx-auto p-3 bg-slate-950 rounded-lg border border-slate-800">
-                      <p className="text-[11px] text-slate-500 mb-2">Instantly add a custom ticket for this search:</p>
-                      <button
-                        onClick={() => {
-                          const priceNum = parseInt(customPrice) || 1000;
-                          handleAddToCart(searchCatalogQuery, priceNum);
-                          toast.success(`Custom item "${searchCatalogQuery}" added to basket.`);
-                        }}
-                        className="w-full py-1.5 bg-[#c7515e] hover:bg-[#b04753] text-white text-[10px] font-bold rounded-md transition"
-                      >
-                        Add "{searchCatalogQuery}" to Basket (1,000 UGX)
-                      </button>
+                
+                {/* Basket list */}
+                <div className="flex-1 overflow-y-auto pr-1 space-y-2 max-h-96 scrollbar-thin">
+                  {cart.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400 text-xs">
+                      Basket is empty. Select canteen menu items on the right.
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {catalog
-                    .filter(item => item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase()))
-                    .map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => handleAddToCart(item.name, item.price)}
-                        className="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-800/40 hover:bg-[#c7515e]/5 hover:border-[#c7515e]/50 p-3.5 text-left transition-all duration-200 active:scale-95 group flex flex-col justify-between h-24 shadow-sm"
-                      >
-                        {/* Soft visual glow on hover */}
-                        <div className="absolute inset-0 bg-linear-to-br from-[#c7515e]/0 via-[#c7515e]/0 to-[#c7515e]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        
-                        <span className="text-xs font-bold text-slate-200 group-hover:text-white truncate w-full relative z-10">{item.name}</span>
-                        <div className="flex items-center justify-between w-full relative z-10">
-                          <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-md">
-                            {item.price.toLocaleString()} UGX
-                          </span>
-                          <span className="text-[10px] text-slate-500 font-extrabold opacity-0 group-hover:opacity-100 transition-opacity">
-                            + ADD
-                          </span>
+                  ) : (
+                    cart.map((item) => (
+                      <div key={item.name} className="flex justify-between items-center border-b border-slate-100 py-2.5">
+                        <div className="flex-1 min-w-0 pr-2">
+                          <h5 className="text-xs font-bold text-slate-800 truncate">{item.name}</h5>
+                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            {item.price.toLocaleString()} UGX x {item.quantity}
+                          </p>
                         </div>
-                      </button>
-                    ))}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono font-bold text-slate-700">
+                            {(item.price * item.quantity).toLocaleString()} UGX
+                          </span>
+                          <button
+                            onClick={() => handleRemoveFromCart(item.name)}
+                            className="text-slate-400 hover:text-[#ED0101] p-1 text-xs font-bold font-mono"
+                            title="Remove item"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
-              )}
-
-              {/* Manual Inline Custom Item Form */}
-              <div className="pt-4 border-t border-slate-800/80">
-                <div className="bg-slate-950/40 rounded-xl border border-slate-800/60 p-4">
-                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Custom / PIN-Less Tap Overrides</h4>
-                  <form onSubmit={handleCustomAddToCart} className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex-1 relative">
-                      <input
-                        type="text"
-                        required
-                        value={customName}
-                        onChange={(e) => setCustomName(e.target.value)}
-                        placeholder="Custom item name or purpose (e.g., Samosa Set)..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-slate-200 placeholder-slate-600 focus:border-[#c7515e] outline-none transition-colors"
-                      />
-                    </div>
-                    <div className="w-full sm:w-44 relative">
-                      <input
-                        type="number"
-                        required
-                        value={customPrice}
-                        onChange={(e) => setCustomPrice(e.target.value)}
-                        placeholder="Price (UGX)..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-slate-200 placeholder-slate-600 focus:border-[#c7515e] outline-none transition-colors"
-                      />
-                    </div>
+                
+                {/* Pay trigger section */}
+                <div className="border-t border-slate-200 pt-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-slate-600">Total Amount:</span>
+                    <span className="text-base font-bold text-slate-900 font-mono">
+                      {cartTotal.toLocaleString()} UGX
+                    </span>
+                  </div>
+                  
+                  {scannedStudent ? (
                     <button
-                      type="submit"
-                      className="rounded-xl bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700/80 px-5 py-2 text-xs font-bold text-slate-200 transition-colors whitespace-nowrap"
+                      type="button"
+                      onClick={() => executeCheckoutRequest(null, scannedStudent)}
+                      disabled={cart.length === 0 || loading}
+                      className={`w-full py-3.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${
+                        cart.length === 0 || loading
+                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                          : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-98 shadow-sm shadow-emerald-600/10'
+                      }`}
                     >
-                      + Add Custom
+                      {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                      Charge {scannedStudent.name}'s Card
                     </button>
-                  </form>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleCheckout}
+                      disabled={cart.length === 0}
+                      className={`w-full py-3.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${
+                        cart.length === 0
+                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                          : 'bg-[#ED0101] text-white hover:bg-[#d60000] active:scale-98 shadow-sm shadow-[#ED0101]/10'
+                      }`}
+                    >
+                      <CreditCard className="h-4 w-4" /> Scan Card to Pay
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleGeneratePaymentQr}
+                    disabled={cart.length === 0 || loading}
+                    className={`w-full py-2.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all border ${
+                      cart.length === 0 || loading
+                        ? 'border-slate-200 text-slate-400 cursor-not-allowed'
+                        : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:scale-98'
+                    }`}
+                  >
+                    <QrCode className="h-4 w-4" />
+                    Generate Family Payment QR
+                  </button>
                 </div>
               </div>
-
             </div>
 
           </div>
 
-        {/* RIGHT COLUMN: Basket & Checkout (4 cols) */}
-        <div className="xl:col-span-4 rounded-xl border border-slate-800 bg-slate-900 shadow-xl flex flex-col h-full min-h-125 max-h-200">
-          {activeQrCode ? (
-            <div className="p-6 flex flex-col items-center justify-between h-full flex-1 space-y-6">
-              <div className="text-center w-full">
-                <div className="mx-auto bg-emerald-500/10 w-12 h-12 rounded-full flex items-center justify-center mb-3">
-                  <QrCode className="h-6 w-6 text-emerald-400" />
-                </div>
-                <h3 className="font-bold text-lg text-white">Dynamic QR Payment</h3>
-                <p className="text-xs text-slate-400 mt-1">Scan using parental or student mobile app to complete transaction.</p>
+          {/* RIGHT COLUMN: Searchable Catalog & Custom Amount additions (7 cols) */}
+          <div className="xl:col-span-7 flex flex-col gap-6 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            
+            {/* Header with real-time searching input */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="font-bold text-base text-slate-800 tracking-tight">Canteen Inventory</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Select items to build the customer's order basket</p>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl shadow-xl flex flex-col items-center border-4 border-slate-800 animate-in fade-in duration-300">
-                <div className="w-48 h-48 flex items-center justify-center">
-                  <QRCodeSVG 
-                    value={activeQrCode.paymentUrl} 
-                    size={176} 
-                    level="H"
-                  />
-                </div>
-                <div className="mt-3 text-slate-900 font-mono font-bold text-xs tracking-wider bg-slate-100 px-3 py-1 rounded">
-                  {activeQrCode.referenceCode}
-                </div>
-              </div>
-
-              <div className="w-full space-y-4">
-                <div className="bg-slate-950 rounded-xl p-4 border border-slate-800/80 text-center">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Total to Collect</span>
-                  <span className="text-2xl font-mono font-black text-emerald-400">{activeQrCode.amount.toLocaleString()} <span className="text-xs text-emerald-600">UGX</span></span>
-                  <div className="flex items-center justify-center gap-2 mt-3 text-xs text-[#c7515e] animate-pulse font-medium">
-                    <span className="h-2 w-2 rounded-full bg-[#c7515e]"></span>
-                    Awaiting customer checkout status...
-                  </div>
-                </div>
-
-                <div className="space-y-2">
+              {/* Search Bar */}
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchCatalogQuery}
+                  onChange={(e) => {
+                    setSearchCatalogQuery(e.target.value);
+                    setCustomName(e.target.value);
+                  }}
+                  placeholder="Search catalog items..."
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:border-slate-300 outline-none transition-colors"
+                />
+                {searchCatalogQuery && (
                   <button
                     onClick={() => {
-                      setSimError('');
-                      setSimPin('');
-                      setShowSimModal(true);
+                      setSearchCatalogQuery('');
+                      setCustomName('');
                     }}
-                    className="w-full py-3 bg-[#c7515e] hover:bg-[#b04753] hover:shadow-lg hover:shadow-[#c7515e]/25 active:scale-[0.98] transition-all text-xs font-bold text-white rounded-xl flex items-center justify-center gap-2"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
                   >
-                    <Smartphone className="h-4 w-4" />
-                    Simulate Customer Scan & Pay
+                    X
                   </button>
-
-                  <button
-                    onClick={() => setActiveQrCode(null)}
-                    className="w-full py-3 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] transition-all text-xs font-semibold text-slate-400 hover:text-white rounded-xl"
-                  >
-                    Cancel QR & Back to Basket
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="p-5 border-b border-slate-800 bg-slate-800/30 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-[#c7515e]" />
-                  <h3 className="font-semibold text-slate-100">Current Order</h3>
-                </div>
-                <span className="bg-[#c7515e]/20 text-[#c7515e] text-xs font-bold px-2.5 py-1 rounded-full">
-                  {cart.reduce((a, c) => a + c.quantity, 0)} Items
-                </span>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin">
-                {cart.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-3 py-10">
-                    <ShoppingCart className="h-10 w-10 opacity-20" />
-                    <p className="text-sm">Basket is empty</p>
-                  </div>
-                ) : (
-                  cart.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center bg-slate-950 border border-slate-800 rounded-lg p-3 group">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-200 text-sm">{item.name}</span>
-                        <span className="text-slate-500 font-mono text-[11px]">{item.price.toLocaleString()} x {item.quantity}</span>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span className="font-mono font-bold text-slate-100">{(item.price * item.quantity).toLocaleString()}</span>
-                        <button onClick={() => handleRemoveFromCart(item.name)} className="text-[10px] text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity uppercase font-bold">Remove</button>
-                      </div>
-                    </div>
-                  ))
                 )}
               </div>
+            </div>
 
-              <div className="p-5 bg-slate-800/50 border-t border-slate-800 space-y-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-slate-400 font-medium">Total Amount</span>
-                  <span className="text-2xl font-black text-emerald-400 font-mono">{cartTotal.toLocaleString()} <span className="text-sm text-emerald-600">UGX</span></span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={handleCheckout}
-                    disabled={cart.length === 0 || !scannedStudent || loading}
-                    className={`py-4 rounded-xl text-xs font-bold text-white shadow-lg transition-all flex items-center justify-center gap-1.5 
-                      ${cart.length === 0 || !scannedStudent 
-                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
-                        : 'bg-[#c7515e] hover:bg-[#b04753] hover:shadow-[#c7515e]/25 active:scale-[0.98]'}`}
-                  >
-                    {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                    {loading ? 'Processing...' : 'Card Checkout'}
-                  </button>
-
-                  <button
-                    onClick={handleGeneratePaymentQr}
-                    disabled={cart.length === 0 || loading}
-                    className={`py-4 rounded-xl text-xs font-bold text-white shadow-lg transition-all flex items-center justify-center gap-1.5 
-                      ${cart.length === 0 
-                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
-                        : 'bg-emerald-600 hover:bg-emerald-500 hover:shadow-emerald-500/25 active:scale-[0.98]'}`}
-                  >
-                    <QrCode className="h-4 w-4" />
-                    Generate QR
-                  </button>
-                </div>
+            {/* Dynamic Items Grid (No background or heavy colors) */}
+            {catalog.filter(item => item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase())).length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center space-y-4 bg-transparent">
+                <p className="text-xs text-slate-500">No registered menu items match "{searchCatalogQuery}".</p>
+                {searchCatalogQuery && (
+                  <div className="max-w-xs mx-auto p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-[11px] text-slate-500 mb-2">Instantly add a custom ticket for this search:</p>
+                    <button
+                      onClick={() => {
+                        const priceNum = parseInt(customPrice) || 1000;
+                        handleAddToCart(searchCatalogQuery, priceNum);
+                        toast.success(`Custom item "${searchCatalogQuery}" added to basket.`);
+                      }}
+                      className="w-full py-1.5 bg-[#06065C] hover:bg-[#040440] text-white text-[10px] font-bold rounded-md transition"
+                    >
+                      Add "{searchCatalogQuery}" to Basket (1,000 UGX)
+                    </button>
+                  </div>
+                )}
               </div>
-            </>
-          )}
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {catalog
+                  .filter(item => item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase()))
+                  .map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handleAddToCart(item.name, item.price)}
+                      className="rounded-lg border border-slate-200 bg-white hover:border-slate-300 p-3.5 text-left transition-all active:scale-98 flex flex-col justify-between h-20 shadow-xs"
+                    >
+                      <span className="text-xs font-bold text-slate-800 truncate w-full">{item.name}</span>
+                      <span className="text-[11px] font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+                        {item.price.toLocaleString()} UGX
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            )}
+
+            {/* CUSTOM TICKET ENTRY FORM (Clean and integrated) */}
+            <form onSubmit={handleCustomAddToCart} className="border-t border-slate-200 pt-6 mt-4 flex flex-col sm:flex-row items-end gap-3">
+              <div className="flex-1 space-y-1.5 w-full">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Custom Ticket Name</label>
+                <input
+                  type="text"
+                  required
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="e.g. Snack Pack, Stationery Extra"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-slate-300 outline-none transition-colors"
+                />
+              </div>
+              <div className="w-full sm:w-44 space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Price (UGX)</label>
+                <input
+                  type="number"
+                  required
+                  value={customPrice}
+                  onChange={(e) => setCustomPrice(e.target.value)}
+                  placeholder="Amount"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-slate-300 outline-none transition-colors"
+                />
+              </div>
+              <button
+                type="submit"
+                className="rounded-lg bg-[#06065C] hover:bg-[#040440] text-white px-5 py-2 text-xs font-bold transition-all whitespace-nowrap w-full sm:w-auto flex items-center justify-center gap-1.5 h-9"
+              >
+                <Plus className="h-4 w-4 text-white" /> Add Custom
+              </button>
+            </form>
+
+          </div>
+
         </div>
-      </div>
       )}
 
       {activeTerminalTab === 'ANALYTICS' && (
@@ -1620,7 +1415,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
       {/* MODALS */}
       
       {/* PIN Authorization Modal */}
-      {showPinModal && scannedStudent && (
+      {showPinModal && pinRequiredStudent && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
           <div className="w-full max-w-85 rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="text-center mb-6">
@@ -1628,7 +1423,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                 <ShieldCheck className="h-6 w-6 text-[#c7515e]" />
               </div>
               <h4 className="text-lg font-bold text-white">Enter Student PIN</h4>
-              <p className="text-xs text-slate-400 mt-1">Required for amounts over {scannedStudent.noPinLimit.toLocaleString()} UGX</p>
+              <p className="text-xs text-slate-400 mt-1">Required for amounts over {pinRequiredStudent.noPinLimit.toLocaleString()} UGX</p>
             </div>
 
             {pinError && (
@@ -1721,6 +1516,48 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                   Confirm Void
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dynamic QR Code Presentation Modal */}
+      {activeQrCode && !showSimModal && (
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200 text-center space-y-5">
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] font-bold text-[#ED0101] tracking-widest uppercase bg-red-50 px-2 py-0.5 rounded-full">skoolDime Pay</span>
+              <h4 className="text-base font-black text-slate-800 mt-2">Dynamic Checkout QR</h4>
+              <p className="text-xs text-slate-500 mt-1">Scan this QR from a parent app or student device to authorize instantly</p>
+            </div>
+
+            {/* QR SVG Drawing */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center space-y-3">
+              <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-xs">
+                <QRCodeSVG value={activeQrCode.paymentUrl} size={180} />
+              </div>
+              <div className="font-mono text-xs text-slate-750 font-bold bg-slate-200/50 px-3 py-1 rounded">
+                Ref: {activeQrCode.referenceCode}
+              </div>
+              <p className="text-xs font-bold text-slate-700">Amount: <span className="font-mono text-slate-900 font-bold">{activeQrCode.amount.toLocaleString()} UGX</span></p>
+            </div>
+
+            {/* Simulated actions */}
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setShowSimModal(true)}
+                className="w-full py-3 bg-[#ED0101] hover:bg-[#d60000] text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 active:scale-98 shadow-md"
+              >
+                <Smartphone className="h-4 w-4" /> Simulate Parent App Scan
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveQrCode(null)}
+                className="w-full py-2.5 text-xs text-slate-500 hover:text-slate-800 transition"
+              >
+                Cancel / Dismiss
+              </button>
             </div>
           </div>
         </div>
@@ -1901,334 +1738,332 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
         </div>
       )}
 
-      {/* QR CAMERA VIEWFINDER SIMULATOR MODAL */}
-      {showScannerModal && (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <style>{`
-            @keyframes scanLaser {
-              0% { top: 4%; opacity: 0.3; }
-              50% { top: 96%; opacity: 1; }
-              100% { top: 4%; opacity: 0.3; }
-            }
-            @keyframes pulseMarker {
-              0%, 100% { transform: scale(1); opacity: 0.6; }
-              50% { transform: scale(1.08); opacity: 1; }
-            }
-            @keyframes scanBeepFlash {
-              0% { background-color: rgba(16, 185, 129, 0); }
-              15% { background-color: rgba(16, 185, 129, 0.35); }
-              100% { background-color: rgba(16, 185, 129, 0); }
-            }
-            .laser-sweep {
-              animation: scanLaser 2.2s infinite ease-in-out;
-            }
-            .viewfinder-corner {
-              width: 24px;
-              height: 24px;
-              border-color: #c7515e;
-              position: absolute;
-            }
-            .flash-active {
-              animation: scanBeepFlash 0.5s ease-out forwards;
-            }
-          `}</style>
-
-          <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200 flex flex-col lg:flex-row h-162.5 lg:h-137.5">
-            
-            {/* LEFT SIDE: VIEW FINDER (MIMIC CAMERA INTERFACE) */}
-            <div className={`lg:w-1/2 bg-slate-950 relative flex flex-col justify-between p-6 overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-800 transition-colors duration-300 ${scanFlash ? 'flash-active' : ''}`}>
-              
-              {/* Camera status indicators */}
-              <div className="flex items-center justify-between z-10">
-                <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/5">
-                  <span className={`h-2.5 w-2.5 rounded-full ${
-                    scannerStatus === 'SUCCESS' ? 'bg-emerald-500 animate-ping' :
-                    scannerStatus === 'DECODING' ? 'bg-amber-500 animate-spin' :
-                    scannerStatus === 'SCANNING' ? 'bg-[#c7515e] animate-pulse' :
-                    'bg-emerald-500 animate-pulse'
-                  }`}></span>
-                  <span className="text-[10px] font-mono text-slate-300 uppercase tracking-widest font-bold">
-                    {scannerStatus === 'READY' && 'CAMERA: LIVE'}
-                    {scannerStatus === 'SCANNING' && 'SCANNING OBJECT...'}
-                    {scannerStatus === 'DECODING' && 'DECODING DATA...'}
-                    {scannerStatus === 'SUCCESS' && 'DECODED SUCCESSFULLY'}
-                  </span>
-                </div>
-
-                <div className="bg-black/60 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-mono text-slate-400">
-                  FPS: 60 • 1080p
-                </div>
+      {/* CONTACTLESS RFID CARD READER DIALOG */}
+      {showScanDialog && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl animate-in fade-in zoom-in-95 duration-150 p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-slate-700" />
+                <h4 className="font-bold text-slate-800 text-sm">Tap Contactless Card</h4>
               </div>
-
-              {/* Viewfinder Target Reticle */}
-              <div className="absolute inset-0 flex items-center justify-center p-8">
-                <div className="w-64 h-64 md:w-72 md:h-72 border border-dashed border-slate-800/60 rounded-3xl relative flex flex-col items-center justify-center bg-black/20">
-                  
-                  {/* Corners */}
-                  <div className="viewfinder-corner top-0 left-0 border-t-4 border-l-4 rounded-tl-xl"></div>
-                  <div className="viewfinder-corner top-0 right-0 border-t-4 border-r-4 rounded-tr-xl"></div>
-                  <div className="viewfinder-corner bottom-0 left-0 border-b-4 border-l-4 rounded-bl-xl"></div>
-                  <div className="viewfinder-corner bottom-0 right-0 border-b-4 border-r-4 rounded-br-xl"></div>
-
-                  {/* Laser Sweeper Line */}
-                  {scannerStatus !== 'SUCCESS' && (
-                    <div className="absolute left-4 right-4 h-1 bg-linear-to-r from-transparent via-[#c7515e] to-transparent shadow-[0_0_12px_#c7515e] laser-sweep z-10"></div>
-                  )}
-
-                  {/* Content based on Scanner State */}
-                  {scannerStatus === 'READY' && (
-                    <div className="text-center p-4 space-y-2 z-10">
-                      <Camera className="h-10 w-10 text-slate-600 mx-auto animate-pulse" />
-                      <p className="text-xs font-semibold text-slate-300">Align QR Code to Scan</p>
-                      <p className="text-[10px] text-slate-500">Position student ID card or parent payment screen inside the border</p>
-                    </div>
-                  )}
-
-                  {scannerStatus === 'SCANNING' && (
-                    <div className="text-center p-4 space-y-3 z-10">
-                      <div className="w-12 h-12 rounded-full border-4 border-[#c7515e]/30 border-t-[#c7515e] animate-spin mx-auto"></div>
-                      <p className="text-xs font-bold text-rose-400 uppercase tracking-widest animate-pulse">Capturing Image...</p>
-                      <p className="text-[11px] font-mono text-slate-400">
-                        {detectedStudent ? detectedStudent.name : detectedParent?.name}
-                      </p>
-                    </div>
-                  )}
-
-                  {scannerStatus === 'DECODING' && (
-                    <div className="text-center p-4 space-y-3 z-10">
-                      <RefreshCw className="h-10 w-10 text-amber-400 mx-auto animate-spin" />
-                      <p className="text-xs font-bold text-amber-400 uppercase tracking-widest">Parsing QR Matrix...</p>
-                      <p className="text-[10px] font-mono text-slate-500">Checking registry database...</p>
-                    </div>
-                  )}
-
-                  {scannerStatus === 'SUCCESS' && (
-                    <div className="text-center p-4 space-y-2 z-10 animate-in zoom-in-50 duration-200">
-                      <CheckCircle2 className="h-14 w-14 text-emerald-400 mx-auto" />
-                      <p className="text-sm font-bold text-emerald-400">Optical Match Succeeded!</p>
-                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 max-w-50 mx-auto">
-                        <p className="text-xs font-bold text-white truncate">{detectedStudent ? detectedStudent.name : detectedParent?.name}</p>
-                        <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                          {detectedStudent ? `CARD: ${detectedStudent.qrHash}` : `PHONE: ${detectedParent?.phone}`}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                </div>
-              </div>
-
-              {/* Technical telemetry footer inside scanner */}
-              <div className="flex justify-between items-end text-[9px] font-mono text-slate-600 z-10 border-t border-white/5 pt-3">
-                <div className="space-y-0.5">
-                  <p>SYS_MODEL: OP_V2_MIMIC</p>
-                  <p>LENS_FOCUS: AUTOFOCUS</p>
-                </div>
-                <div className="text-right">
-                  <p>COLLECTO_PUSH_TRIGGER: AUTO</p>
-                  <p>AUDIO_GATEWAY: ACTIVE</p>
-                </div>
-              </div>
-
+              <button
+                type="button"
+                onClick={() => {
+                  setShowScanDialog(false);
+                  setScanStatus('READY');
+                  setScanDeclineMessage('');
+                }}
+                className="text-slate-400 hover:text-slate-600 text-sm font-bold"
+              >
+                ✕
+              </button>
             </div>
 
-            {/* RIGHT SIDE: CONTROLLER SHEET (TABBED INTERACTIVE SIMULATION SELECTION) */}
-            <div className="lg:w-1/2 bg-slate-900 flex flex-col justify-between h-full p-6">
-              
-              <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <div>
-                    <h3 className="font-bold text-base text-white">Merchant Quick-Scan Controller</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">Simulate scanning of customer identifiers physically</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowScannerModal(false);
-                      setScannerStatus('READY');
-                      setDetectedParent(null);
-                      setDetectedStudent(null);
-                    }}
-                    className="text-slate-500 hover:text-white font-mono text-xs uppercase"
-                  >
-                    Close [X]
-                  </button>
+            {scanStatus === 'DECLINED' ? (
+              <div className="space-y-4 py-3 text-center">
+                <div className="mx-auto bg-rose-50 w-12 h-12 rounded-full flex items-center justify-center text-rose-600">
+                  <X className="h-6 w-6" />
+                </div>
+                <div className="space-y-1">
+                  <h5 className="font-bold text-slate-850 text-sm">Payment Declined</h5>
+                  <p className="text-xs text-rose-650 font-medium">
+                    {scanDeclineMessage || 'Insufficient Card Balance.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setScanStatus('READY');
+                    setScanDeclineMessage('');
+                  }}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-lg transition w-full"
+                >
+                  Try Another Card
+                </button>
+              </div>
+            ) : scanStatus === 'READING' ? (
+              <div className="text-center py-8 space-y-3">
+                <div className="w-10 h-10 rounded-full border-2 border-slate-200 border-t-slate-800 animate-spin mx-auto"></div>
+                <p className="text-xs text-slate-500 font-medium">Authorizing payment on ledger...</p>
+              </div>
+            ) : (
+              /* AWAITING CARD: Simulated list of RFID Student cards for the cashier to trigger simulated tap */
+              <div className="space-y-4">
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Search and click a roster card to simulate tapping it against the canteen's terminal.
+                </p>
+
+                {/* Card Search input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={scanSearchQuery}
+                    onChange={(e) => setScanSearchQuery(e.target.value)}
+                    placeholder="Search card serial by name..."
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-800 focus:border-slate-300 outline-none transition-colors"
+                  />
                 </div>
 
-                {/* Tab selections */}
-                <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                  <button
-                    onClick={() => {
-                      setScannerTab('STUDENT');
-                      setDetectedParent(null);
-                      setScannerStatus('READY');
-                    }}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                      scannerTab === 'STUDENT'
-                        ? 'bg-[#c7515e] text-white shadow-md'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                    }`}
-                  >
-                    <User className="h-3.5 w-3.5" />
-                    Student Cards
-                  </button>
-                  <button
-                    onClick={() => {
-                      setScannerTab('PARENT');
-                      setDetectedParent(null);
-                      setScannerStatus('READY');
-                    }}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                      scannerTab === 'PARENT'
-                        ? 'bg-[#c7515e] text-white shadow-md'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                    }`}
-                  >
-                    <Smartphone className="h-3.5 w-3.5" />
-                    Parent App QR
-                  </button>
-                </div>
-
-                {/* Tab Content body (Scrollable list of candidates) */}
-                <div className="flex-1 overflow-y-auto pr-1 space-y-3.5 scrollbar-thin max-h-70">
-                  {scannerTab === 'STUDENT' ? (
-                    <div className="space-y-2">
-                      <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest block mb-1">Select card candidate to scan:</span>
-                      
-                      {allStudents.map((stud) => {
-                        const isScanningThis = detectedStudent?.id === stud.id;
-                        return (
-                          <button
-                            key={stud.id}
-                            disabled={scannerStatus !== 'READY'}
-                            onClick={() => startStudentScan(stud)}
-                            className={`w-full text-left rounded-xl border p-3 flex items-center justify-between transition-all duration-150 ${
-                              isScanningThis
-                                ? 'bg-[#c7515e]/15 border-[#c7515e] ring-1 ring-[#c7515e]'
-                                : 'bg-slate-950 border-slate-800 hover:border-slate-700/80 hover:bg-slate-900/60'
-                            } ${scannerStatus !== 'READY' && !isScanningThis ? 'opacity-40 cursor-not-allowed' : ''}`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <img src={stud.avatarUrl} alt="" className="w-10 h-10 rounded-full border border-slate-800" referrerPolicy="no-referrer" />
-                              <div>
-                                <h4 className="text-xs font-bold text-white">{stud.name}</h4>
-                                <p className="text-[10px] text-slate-400 mt-0.5">{stud.class} • No-PIN: {stud.noPinLimit.toLocaleString()} UGX</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <span className="font-mono text-[10px] font-bold block bg-[#c7515e]/10 text-[#c7515e] px-2 py-0.5 rounded border border-[#c7515e]/15">
-                                {stud.qrHash}
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
+                {/* Simulated RFID tag cards list */}
+                <div className="max-h-64 overflow-y-auto pr-1 space-y-2 scrollbar-thin">
+                  {allStudents.filter(stud =>
+                    stud.name.toLowerCase().includes(scanSearchQuery.toLowerCase()) ||
+                    stud.class.toLowerCase().includes(scanSearchQuery.toLowerCase())
+                  ).length === 0 ? (
+                    <div className="text-center py-6 text-slate-400 text-xs italic">
+                      No card found matching "{scanSearchQuery}"
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      {detectedParent && scannerStatus === 'SUCCESS' ? (
-                        // Parent is scanned successfully! Display options to select child
-                        <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                          <div className="bg-slate-950 rounded-xl p-4 border border-emerald-500/20 space-y-1">
-                            <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest block">Linked Family Account Identified</span>
-                            <h4 className="text-sm font-black text-white">{detectedParent.name}</h4>
-                            <p className="text-xs text-slate-400">{detectedParent.phone}</p>
+                    allStudents
+                      .filter(stud =>
+                        stud.name.toLowerCase().includes(scanSearchQuery.toLowerCase()) ||
+                        stud.class.toLowerCase().includes(scanSearchQuery.toLowerCase())
+                      )
+                      .map((stud) => (
+                        <button
+                          key={stud.id}
+                          type="button"
+                          onClick={async () => {
+                            setScanStatus('READING');
+                            // Delay slightly for physical tap response simulation
+                            await new Promise(r => setTimeout(r, 600));
+                            executeCheckoutRequest(null, stud);
+                          }}
+                          className="w-full text-left rounded-lg border border-slate-200 hover:border-slate-300 p-2.5 flex items-center justify-between hover:bg-slate-50 transition"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-700">
+                              {stud.name.charAt(0)}
+                            </div>
+                            <div>
+                              <h5 className="text-xs font-bold text-slate-800">{stud.name}</h5>
+                              <p className="text-[10px] text-slate-400">{stud.class}</p>
+                            </div>
                           </div>
-
-                          <div className="space-y-2">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Choose child payment account to authorize billing:</span>
-                            {allStudents.filter(s => s.parentPhone === detectedParent.phone).length === 0 ? (
-                              <p className="text-xs text-slate-500 italic">No students linked to this parent account.</p>
-                            ) : (
-                              allStudents
-                                .filter(s => s.parentPhone === detectedParent.phone)
-                                .map((s) => (
-                                  <button
-                                    key={s.id}
-                                    onClick={() => selectParentChild(s)}
-                                    className="w-full text-left bg-slate-950 hover:bg-[#c7515e]/10 hover:border-[#c7515e]/50 border border-slate-800 rounded-lg p-3 flex items-center gap-3 transition-colors"
-                                  >
-                                    <img src={s.avatarUrl} alt="" className="w-8 h-8 rounded-full border border-slate-800" referrerPolicy="no-referrer" />
-                                    <div className="flex-1">
-                                      <h5 className="text-xs font-bold text-slate-200">{s.name}</h5>
-                                      <p className="text-[10px] text-slate-400">{s.class}</p>
-                                    </div>
-                                    <span className="text-emerald-400 font-mono text-xs font-bold">Pay Card &gt;&gt;</span>
-                                  </button>
-                                ))
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        // Normal select parent screen
-                        <>
-                          <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest block mb-1">Select Parent App QR code candidate to scan:</span>
-                          {allParents.map((parent) => {
-                            const isScanningThis = detectedParent?.id === parent.id;
-                            return (
-                              <button
-                                key={parent.id}
-                                disabled={scannerStatus !== 'READY'}
-                                onClick={() => startParentScan(parent)}
-                                className={`w-full text-left rounded-xl border p-3 flex items-center justify-between transition-all duration-150 ${
-                                  isScanningThis
-                                    ? 'bg-[#c7515e]/15 border-[#c7515e] ring-1 ring-[#c7515e]'
-                                    : 'bg-slate-950 border-slate-800 hover:border-slate-700/80 hover:bg-slate-900/60'
-                                }  ${scannerStatus !== 'READY' && !isScanningThis ? 'opacity-40 cursor-not-allowed' : ''}`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
-                                    <User className="h-5 w-5 text-slate-400" />
-                                  </div>
-                                  <div>
-                                    <h4 className="text-xs font-bold text-white">{parent.name}</h4>
-                                    <p className="text-[10px] text-slate-400 mt-0.5">{parent.phone} • Verification: Tier {parent.kycTier}</p>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <span className="font-mono text-[9px] font-bold block bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/15">
-                                    APP QR LINK
-                                  </span>
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </>
-                      )}
-                    </div>
+                          <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-bold">
+                            TAP CARD
+                          </span>
+                        </button>
+                      ))
                   )}
                 </div>
-
               </div>
+            )}
+          </div>
+        </div>
+      )}
 
-              {/* Back to main controller panel */}
-              <div className="border-t border-slate-800 pt-4 flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowScannerModal(false);
-                    setScannerStatus('READY');
-                    setDetectedParent(null);
-                    setDetectedStudent(null);
-                  }}
-                  className="flex-1 py-3 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition"
-                >
-                  Cancel Scanner
-                </button>
-                {scannerStatus !== 'READY' && (
-                  <button
-                    onClick={() => {
-                      setScannerStatus('READY');
-                      setDetectedParent(null);
-                      setDetectedStudent(null);
-                    }}
-                    className="px-4 py-3 text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-xl transition"
-                  >
-                    Reset Lens
-                  </button>
-                )}
+      {/* Simulation NFC/QR Scanner Modal */}
+      {showScannerModal && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h4 className="text-base font-bold text-slate-800">Simulate Physical Card / QR Scan</h4>
+                <p className="text-xs text-slate-500">Tap a student's contactless RFID card or scan a parent's QR code</p>
               </div>
-
+              <button
+                type="button"
+                onClick={() => setShowScannerModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-sm font-bold"
+              >
+                ✕
+              </button>
             </div>
 
+            {/* Tabs for Student and Parent */}
+            <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <button
+                type="button"
+                onClick={() => {
+                  setScannerTab('STUDENT');
+                  setDetectedParent(null);
+                  setScannerStatus('READY');
+                  setCandidateSearchQuery('');
+                }}
+                className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  scannerTab === 'STUDENT'
+                    ? 'bg-[#06065C] text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-850 hover:bg-white/50'
+                }`}
+              >
+                <User className="h-3.5 w-3.5" />
+                Students
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setScannerTab('PARENT');
+                  setDetectedParent(null);
+                  setScannerStatus('READY');
+                  setCandidateSearchQuery('');
+                }}
+                className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  scannerTab === 'PARENT'
+                    ? 'bg-[#06065C] text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-850 hover:bg-white/50'
+                }`}
+              >
+                <Smartphone className="h-3.5 w-3.5" />
+                Parents
+              </button>
+            </div>
+
+            {/* candidate search field */}
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                value={candidateSearchQuery}
+                onChange={(e) => setCandidateSearchQuery(e.target.value)}
+                placeholder={scannerTab === 'STUDENT' ? "Search student class or name..." : "Search parent name or phone..."}
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2.5 text-xs text-slate-800 focus:border-slate-300 outline-none transition-colors"
+              />
+            </div>
+
+            {/* Candidate List Container */}
+            <div className="max-h-60 overflow-y-auto pr-1 space-y-2 scrollbar-thin">
+              {scannerTab === 'STUDENT' ? (
+                allStudents.filter(stud => 
+                  stud.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
+                  stud.class.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
+                  stud.admissionNo.toLowerCase().includes(candidateSearchQuery.toLowerCase())
+                ).length === 0 ? (
+                  <div className="text-center py-8 text-slate-400 text-xs italic">
+                    No students match "{candidateSearchQuery}"
+                  </div>
+                ) : (
+                  allStudents
+                    .filter(stud => 
+                      stud.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
+                      stud.class.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
+                      stud.admissionNo.toLowerCase().includes(candidateSearchQuery.toLowerCase())
+                    )
+                    .map((stud) => {
+                      const isScanningThis = detectedStudent?.id === stud.id;
+                      return (
+                        <button
+                          key={stud.id}
+                          type="button"
+                          disabled={scannerStatus !== 'READY'}
+                          onClick={() => startStudentScan(stud)}
+                          className={`w-full text-left rounded-xl border p-2.5 flex items-center justify-between transition-all duration-150 ${
+                            isScanningThis
+                              ? 'bg-red-50 border-red-200'
+                              : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                          } ${scannerStatus !== 'READY' && !isScanningThis ? 'opacity-40 cursor-not-allowed' : ''}`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <img src={stud.avatarUrl} alt="" className="w-8 h-8 rounded-full border border-slate-200" referrerPolicy="no-referrer" />
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-800 leading-tight">{stud.name}</h4>
+                              <p className="text-[10px] text-slate-500 mt-0.5">{stud.class} • Bal: {(stud.balance || 0).toLocaleString()} UGX</p>
+                            </div>
+                          </div>
+                          <span className="font-mono text-[9px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+                            {stud.qrHash}
+                          </span>
+                        </button>
+                      );
+                    })
+                )
+              ) : (
+                detectedParent && scannerStatus === 'SUCCESS' ? (
+                  // Parent scanned successfully, choose child
+                  <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between">
+                      <div>
+                        <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Parent Identified</span>
+                        <h4 className="text-xs font-bold text-slate-800">{detectedParent.name}</h4>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDetectedParent(null);
+                          setScannerStatus('READY');
+                        }}
+                        className="text-[10px] text-slate-500 hover:text-slate-850"
+                      >
+                        [Change]
+                      </button>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block mb-1">Select linked student child:</span>
+                      {allStudents.filter(s => s.parentPhone === detectedParent.phone).length === 0 ? (
+                        <p className="text-xs text-slate-400 italic p-2 bg-slate-50 rounded border border-slate-200">No students linked to this account.</p>
+                      ) : (
+                        allStudents
+                          .filter(s => s.parentPhone === detectedParent.phone)
+                          .map((s) => (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => selectParentChild(s)}
+                              className="w-full text-left bg-white hover:bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex items-center justify-between transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <img src={s.avatarUrl} alt="" className="w-7 h-7 rounded-full border border-slate-200" referrerPolicy="no-referrer" />
+                                <div>
+                                  <h5 className="text-xs font-bold text-slate-800">{s.name}</h5>
+                                  <p className="text-[9px] text-slate-500">{s.class}</p>
+                                </div>
+                              </div>
+                              <span className="text-[#06065C] font-mono text-[10px] font-bold">Select Child &gt;</span>
+                            </button>
+                          ))
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  allParents.filter(p => 
+                    p.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
+                    p.phone.includes(candidateSearchQuery)
+                  ).length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs italic">
+                      No parents match "{candidateSearchQuery}"
+                    </div>
+                  ) : (
+                    allParents
+                      .filter(p => 
+                        p.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
+                        p.phone.includes(candidateSearchQuery)
+                      )
+                      .map((parent) => {
+                        const isScanningThis = detectedParent?.id === parent.id;
+                        return (
+                          <button
+                            key={parent.id}
+                            type="button"
+                            disabled={scannerStatus !== 'READY'}
+                            onClick={() => startParentScan(parent)}
+                            className={`w-full text-left rounded-xl border p-2.5 flex items-center justify-between transition-all duration-150 ${
+                              isScanningThis
+                                ? 'bg-red-50 border-red-200'
+                                : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                            } ${scannerStatus !== 'READY' && !isScanningThis ? 'opacity-40 cursor-not-allowed' : ''}`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
+                                <User className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div>
+                                <h4 className="text-xs font-bold text-slate-800 leading-tight">{parent.name}</h4>
+                                <p className="text-[10px] text-slate-500 mt-0.5">{parent.phone}</p>
+                              </div>
+                            </div>
+                            <span className="font-mono text-[9px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+                              APP QR
+                            </span>
+                          </button>
+                        );
+                      })
+                  )
+                )
+              )}
+            </div>
           </div>
         </div>
       )}

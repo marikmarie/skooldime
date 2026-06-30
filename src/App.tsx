@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Login, { LoggedInUser } from './components/Login'; // Adjust path if Login is placed in a components directory
 import { ErrorBoundary } from './components/ErrorBoundary';
-import RoleSuperAdmin from './components/RoleSuperAdmin';
-import RoleBusinessAdmin from './components/RoleBusinessAdmin';
-import RoleAgent from './components/RoleAgent';
-import RoleSchoolAdmin from './components/RoleSchoolAdmin';
-import RoleVendorPOS from './components/RoleVendorPOS';
-import RoleParent from './components/RoleParent';
-import MicroLoans from './components/MicroLoans';
+
+// Dynamic lazy loaded components for optimal bundle splitting
+const RoleSuperAdmin = React.lazy(() => import('./components/RoleSuperAdmin'));
+const RoleBusinessAdmin = React.lazy(() => import('./components/RoleBusinessAdmin'));
+const RoleAgent = React.lazy(() => import('./components/RoleAgent'));
+const RoleSchoolAdmin = React.lazy(() => import('./components/RoleSchoolAdmin'));
+const RoleVendorPOS = React.lazy(() => import('./components/RoleVendorPOS'));
+const RoleParent = React.lazy(() => import('./components/RoleParent'));
+const MicroLoans = React.lazy(() => import('./components/MicroLoans'));
+
 import QuickActionsFAB from './components/QuickActionsFAB';
 import { useToast } from './components/ToastContext';
 import {
@@ -68,7 +71,7 @@ export default function App() {
         <Login onLoginSuccess={handleLoginSuccess} />
       ) : (
         /* ── Logged-in dashboard ─────────────────────────────── */
-        <div className="max-w-300 mx-auto px-4 py-6 md:p-6 pb-12">
+        <div className="max-w-[1200px] mx-auto px-4 py-6 md:p-6 pb-12">
 
           {/* Inner Dashboard Header (Subtle, custom-contained, no full navbar) */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-black/5">
@@ -159,24 +162,33 @@ export default function App() {
             minHeight: 400, overflow: 'hidden',
           }}>
             <ErrorBoundary key={`${user.role}_${userSubTab}_${resetId}`}>
-              <div className="p-4 md:p-6 lg:p-8">
-                {user.role === 'SUPER_ADMIN'    && <RoleSuperAdmin />}
-                {user.role === 'BUSINESS_ADMIN' && <RoleBusinessAdmin />}
-                {user.role === 'AGENT'          && <RoleAgent />}
-                {user.role === 'SCHOOL_ADMIN'   && <RoleSchoolAdmin />}
+              <Suspense fallback={
+                <div className="flex flex-col items-center justify-center py-24 px-4 space-y-4">
+                  <div className="p-3 bg-red-50 text-[#ED0101] rounded-2xl animate-pulse">
+                    <RefreshCw className="h-6 w-6 animate-spin" />
+                  </div>
+                  <p className="text-xs font-bold tracking-wider uppercase text-slate-400">Loading Secure Portal Component...</p>
+                </div>
+              }>
+                <div className="p-4 md:p-6 lg:p-8">
+                  {user.role === 'SUPER_ADMIN'    && <RoleSuperAdmin />}
+                  {user.role === 'BUSINESS_ADMIN' && <RoleBusinessAdmin />}
+                  {user.role === 'AGENT'          && <RoleAgent />}
+                  {user.role === 'SCHOOL_ADMIN'   && <RoleSchoolAdmin />}
 
-                {user.role === 'VENDOR' && (
-                  userSubTab === 'DASHBOARD'
-                    ? <RoleVendorPOS userPhone={user.phone} />
-                    : <MicroLoans defaultBorrowerId="V1" defaultBorrowerType="VENDOR" />
-                )}
+                  {user.role === 'VENDOR' && (
+                    userSubTab === 'DASHBOARD'
+                      ? <RoleVendorPOS userPhone={user.phone} />
+                      : <MicroLoans defaultBorrowerId="V1" defaultBorrowerType="VENDOR" />
+                  )}
 
-                {user.role === 'PARENT' && (
-                  userSubTab === 'DASHBOARD'
-                    ? <RoleParent userPhone={user.phone} />
-                    : <MicroLoans defaultBorrowerId="P1" defaultBorrowerType="PARENT" />
-                )}
-              </div>
+                  {user.role === 'PARENT' && (
+                    userSubTab === 'DASHBOARD'
+                      ? <RoleParent userPhone={user.phone} />
+                      : <MicroLoans defaultBorrowerId="P1" defaultBorrowerType="PARENT" />
+                  )}
+                </div>
+              </Suspense>
             </ErrorBoundary>
           </div>
 
