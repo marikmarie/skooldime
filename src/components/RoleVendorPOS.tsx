@@ -603,7 +603,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
           onClick={() => setActiveTerminalTab('POS')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
             activeTerminalTab === 'POS'
-              ? 'bg-[#06065C] text-white shadow-sm'
+              ? 'bg-navy text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
           }`}
         >
@@ -615,7 +615,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
           onClick={() => setActiveTerminalTab('ANALYTICS')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
             activeTerminalTab === 'ANALYTICS'
-              ? 'bg-[#06065C] text-white shadow-sm'
+              ? 'bg-navy text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
           }`}
         >
@@ -627,7 +627,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
           onClick={() => setActiveTerminalTab('HISTORY')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
             activeTerminalTab === 'HISTORY'
-              ? 'bg-[#06065C] text-white shadow-sm'
+              ? 'bg-navy text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
           }`}
         >
@@ -673,8 +673,8 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               {/* Header */}
               <div className="bg-white border-b border-slate-150 px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-red-50 text-[#ED0101] border border-red-100">
-                    <Camera className="h-4.5 w-4.5 text-[#ED0101] animate-pulse" />
+                  <div className="p-2 rounded-xl bg-red-50 text-brand border border-red-100">
+                    <Camera className="h-4.5 w-4.5 text-brand animate-pulse" />
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-800 tracking-tight text-sm">Canteen Camera Terminal</h3>
@@ -737,7 +737,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
 
                       {/* Laser Sweep Line */}
                       {scannerStatus !== 'SUCCESS' && (
-                        <div className="absolute left-3 right-3 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_8px_#ff0000] laser-sweep z-10"></div>
+                        <div className="absolute left-3 right-3 h-0.5 bg-linear-to-r from-transparent via-red-500 to-transparent shadow-[0_0_8px_#ff0000] laser-sweep z-10"></div>
                       )}
 
                       {/* Content based on Scanner State */}
@@ -810,7 +810,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                       placeholder="Enter Student Card QR (e.g., STU001)"
                       value={searchQrInput}
                       onChange={(e) => setSearchQrInput(e.target.value)}
-                      className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono font-semibold focus:border-[#06065C] focus:ring-1 focus:ring-[#06065C] outline-none"
+                      className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono font-semibold focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                     />
                     <button
                       type="button"
@@ -829,7 +829,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                           toast.error(`Card QR Code "${trimmed}" not matched in active registry.`);
                         }
                       }}
-                      className="px-3.5 py-2 bg-[#06065C] hover:bg-[#040440] text-white font-bold text-xs rounded-lg shadow-xs transition-colors flex items-center gap-1 active:scale-95"
+                      className="px-3.5 py-2 bg-navy hover:bg-navy-hover text-white font-bold text-xs rounded-lg shadow-xs transition-colors flex items-center gap-1 active:scale-95"
                     >
                       <CreditCard className="h-3.5 w-3.5" />
                       Swipe Card
@@ -846,7 +846,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                             setSearchQrInput(stud.qrHash);
                             triggerCardScan(stud);
                           }}
-                          className="text-[10px] font-mono font-bold text-[#06065C] bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded px-2 py-0.5 transition-colors"
+                          className="text-[10px] font-mono font-bold text-navy bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded px-2 py-0.5 transition-colors"
                         >
                           {stud.qrHash} ({stud.name.split(' ')[0]})
                         </button>
@@ -870,7 +870,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
                           <h4 className="font-bold text-slate-800 text-xs truncate">{scannedStudent.name}</h4>
-                          <span className="text-[9px] bg-red-50 text-[#ED0101] font-mono px-1.5 py-0.5 rounded border border-red-100 font-bold whitespace-nowrap animate-pulse">
+                          <span className="text-[9px] bg-red-50 text-brand font-mono px-1.5 py-0.5 rounded border border-red-100 font-bold whitespace-nowrap animate-pulse">
                             ACTIVE SESSION
                           </span>
                         </div>
@@ -965,7 +965,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                           </span>
                           <button
                             onClick={() => handleRemoveFromCart(item.name)}
-                            className="text-slate-400 hover:text-[#ED0101] p-1 text-xs font-bold font-mono"
+                            className="text-slate-400 hover:text-brand p-1 text-xs font-bold font-mono"
                             title="Remove item"
                           >
                             ×
@@ -1003,7 +1003,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                             cart.length === 0 || loading
                               ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
                               : isInsufficient
-                                ? 'bg-[#ED0101] text-white hover:bg-[#d60000] active:scale-98 shadow-sm shadow-red-600/15'
+                                ? 'bg-brand text-white hover:bg-[#d60000] active:scale-98 shadow-sm shadow-red-600/15'
                                 : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-98 shadow-sm shadow-emerald-600/10'
                           }`}
                         >
@@ -1026,7 +1026,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                       className={`w-full py-3.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${
                         cart.length === 0
                           ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                          : 'bg-[#ED0101] text-white hover:bg-[#d60000] active:scale-98 shadow-sm shadow-[#ED0101]/10'
+                          : 'bg-brand text-white hover:bg-[#d60000] active:scale-98 shadow-sm shadow-brand/10'
                       }`}
                     >
                       <CreditCard className="h-4 w-4" /> Scan Card to Pay
@@ -1102,7 +1102,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                         handleAddToCart(searchCatalogQuery, priceNum);
                         toast.success(`Custom item "${searchCatalogQuery}" added to basket.`);
                       }}
-                      className="w-full py-1.5 bg-[#06065C] hover:bg-[#040440] text-white text-[10px] font-bold rounded-md transition"
+                      className="w-full py-1.5 bg-navy hover:bg-navy-hover text-white text-[10px] font-bold rounded-md transition"
                     >
                       Add "{searchCatalogQuery}" to Basket (1,000 UGX)
                     </button>
@@ -1154,7 +1154,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               </div>
               <button
                 type="submit"
-                className="rounded-lg bg-[#06065C] hover:bg-[#040440] text-white px-5 py-2 text-xs font-bold transition-all whitespace-nowrap w-full sm:w-auto flex items-center justify-center gap-1.5 h-9"
+                className="rounded-lg bg-navy hover:bg-navy-hover text-white px-5 py-2 text-xs font-bold transition-all whitespace-nowrap w-full sm:w-auto flex items-center justify-center gap-1.5 h-9"
               >
                 <Plus className="h-4 w-4 text-white" /> Add Custom
               </button>
@@ -1607,7 +1607,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
         <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200 text-center space-y-5">
             <div className="flex flex-col items-center">
-              <span className="text-[10px] font-bold text-[#ED0101] tracking-widest uppercase bg-red-50 px-2 py-0.5 rounded-full">skoolDime Pay</span>
+              <span className="text-[10px] font-bold text-brand tracking-widest uppercase bg-red-50 px-2 py-0.5 rounded-full">skoolDime Pay</span>
               <h4 className="text-base font-black text-slate-800 mt-2">Dynamic Checkout QR</h4>
               <p className="text-xs text-slate-500 mt-1">Scan this QR from a parent app or student device to authorize instantly</p>
             </div>
