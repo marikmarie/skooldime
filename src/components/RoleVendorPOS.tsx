@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import jsQR from 'jsqr';
 import { 
   ShoppingCart, QrCode, ClipboardList, RefreshCw, Key, ArrowRight, 
   UserCheck, AlertTriangle, ShieldCheck, CheckCircle2, Search, Plus, CreditCard, Banknote,
@@ -120,6 +121,94 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
   const [isWebcamActive, setIsWebcamActive] = useState(false);
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null);
+
+  // Keep refs of state to keep the animation loop uninterrupted
+  const scannerStatusRef = React.useRef(scannerStatus);
+  useEffect(() => {
+    scannerStatusRef.current = scannerStatus;
+  }, [scannerStatus]);
+
+  const allStudentsRef = React.useRef(allStudents);
+  useEffect(() => {
+    allStudentsRef.current = allStudents;
+  }, [allStudents]);
+
+  useEffect(() => {
+    if (!isWebcamActive) return;
+
+    let animationFrameId: number;
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    let lastScanTime = 0;
+
+    const scanFrame = () => {
+      const video = videoRef.current;
+      if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        if (context) {
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          
+          try {
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+              inversionAttempts: "dontInvert"
+            });
+
+            if (code && code.data) {
+              const now = Date.now();
+              // Prevent scanning trigger if we scanned recently or are busy
+              if (now - lastScanTime > 3000 && scannerStatusRef.current === 'READY') {
+                lastScanTime = now;
+                const qrHash = code.data.trim();
+                
+                // Find matching student
+                const matchedStudent = allStudentsRef.current.find(
+                  s => s.qrHash === qrHash || s.id === qrHash || qrHash.includes(s.qrHash)
+                );
+                
+                setScannerStatus('DECODING');
+                setScanFlash(true);
+                playScanBeep();
+                
+                setTimeout(() => {
+                  setScanFlash(false);
+                  
+                  // Call scanning API
+                  handleScanQr(qrHash).then(() => {
+                    setScannerStatus('SUCCESS');
+                    if (matchedStudent) {
+                      setDetectedStudent(matchedStudent);
+                      toast.success(`Camera Card Detected: ${matchedStudent.name}`);
+                    } else {
+                      toast.success(`Camera QR Detected: ${qrHash}`);
+                    }
+                    
+                    setTimeout(() => {
+                      setScannerStatus('READY');
+                      setDetectedStudent(null);
+                    }, 1800);
+                  });
+                }, 500);
+              }
+            }
+          } catch (e) {
+            console.error('jsQR frame parsing error:', e);
+          }
+        }
+      }
+      
+      if (isWebcamActive) {
+        animationFrameId = requestAnimationFrame(scanFrame);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(scanFrame);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isWebcamActive]);
 
   const startWebcam = async () => {
     try {
