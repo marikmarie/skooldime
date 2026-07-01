@@ -817,16 +817,16 @@ export function devApiMiddleware(req: any, res: any, next: any) {
           if (studentIdx === -1) {
             const studentId = `ST_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
             const CHILD_AVATARS = [
-              'photo-1503919545889-aef636e10ad4?w=150&auto=format&fit=crop',
-              'photo-1545696913-b39cd8590984?w=150&auto=format&fit=crop',
-              'photo-1519457431-44ccd64a579b?w=150&auto=format&fit=crop',
-              'photo-1507591064344-4c6ce005b128?w=150&auto=format&fit=crop',
-              'photo-1516627145497-ae6968895b74?w=150&auto=format&fit=crop',
-              'photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop',
-              'photo-1502082553048-f009c37129b9?w=150&auto=format&fit=crop',
-              'photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop',
-              'photo-1544717305-2782549b5136?w=150&auto=format&fit=crop',
-              'photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1503919545889-aef636e10ad4?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1545696913-b39cd8590984?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1519457431-44ccd64a579b?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop',
             ];
             const randAvatar = CHILD_AVATARS[Math.floor(Math.random() * CHILD_AVATARS.length)];
             

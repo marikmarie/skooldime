@@ -140,17 +140,36 @@ div[class*="bg-[#141C2F]"], section[class*="bg-[#141C2F]"] {
   color: #ffffff !important; /* Keep text-white pure white for brand colored buttons, badges and active tabs */
 }
 
+/* If text-white is inside any of the containers that we overrode from dark to light, make it dark navy/black.
+   BUT, we explicitly restore white text for elements that are buttons, anchors, badges, or inside solid-brand background blocks below. */
+[class*="bg-[#070A13]"] [class*="text-white"],
+[class*="bg-[#080B15]"] [class*="text-white"],
+[class*="bg-[#0B0F19]"] [class*="text-white"],
+[class*="bg-[#06080E]"] [class*="text-white"],
+[class*="bg-[#0D1222]"] [class*="text-white"],
+[class*="bg-[#0F1424]"] [class*="text-white"],
+[class*="bg-[#141C2F]"] [class*="text-white"],
+[class*="bg-slate-900"] [class*="text-white"],
+[class*="bg-slate-950"] [class*="text-white"] {
+  color: #06065C !important;
+}
+
 /* Specific Restoration: Ensure that buttons, badges, and colored/brand backgrounds with white text keep their crisp white text */
 button[class*="text-white"],
 button [class*="text-white"],
 a[class*="text-white"],
-span[class*="bg-"][class*="text-white"],
+span[class*="bg-[#c7515e]"] [class*="text-white"],
+span[class*="bg-[#ED0101]"] [class*="text-white"],
+span[class*="bg-emerald-600"] [class*="text-white"],
+span[class*="bg-indigo-600"] [class*="text-white"],
 span[class*="bg-"] [class*="text-white"],
+span[class*="bg-"][class*="text-white"],
 div[class*="bg-indigo-600"] [class*="text-white"],
 div[class*="bg-[#c7515e]"] [class*="text-white"],
 [class*="bg-[#c7515e]"] [class*="text-white"],
 [class*="bg-[#ED0101]"] [class*="text-white"],
 [class*="bg-[#06065C]"] [class*="text-white"],
+[class*="bg-gradient-to-br"] [class*="text-white"],
 [class*="bg-indigo-600"] [class*="text-white"],
 [class*="bg-emerald-600"] [class*="text-white"],
 [class*="bg-rose-600"] [class*="text-white"],

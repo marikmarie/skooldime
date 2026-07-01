@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Smartphone, Shield, ArrowRightLeft, Landmark, RefreshCw, Key, CheckCircle2, AlertTriangle, History, Search, ListFilter, Printer } from 'lucide-react';
+import { Smartphone, Shield, ArrowRightLeft, Landmark, RefreshCw, Key, CheckCircle2, AlertTriangle, History, Search, ListFilter, Printer, Download } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { Parent, Student, Transaction } from '../types';
 import { useToast } from './ToastContext';
 import { QRCodeSVG } from 'qrcode.react';
@@ -22,13 +25,71 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
 
   useEffect(() => {
     if (printingStudent) {
+      // If we are doing normal print, we invoke the dialog.
+      // The pdf download overrides this by managing timing or checking if custom event.
+      // We check if a hidden attribute is set, or simply use printingStudent as a trigger.
       const timer = setTimeout(() => {
-        window.print();
-        setPrintingStudent(null);
+        // Only trigger native window.print() if it's NOT an html2canvas trigger
+        const isPdfCapturing = document.querySelector('[data-pdf-only="true"]');
+        if (!isPdfCapturing) {
+          window.print();
+          setPrintingStudent(null);
+        }
       }, 350);
       return () => clearTimeout(timer);
     }
   }, [printingStudent]);
+
+  const downloadCardPDF = async (stud: Student) => {
+    // Set printingStudent to render card in DOM
+    setPrintingStudent(stud);
+    
+    // Allow React 500ms to render the DOM target with QRCode and images loaded
+    setTimeout(async () => {
+      const cardElement = document.getElementById('printable-cards-container');
+      if (!cardElement) {
+        setPrintingStudent(null);
+        return;
+      }
+      
+      try {
+        const cardInner = cardElement.querySelector('.print-card');
+        if (!cardInner) {
+          setPrintingStudent(null);
+          return;
+        }
+
+        // We mark as pdf-only to bypass native window.print() popup
+        cardElement.setAttribute('data-pdf-only', 'true');
+
+        const canvas = await html2canvas(cardInner as HTMLElement, {
+          scale: 3, // High-DPI physical scale
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Exact CR-80 wallet card specs (85.6mm width, 54mm height)
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm',
+          format: [85.6, 54]
+        });
+
+        pdf.addImage(imgData, 'PNG', 0, 0, 85.6, 54);
+        pdf.save(`${stud.name.replace(/\s+/g, '_')}_NFC_Wallet_Card.pdf`);
+        toast.success(`PDF Card downloaded successfully for ${stud.name}!`);
+      } catch (err: any) {
+        console.error('PDF Generation Error:', err);
+        toast.error('Could not generate PDF download.');
+      } finally {
+        cardElement.removeAttribute('data-pdf-only');
+        setPrintingStudent(null);
+      }
+    }, 500);
+  };
 
   // Top up states
   const [depositAmt, setDepositAmt] = useState('');
@@ -360,7 +421,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                <div className="grid grid-cols-4 gap-1 sm:gap-1.5">
                   <button
                     onClick={() => triggerPinReset(stud.id)}
                     className="rounded-lg border border-white/10 bg-transparent hover:bg-white/5 py-2 text-center text-[10px] sm:text-xs text-gray-300 font-semibold transition-colors truncate"
@@ -377,11 +438,19 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                   </button>
                   <button
                     onClick={() => setPrintingStudent(stud)}
-                    className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 py-2 text-center text-[10px] sm:text-xs text-emerald-400 font-semibold transition-colors flex items-center justify-center gap-1 truncate"
-                    title="Print QR Card"
+                    className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 py-2 text-center text-[10px] sm:text-xs text-emerald-400 font-semibold transition-colors flex items-center justify-center gap-0.5 truncate"
+                    title="Print Card"
                   >
                     <Printer className="h-3 w-3 shrink-0" />
-                    <span>Card</span>
+                    <span>Print</span>
+                  </button>
+                  <button
+                    onClick={() => downloadCardPDF(stud)}
+                    className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 py-2 text-center text-[10px] sm:text-xs text-indigo-400 font-semibold transition-colors flex items-center justify-center gap-0.5 truncate"
+                    title="Download Card PDF"
+                  >
+                    <Download className="h-3 w-3 shrink-0" />
+                    <span>PDF</span>
                   </button>
                 </div>
               </div>
@@ -770,7 +839,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
       )}
 
        {/* HIDDEN PRINT TARGET CONTAINER */}
-       {printingStudent && (
+       {printingStudent && createPortal(
          <div id="printable-cards-container">
            <div className="print-card-grid">
              <div 
@@ -833,7 +902,8 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                </div>
              </div>
            </div>
-         </div>
+         </div>,
+         document.body
        )}
 
     </div>

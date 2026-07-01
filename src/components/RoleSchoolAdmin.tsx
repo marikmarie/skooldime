@@ -162,14 +162,14 @@ export default function RoleSchoolAdmin() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto font-sans">
+    <div className="space-y-6 max-w-7xl mx-auto font-sans antialiased text-gray-200 bg-[#06080E] p-4 md:p-6 rounded-2xl border border-white/5 shadow-xl">
       
       {/* Analytics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Campus Registered</span>
-            <h4 className="text-lg font-bold text-white">Kampala Parents Primary</h4>
+            <h4 className="text-lg font-bold text-[#06065C]">Kampala Parents Primary</h4>
           </div>
           <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
             <Landmark className="h-6 w-6" />
@@ -179,7 +179,7 @@ export default function RoleSchoolAdmin() {
         <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">School Revenue Ledger</span>
-            <h4 className="text-2xl font-bold text-white">15,000 <span className="text-sm text-gray-500">UGX</span></h4>
+            <h4 className="text-2xl font-bold text-[#06065C]">15,000 <span className="text-sm text-gray-500">UGX</span></h4>
           </div>
           <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
             <BarChart3 className="h-6 w-6" />
@@ -189,7 +189,7 @@ export default function RoleSchoolAdmin() {
         <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Monitored Students</span>
-            <h4 className="text-2xl font-bold text-white">{students.length} <span className="text-sm text-gray-500">Accounts</span></h4>
+            <h4 className="text-2xl font-bold text-[#06065C]">{students.length} <span className="text-sm text-gray-500">Accounts</span></h4>
           </div>
           <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
             <Smartphone className="h-6 w-6" />
@@ -240,13 +240,13 @@ export default function RoleSchoolAdmin() {
           {/* Student Spend Analytics Table */}
           <div className="lg:col-span-8 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl">
             <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-[#06065C] flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-[#c7515e]" />
                 Pocket Money Registry & PIN Monitor
               </h3>
               <button 
                 onClick={fetchStudents} 
-                className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition"
+                className="text-gray-400 hover:text-gray-200 p-2 rounded-lg hover:bg-white/5 transition"
                 title="Refresh Registry"
               >
                 <RefreshCw className={`h-4.5 w-4.5 ${loading ? 'animate-spin text-[#c7515e]' : ''}`} />
@@ -263,7 +263,7 @@ export default function RoleSchoolAdmin() {
                 placeholder="Search students by name, admission #, class..."
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#06080E] text-white placeholder-gray-500 focus:border-[#c7515e] outline-none transition"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#06080E] text-slate-800 placeholder-gray-500 focus:border-[#c7515e] outline-none transition"
               />
             </div>
 
@@ -293,7 +293,7 @@ export default function RoleSchoolAdmin() {
                       <tr key={stud.id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="py-4 px-2 flex items-center gap-3">
                           <img src={stud.avatarUrl} alt="" className="w-8 h-8 rounded-full border border-white/10" referrerPolicy="no-referrer" />
-                          <span className="font-semibold text-white">{stud.name}</span>
+                          <span className="font-bold text-[#06065C]">{stud.name}</span>
                         </td>
                         <td className="py-4 px-2 font-mono text-gray-400 text-xs">{stud.admissionNo}</td>
                         <td className="py-4 px-2 text-xs">{stud.class}</td>
@@ -333,7 +333,7 @@ export default function RoleSchoolAdmin() {
           <div className="lg:col-span-4 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-4 h-fit">
             <div className="flex items-center gap-2 border-b border-white/5 pb-4">
               <ShieldCheck className="h-5 w-5 text-amber-400" />
-              <h3 className="text-sm font-bold text-white">Institutional PIN Security</h3>
+              <h3 className="text-sm font-bold text-[#06065C]">Institutional PIN Security</h3>
             </div>
             <p className="text-xs text-gray-400 leading-relaxed">
               In compliance with student financial privacy guidelines, School Admins are strictly forbidden from manual overrides.
@@ -341,7 +341,7 @@ export default function RoleSchoolAdmin() {
             <div className="rounded-xl bg-[#06080E] border border-white/5 p-5 space-y-3">
               <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold block border-b border-white/5 pb-2 mb-3">Regulatory Sequence</span>
               <ol className="list-decimal pl-4 space-y-2 text-xs text-gray-300">
-                <li>Admin clicks <span className="font-semibold text-white">"Reset PIN"</span> which sends an encrypted OTP via Collecto SMS to the registered Parent phone number.</li>
+                <li>Admin clicks <span className="font-semibold text-[#ED0101]">"Reset PIN"</span> which sends an encrypted OTP via Collecto SMS to the registered Parent phone number.</li>
                 <li>Parent reads OTP to School Admin (verifying identity).</li>
                 <li>Admin inputs OTP and types the new 4-digit PIN.</li>
               </ol>
@@ -361,13 +361,13 @@ export default function RoleSchoolAdmin() {
           {/* Staff List Table */}
           <div className="lg:col-span-8 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-[#06065C] flex items-center gap-2">
                 <Users className="h-5 w-5 text-[#c7515e]" />
                 Institutional Staff & Faculty Directory
               </h3>
               <button 
                 onClick={fetchStaff} 
-                className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition"
+                className="text-gray-400 hover:text-gray-200 p-2 rounded-lg hover:bg-white/5 transition"
                 title="Refresh Staff"
               >
                 <RefreshCw className="h-4.5 w-4.5" />
@@ -388,7 +388,7 @@ export default function RoleSchoolAdmin() {
                 <tbody className="divide-y divide-white/5 text-sm text-gray-300">
                   {staff.map((s) => (
                     <tr key={s.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-4 px-2 font-semibold text-white">{s.name}</td>
+                      <td className="py-4 px-2 font-bold text-[#06065C]">{s.name}</td>
                       <td className="py-4 px-2 text-xs">
                         <span className="bg-[#c7515e]/15 text-[#c7515e] border border-[#c7515e]/10 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
                           {s.role}
@@ -421,7 +421,7 @@ export default function RoleSchoolAdmin() {
           <div className="lg:col-span-4 rounded-2xl border border-white/5 bg-[#0B0F19] p-6 shadow-xl space-y-4 h-fit">
             <div className="flex items-center gap-2 border-b border-white/5 pb-4">
               <UserPlus className="h-5 w-5 text-[#c7515e]" />
-              <h3 className="text-sm font-bold text-white">Enroll Staff Member</h3>
+              <h3 className="text-sm font-bold text-[#06065C]">Enroll Staff Member</h3>
             </div>
             
             <form onSubmit={handleCreateStaff} className="space-y-4">
@@ -434,7 +434,7 @@ export default function RoleSchoolAdmin() {
                     value={staffName}
                     onChange={(e) => setStaffName(e.target.value)}
                     placeholder="e.g. Juliet Nabassa"
-                    className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
+                    className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-slate-800 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
                   />
                 </div>
               </div>
@@ -444,7 +444,7 @@ export default function RoleSchoolAdmin() {
                 <select
                   value={staffRole}
                   onChange={(e) => setStaffRole(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-gray-300 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition cursor-pointer appearance-none"
+                  className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-slate-800 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition cursor-pointer appearance-none"
                 >
                   <option value="Bursar">School Bursar</option>
                   <option value="Teacher">Senior Teacher</option>
@@ -463,7 +463,7 @@ export default function RoleSchoolAdmin() {
                     value={staffPhone}
                     onChange={(e) => setStaffPhone(e.target.value)}
                     placeholder="772345678"
-                    className="w-full rounded-xl border border-white/10 bg-[#06080E] pl-12 pr-4 py-2.5 text-xs text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
+                    className="w-full rounded-xl border border-white/10 bg-[#06080E] pl-12 pr-4 py-2.5 text-xs text-slate-800 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
                   />
                 </div>
               </div>
@@ -475,7 +475,7 @@ export default function RoleSchoolAdmin() {
                   value={staffEmail}
                   onChange={(e) => setStaffEmail(e.target.value)}
                   placeholder="juliet@school.ac.ug"
-                  className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
+                  className="w-full rounded-xl border border-white/10 bg-[#06080E] px-4 py-2.5 text-xs text-slate-800 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition"
                 />
               </div>
 
@@ -497,7 +497,7 @@ export default function RoleSchoolAdmin() {
               <div>
                 <h3 className="text-sm font-bold text-gray-200 flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-[#c7515e]" />
-                 QR Card Generator & Publisher
+                  NFC QR Card Generator & Publisher
                 </h3>
                 <p className="text-xs text-gray-400 mt-1">Batch print cards with unique secure scan QR codes and student photographs.</p>
               </div>
@@ -604,7 +604,6 @@ export default function RoleSchoolAdmin() {
                       {/* Card Content Mockup */}
                       <div className="w-full h-[210px] rounded-xl bg-gradient-to-br from-[#06065C] to-[#040440] text-white p-4 flex flex-col justify-between relative overflow-hidden select-none">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-[#ED0101]/10 rounded-full blur-2xl pointer-events-none" />
-                        <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-white/5 rounded-full pointer-events-none" />
                         
                         {/* Header */}
                         <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
@@ -641,7 +640,7 @@ export default function RoleSchoolAdmin() {
                         <div className="border-t border-white/15 pt-1 flex items-center justify-between text-[7px] font-mono text-slate-400">
                           <div className="flex items-center gap-1">
                             <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>CARD SCAN READY</span>
+                            <span>NFC / SCAN READY</span>
                           </div>
                           <span className="text-white font-bold">{student.qrHash}</span>
                         </div>
@@ -789,7 +788,7 @@ export default function RoleSchoolAdmin() {
                 <div className="border-t-2 border-[#06065C]/15 pt-2 flex items-center justify-between text-[8px] font-mono text-[#475569]">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-600" style={{ display: 'inline-block' }} />
-                    <span className="font-bold text-[#06065C]">SECURE CARD</span>
+                    <span className="font-bold text-[#06065C]">NFC / SECURE CARD</span>
                   </div>
                   <span className="text-[#ED0101] font-bold font-mono">{student.qrHash}</span>
                 </div>

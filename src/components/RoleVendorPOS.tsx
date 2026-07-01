@@ -677,18 +677,18 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               <div className="bg-white border-b border-slate-150 px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 rounded-xl bg-red-50 text-brand border border-red-100">
-                    <Camera className="h-4.5 w-4.5 text-brand animate-pulse" />
+                    <Camera className="h-4.5 w-4.5 text-brand" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800 tracking-tight text-sm">Canteen Camera</h3>
-                    <p className="text-[11px] text-slate-500 mt-0.5">QR reader for cards</p>
+                    <h3 className="font-bold text-slate-800 tracking-tight text-sm">NFC & QR Card Reader</h3>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Hold student card to camera or enter code</p>
                   </div>
                 </div>
                 
-                {/* Active telemetry label */}
-                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                {/* Active status indicator */}
+                <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-100">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="text-[10px] font-mono text-slate-700 font-bold tracking-wider">CAMERA_ONLINE</span>
+                  <span className="text-[10px] font-bold tracking-wider uppercase">Terminal Active</span>
                 </div>
               </div>
 
@@ -711,20 +711,16 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
 
                   {/* Status Indicator overlay */}
                   <div className="flex items-center justify-between z-10">
-                    <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10">
+                    <div className="flex items-center gap-1.5 bg-black/75 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-white/10">
                       <span className={`h-1.5 w-1.5 rounded-full ${
-                        scannerStatus === 'SUCCESS' ? 'bg-emerald-500 animate-ping' :
-                        scannerStatus === 'DECODING' ? 'bg-amber-500 animate-spin' :
-                        scannerStatus === 'SCANNING' ? 'bg-red-500 animate-pulse' :
-                        'bg-emerald-500 animate-pulse'
+                        scannerStatus === 'SUCCESS' ? 'bg-emerald-400' :
+                        scannerStatus === 'DECODING' ? 'bg-amber-400 animate-spin' :
+                        scannerStatus === 'SCANNING' ? 'bg-red-400 animate-pulse' :
+                        'bg-emerald-400 animate-pulse'
                       }`}></span>
-                      <span className="text-[9px] font-mono text-slate-300 uppercase tracking-widest font-black">
-                        {isWebcamActive ? 'WEBCAM_STREAM' : 'SIMULATOR_ACTIVE'}
+                      <span className="text-[9px] text-slate-200 uppercase tracking-wider font-bold">
+                        {isWebcamActive ? 'Webcam Stream' : 'Card Scanner Simulator'}
                       </span>
-                    </div>
-
-                    <div className="bg-black/70 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-mono text-slate-400 border border-white/5">
-                      60FPS • 1080P
                     </div>
                   </div>
 
@@ -816,11 +812,11 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Instant QR Reader</span>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Enter Student Card QR (e.g., STU001)"
+                      placeholder="Enter card QR (e.g. STU001)"
                       value={searchQrInput}
                       onChange={(e) => setSearchQrInput(e.target.value)}
                       className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono font-semibold focus:border-navy focus:ring-1 focus:ring-navy outline-none"
@@ -842,28 +838,32 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                           toast.error(`Card QR Code "${trimmed}" not matched in active registry.`);
                         }
                       }}
-                      className="px-3.5 py-2 bg-navy hover:bg-navy-hover text-white font-bold text-xs rounded-lg shadow-xs transition-colors flex items-center gap-1 active:scale-95"
+                      className="px-3.5 py-2 bg-[#06065C] hover:bg-[#040440] text-white font-bold text-xs rounded-lg shadow-xs transition-colors flex items-center gap-1 active:scale-95"
                     >
                       <CreditCard className="h-3.5 w-3.5" />
                       Swipe Card
                     </button>
                   </div>
                   {allStudents.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 items-center">
-                      <span className="text-[10px] text-slate-400">Registry Samples:</span>
-                      {allStudents.slice(0, 4).map((stud) => (
-                        <button
-                          key={stud.id}
-                          type="button"
-                          onClick={() => {
-                            setSearchQrInput(stud.qrHash);
-                            triggerCardScan(stud);
-                          }}
-                          className="text-[10px] font-mono font-bold text-navy bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded px-2 py-0.5 transition-colors"
-                        >
-                          {stud.qrHash} ({stud.name.split(' ')[0]})
-                        </button>
-                      ))}
+                    <div className="space-y-1.5 pt-0.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Registry Quick-Tap:</span>
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        {allStudents.slice(0, 4).map((stud) => (
+                          <button
+                            key={stud.id}
+                            type="button"
+                            onClick={() => {
+                              setSearchQrInput(stud.qrHash);
+                              triggerCardScan(stud);
+                            }}
+                            className="text-[10px] font-medium text-[#06065C] bg-[#06065C]/5 hover:bg-[#06065C]/10 border border-[#06065C]/10 rounded-full px-2.5 py-1 transition-colors flex items-center gap-1 active:scale-95"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span>{stud.name.split(' ')[0]}</span>
+                            <span className="text-[9px] text-slate-400 font-mono">({stud.qrHash})</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
