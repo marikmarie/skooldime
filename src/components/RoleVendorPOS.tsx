@@ -769,7 +769,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                     <Camera className="h-4.5 w-4.5 text-brand" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800 tracking-tight text-sm">NFC & QR Card Reader</h3>
+                    <h3 className="font-bold text-slate-800 tracking-tight text-sm">QR Card Reader</h3>
                     <p className="text-[11px] text-slate-500 mt-0.5">Hold student card to camera or enter code</p>
                   </div>
                 </div>

@@ -79,7 +79,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         });
 
         pdf.addImage(imgData, 'PNG', 0, 0, 85.6, 54);
-        pdf.save(`${stud.name.replace(/\s+/g, '_')}_NFC_Wallet_Card.pdf`);
+        pdf.save(`${stud.name.replace(/\s+/g, '_')}_Wallet_Card.pdf`);
         toast.success(`PDF Card downloaded successfully for ${stud.name}!`);
       } catch (err: any) {
         console.error('PDF Generation Error:', err);
@@ -478,7 +478,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
 
             <div className="bg-[#c7515e]/5 rounded-xl border border-[#c7515e]/15 p-3.5 mb-4">
               <p className="text-xs text-gray-400 leading-relaxed">
-                🚀 <strong className="text-[#c7515e]">Direct Card Crediting:</strong> Allocate funds instantly from your personal <strong>Parent Wallet</strong> to credit your child's physical <strong>NFC Wallet Card</strong>. This transaction is free, safe, and immediate.
+                🚀 <strong className="text-[#c7515e]">Direct Card Crediting:</strong> Allocate funds instantly from your personal <strong>Parent Wallet</strong> to credit your child's physical <strong> Wallet Card</strong>. This transaction is free, safe, and immediate.
               </p>
             </div>
 
@@ -896,7 +896,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                <div className="border-t-2 border-[#06065C]/15 pt-2 flex items-center justify-between text-[8px] font-mono text-[#475569]">
                  <div className="flex items-center gap-1.5">
                    <span className="w-2 h-2 rounded-full bg-emerald-600" style={{ display: 'inline-block' }} />
-                   <span className="font-bold text-[#06065C]" style={{ color: '#06065C' }}>NFC / SECURE CARD</span>
+                   <span className="font-bold text-[#06065C]" style={{ color: '#06065C' }}> SECURE CARD</span>
                  </div>
                  <span className="text-[#ED0101] font-bold font-mono">{printingStudent.qrHash}</span>
                </div>

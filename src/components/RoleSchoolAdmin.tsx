@@ -497,7 +497,7 @@ export default function RoleSchoolAdmin() {
               <div>
                 <h3 className="text-sm font-bold text-gray-200 flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-[#c7515e]" />
-                  NFC QR Card Generator & Publisher
+                   QR Card Generator & Publisher
                 </h3>
                 <p className="text-xs text-gray-400 mt-1">Batch print cards with unique secure scan QR codes and student photographs.</p>
               </div>
@@ -640,7 +640,7 @@ export default function RoleSchoolAdmin() {
                         <div className="border-t border-white/15 pt-1 flex items-center justify-between text-[7px] font-mono text-slate-400">
                           <div className="flex items-center gap-1">
                             <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>NFC / SCAN READY</span>
+                            <span> SCAN READY</span>
                           </div>
                           <span className="text-white font-bold">{student.qrHash}</span>
                         </div>
@@ -788,7 +788,7 @@ export default function RoleSchoolAdmin() {
                 <div className="border-t-2 border-[#06065C]/15 pt-2 flex items-center justify-between text-[8px] font-mono text-[#475569]">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-600" style={{ display: 'inline-block' }} />
-                    <span className="font-bold text-[#06065C]">NFC / SECURE CARD</span>
+                    <span className="font-bold text-[#06065C]"> SECURE CARD</span>
                   </div>
                   <span className="text-[#ED0101] font-bold font-mono">{student.qrHash}</span>
                 </div>
