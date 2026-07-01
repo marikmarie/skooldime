@@ -122,7 +122,7 @@ class StudentController {
                     'pin' => '0000',
                     'parentPhone' => $parentPhone,
                     'isLinked' => true,
-                    'avatarUrl' => 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120',
+                    'avatarUrl' => 'imagesphoto-1544005313-94ddf0286df2?w=120',
                     'noPinLimit' => 2000
                 ];
                 $db['students'][] = $newStudent;

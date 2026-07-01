@@ -387,7 +387,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
 
             <div className="bg-[#c7515e]/5 rounded-xl border border-[#c7515e]/15 p-3.5 mb-4">
               <p className="text-xs text-gray-400 leading-relaxed">
-                🚀 <strong className="text-[#c7515e]">Direct Card Crediting:</strong> Allocate funds instantly from your personal <strong>Parent Wallet</strong> to credit your child's physical <strong>NFC Wallet Card</strong>. This transaction is free, safe, and immediate.
+              <strong className="text-[#c7515e]">Direct Card Crediting:</strong> Allocate funds instantly from your personal <strong>Parent Wallet</strong> to credit your child's physical <strong> Wallet Card</strong>. This transaction is free, safe, and immediate.
               </p>
             </div>
 

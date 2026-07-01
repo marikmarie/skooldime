@@ -637,11 +637,14 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
       </div>
 
       {activeTerminalTab === 'POS' && (
-        /* POS Top Section: Main Work Area (Scanner on left, Catalog on right) */
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        /* POS Top Section: Main Work Area (Scanner, Cart, Catalog) */
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         
-          {/* LEFT COLUMN: Optical Scanner Terminal, Active Student profile, and Shopping Cart (5 cols) */}
-          <div className="xl:col-span-5 flex flex-col gap-6">
+          {/* LEFT COLUMN: Camera, Verification, and Inventory (8 cols of 12) */}
+          <div className="xl:col-span-8 flex flex-col gap-6 animate-in fade-in duration-300">
+            
+            {/* Top row: Camera Viewfinder and Identity Verification side-by-side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
 
             {/* ACTIVE RFID / QR OPTICAL TERMINAL */}
             <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
@@ -677,8 +680,8 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                     <Camera className="h-4.5 w-4.5 text-brand animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800 tracking-tight text-sm">Canteen Camera Terminal</h3>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Dual-stream optical QR reader for cards & parent devices</p>
+                    <h3 className="font-bold text-slate-800 tracking-tight text-sm">Canteen Camera</h3>
+                    <p className="text-[11px] text-slate-500 mt-0.5">QR reader for cards</p>
                   </div>
                 </div>
                 
@@ -793,8 +796,18 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                 </div>
               </div>
 
-              {/* MANUAL CARD SWIPER / SIMULATOR (No long lists!) */}
-              <div className="p-4 bg-slate-50 border-b border-slate-100 space-y-3">
+            </div> {/* Close Column 1 of Inner Grid (Camera Card) */}
+
+            {/* Column 2 of Inner Grid: Verification & Swiper Card */}
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between overflow-hidden h-full">
+              
+              <div className="bg-white border-b border-slate-150 px-5 py-4">
+                <h3 className="font-bold text-slate-800 tracking-tight text-sm">Customer Verification</h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">Swipe dynamic card or manage active session</p>
+              </div>
+
+              {/* MANUAL CARD SWIPER / SIMULATOR */}
+              <div className="p-5 border-b border-slate-100 space-y-3 bg-slate-50/30 flex-1 flex flex-col justify-center">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
@@ -934,7 +947,92 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               </div>
             </div>
 
-            {/* ORDER BASKET CARD (Positioned elegantly on the left column under scanner) */}
+          </div> {/* Close Inner Grid Row */}
+
+          {/* Searchable Catalog & Canteen Inventory */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col gap-6">
+            
+            {/* Header with real-time searching input */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="font-bold text-base text-slate-800 tracking-tight">Canteen Inventory</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Select items to build the customer's order basket</p>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchCatalogQuery}
+                  onChange={(e) => {
+                    setSearchCatalogQuery(e.target.value);
+                    setCustomName(e.target.value);
+                  }}
+                  placeholder="Search catalog items..."
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:border-slate-300 outline-none transition-colors"
+                />
+                {searchCatalogQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchCatalogQuery('');
+                      setCustomName('');
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                  >
+                    X
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Dynamic Items Grid */}
+            {catalog.filter(item => item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase())).length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center space-y-4 bg-transparent">
+                <p className="text-xs text-slate-500">No registered menu items match "{searchCatalogQuery}".</p>
+                {searchCatalogQuery && (
+                  <div className="max-w-xs mx-auto p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-[11px] text-slate-500 mb-2">Instantly add a custom ticket for this search:</p>
+                    <button
+                      onClick={() => {
+                        const priceNum = parseInt(customPrice) || 1000;
+                        handleAddToCart(searchCatalogQuery, priceNum);
+                        toast.success(`Custom item "${searchCatalogQuery}" added to basket.`);
+                      }}
+                      className="w-full py-1.5 bg-navy hover:bg-navy-hover text-white text-[10px] font-bold rounded-md transition"
+                    >
+                      Add "{searchCatalogQuery}" to Basket (1,000 UGX)
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {catalog
+                  .filter(item => item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase()))
+                  .map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handleAddToCart(item.name, item.price)}
+                      className="rounded-lg border border-slate-200 bg-white hover:border-slate-300 p-3.5 text-left transition-all active:scale-98 flex flex-col justify-between h-20 shadow-xs"
+                    >
+                      <span className="text-xs font-bold text-slate-800 truncate w-full">{item.name}</span>
+                      <span className="text-[11px] font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+                        {item.price.toLocaleString()} UGX
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            )}
+
+          </div>
+
+          </div>
+
+          {/* COLUMN 2: Current Order Basket (4 cols) */}
+          <div className="xl:col-span-4 flex flex-col gap-6 order-2 xl:order-2 sticky top-6">
+
+            {/* ORDER BASKET CARD */}
             <div className="flex flex-col justify-between bg-white border border-slate-200 rounded-2xl p-5 min-h-110 shadow-sm">
               <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -948,7 +1046,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                 <div className="flex-1 overflow-y-auto pr-1 space-y-2 max-h-96 scrollbar-thin">
                   {cart.length === 0 ? (
                     <div className="text-center py-12 text-slate-400 text-xs">
-                      Basket is empty. Select canteen menu items on the right.
+                      Basket is empty. Select canteen menu items below or on the left.
                     </div>
                   ) : (
                     cart.map((item) => (
@@ -1052,116 +1150,6 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
 
           </div>
 
-          {/* RIGHT COLUMN: Searchable Catalog & Custom Amount additions (7 cols) */}
-          <div className="xl:col-span-7 flex flex-col gap-6 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-            
-            {/* Header with real-time searching input */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-              <div>
-                <h3 className="font-bold text-base text-slate-800 tracking-tight">Canteen Inventory</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Select items to build the customer's order basket</p>
-              </div>
-
-              {/* Search Bar */}
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchCatalogQuery}
-                  onChange={(e) => {
-                    setSearchCatalogQuery(e.target.value);
-                    setCustomName(e.target.value);
-                  }}
-                  placeholder="Search catalog items..."
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:border-slate-300 outline-none transition-colors"
-                />
-                {searchCatalogQuery && (
-                  <button
-                    onClick={() => {
-                      setSearchCatalogQuery('');
-                      setCustomName('');
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
-                  >
-                    X
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Dynamic Items Grid (No background or heavy colors) */}
-            {catalog.filter(item => item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase())).length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center space-y-4 bg-transparent">
-                <p className="text-xs text-slate-500">No registered menu items match "{searchCatalogQuery}".</p>
-                {searchCatalogQuery && (
-                  <div className="max-w-xs mx-auto p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <p className="text-[11px] text-slate-500 mb-2">Instantly add a custom ticket for this search:</p>
-                    <button
-                      onClick={() => {
-                        const priceNum = parseInt(customPrice) || 1000;
-                        handleAddToCart(searchCatalogQuery, priceNum);
-                        toast.success(`Custom item "${searchCatalogQuery}" added to basket.`);
-                      }}
-                      className="w-full py-1.5 bg-navy hover:bg-navy-hover text-white text-[10px] font-bold rounded-md transition"
-                    >
-                      Add "{searchCatalogQuery}" to Basket (1,000 UGX)
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {catalog
-                  .filter(item => item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase()))
-                  .map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => handleAddToCart(item.name, item.price)}
-                      className="rounded-lg border border-slate-200 bg-white hover:border-slate-300 p-3.5 text-left transition-all active:scale-98 flex flex-col justify-between h-20 shadow-xs"
-                    >
-                      <span className="text-xs font-bold text-slate-800 truncate w-full">{item.name}</span>
-                      <span className="text-[11px] font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
-                        {item.price.toLocaleString()} UGX
-                      </span>
-                    </button>
-                  ))}
-              </div>
-            )}
-
-            {/* CUSTOM TICKET ENTRY FORM (Clean and integrated) */}
-            <form onSubmit={handleCustomAddToCart} className="border-t border-slate-200 pt-6 mt-4 flex flex-col sm:flex-row items-end gap-3">
-              <div className="flex-1 space-y-1.5 w-full">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Custom Ticket Name</label>
-                <input
-                  type="text"
-                  required
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  placeholder="e.g. Snack Pack, Stationery Extra"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-slate-300 outline-none transition-colors"
-                />
-              </div>
-              <div className="w-full sm:w-44 space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Price (UGX)</label>
-                <input
-                  type="number"
-                  required
-                  value={customPrice}
-                  onChange={(e) => setCustomPrice(e.target.value)}
-                  placeholder="Amount"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-slate-300 outline-none transition-colors"
-                />
-              </div>
-              <button
-                type="submit"
-                className="rounded-lg bg-navy hover:bg-navy-hover text-white px-5 py-2 text-xs font-bold transition-all whitespace-nowrap w-full sm:w-auto flex items-center justify-center gap-1.5 h-9"
-              >
-                <Plus className="h-4 w-4 text-white" /> Add Custom
-              </button>
-            </form>
-
-          </div>
-
         </div>
       )}
 
@@ -1171,7 +1159,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-5">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-[#c7515e]/10 text-[#c7515e]">
+            <div className="p-2.5 rounded-lg bg-brand/10 text-brand">
               <BarChart3 className="h-5 w-5" />
             </div>
             <div>
@@ -1185,7 +1173,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               onClick={() => setShowBenchmark(!showBenchmark)}
               className={`px-3.5 py-1.5 text-xs font-bold rounded-lg border transition-all duration-150 active:scale-95 flex items-center gap-1.5 ${
                 showBenchmark 
-                  ? 'bg-[#c7515e]/10 text-[#c7515e] border-[#c7515e]/30' 
+                  ? 'bg-brand/10 text-brand border-brand/30' 
                   : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
               }`}
             >
@@ -1500,8 +1488,8 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
           <div className="w-full max-w-85 rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="text-center mb-6">
-              <div className="mx-auto bg-[#c7515e]/10 w-12 h-12 rounded-full flex items-center justify-center mb-3">
-                <ShieldCheck className="h-6 w-6 text-[#c7515e]" />
+              <div className="mx-auto bg-brand/10 w-12 h-12 rounded-full flex items-center justify-center mb-3">
+                <ShieldCheck className="h-6 w-6 text-brand" />
               </div>
               <h4 className="text-lg font-bold text-white">Enter Student PIN</h4>
               <p className="text-xs text-slate-400 mt-1">Required for amounts over {pinRequiredStudent.noPinLimit.toLocaleString()} UGX</p>
@@ -1541,7 +1529,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               </button>
               <button
                 onClick={handleKeyboardSubmit}
-                className="rounded-xl bg-[#c7515e] hover:bg-[#b04753] text-white font-bold text-sm shadow-md active:scale-95 transition-all"
+                className="rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm shadow-md active:scale-95 transition-all"
               >
                 OK
               </button>
