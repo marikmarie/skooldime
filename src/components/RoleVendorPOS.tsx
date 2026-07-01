@@ -25,7 +25,6 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [allStudents, setAllStudents] = useState<Student[]>([]);
-  const [allParents, setAllParents] = useState<any[]>([]);
   
   // Custom manual item input
   const [customName, setCustomName] = useState('');
@@ -33,11 +32,11 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
   
   // Catalog search & Simulation candidates search
   const [searchCatalogQuery, setSearchCatalogQuery] = useState('');
-  const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
   
   // POS scanning state
   const [scannedStudent, setScannedStudent] = useState<any | null>(null);
   const [searchQr, setSearchQr] = useState('');
+  const [searchQrInput, setSearchQrInput] = useState('');
   const [loading, setLoading] = useState(false);
   const toast = useToast();
   
@@ -59,22 +58,12 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
   const [withdrawPhone, setWithdrawPhone] = useState('');
   const [merchantBalance, setMerchantBalance] = useState(180000);
 
-  // Dynamic QR Code Payment & Simulation states
+  // Dynamic QR Code Payment
   const [activeQrCode, setActiveQrCode] = useState<{ paymentUrl: string; referenceCode: string; amount: number } | null>(null);
-  const [showSimModal, setShowSimModal] = useState(false);
-  const [simFundingSource, setSimFundingSource] = useState<'STUDENT' | 'PARENT' | 'MOMO'>('MOMO');
-  const [simStudentId, setSimStudentId] = useState('');
-  const [simParentId, setSimParentId] = useState('');
-  const [simPin, setSimPin] = useState('');
-  const [simError, setSimError] = useState('');
-  const [simLoading, setSimLoading] = useState(false);
 
   // New QR Camera Scanner state
-  const [showScannerModal, setShowScannerModal] = useState(false);
-  const [scannerTab, setScannerTab] = useState<'STUDENT' | 'PARENT'>('STUDENT');
   const [scannerStatus, setScannerStatus] = useState<'READY' | 'SCANNING' | 'DECODING' | 'SUCCESS'>('READY');
   const [detectedStudent, setDetectedStudent] = useState<any | null>(null);
-  const [detectedParent, setDetectedParent] = useState<any | null>(null);
   const [scanFlash, setScanFlash] = useState(false);
 
   // Daily Transaction Summary state
@@ -109,14 +98,6 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
       const studData = await studRes.json();
       if (Array.isArray(studData)) {
         setAllStudents(studData);
-        if (studData.length > 0) setSimStudentId(studData[0].id);
-      }
-
-      const parentRes = await fetch('/api/parents');
-      const parentData = await parentRes.json();
-      if (Array.isArray(parentData)) {
-        setAllParents(parentData);
-        if (parentData.length > 0) setSimParentId(parentData[0].id);
       }
 
       const txsRes = await fetch(`/api/pos/transactions/${currentVendor.id}`);
@@ -135,6 +116,70 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
   useEffect(() => {
     fetchBaseData();
   }, [userPhone]);
+
+  const [isWebcamActive, setIsWebcamActive] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+  const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null);
+
+  const startWebcam = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      setWebcamStream(stream);
+      setIsWebcamActive(true);
+      toast.success('Canteen terminal camera activated successfully.');
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (e) {
+      console.error('Webcam failed to start:', e);
+      toast.error('Camera blocked or not available in this browser sandbox. Using high-fidelity digital scanner simulation.');
+      setIsWebcamActive(false);
+    }
+  };
+
+  const stopWebcam = () => {
+    if (webcamStream) {
+      webcamStream.getTracks().forEach(track => track.stop());
+      setWebcamStream(null);
+    }
+    setIsWebcamActive(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (webcamStream) {
+        webcamStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [webcamStream]);
+
+  const triggerCardScan = (stud: Student) => {
+    setDetectedStudent(stud);
+    setScannerStatus('SCANNING');
+    
+    setTimeout(() => {
+      setScannerStatus('DECODING');
+      
+      setTimeout(() => {
+        setScanFlash(true);
+        playScanBeep();
+        
+        setTimeout(() => {
+          setScanFlash(false);
+          handleScanQr(stud.qrHash);
+          setScannerStatus('SUCCESS');
+          toast.success(`Physical card swiped: ${stud.name}`);
+          
+          setTimeout(() => {
+            setScannerStatus('READY');
+            setDetectedStudent(null);
+          }, 800);
+        }, 120);
+      }, 500);
+    }, 400);
+  };
 
   const handleScanQr = async (qrHash: string) => {
     if (!qrHash) return;
@@ -173,62 +218,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
     }
   };
 
-  const startStudentScan = (stud: Student) => {
-    setDetectedStudent(stud);
-    setDetectedParent(null);
-    setScannerStatus('SCANNING');
-    
-    setTimeout(() => {
-      setScannerStatus('DECODING');
-      
-      setTimeout(() => {
-        setScanFlash(true);
-        playScanBeep();
-        
-        setTimeout(() => {
-          setScanFlash(false);
-          handleScanQr(stud.qrHash);
-          toast.success(`Student card decoded: ${stud.name}`);
-          setScannerStatus('SUCCESS');
-          
-          setTimeout(() => {
-            setShowScannerModal(false);
-            setScannerStatus('READY');
-            setDetectedStudent(null);
-          }, 450);
-        }, 120);
-      }, 600);
-    }, 700);
-  };
 
-  const startParentScan = (p: any) => {
-    setDetectedParent(p);
-    setDetectedStudent(null);
-    setScannerStatus('SCANNING');
-    
-    setTimeout(() => {
-      setScannerStatus('DECODING');
-      
-      setTimeout(() => {
-        setScanFlash(true);
-        playScanBeep();
-        
-        setTimeout(() => {
-          setScanFlash(false);
-          toast.success(`Parent QR resolved: ${p.name}`);
-          setScannerStatus('SUCCESS');
-        }, 120);
-      }, 600);
-    }, 700);
-  };
-
-  const selectParentChild = (stud: Student) => {
-    handleScanQr(stud.qrHash);
-    setShowScannerModal(false);
-    setDetectedParent(null);
-    setScannerStatus('READY');
-    toast.success(`Selected student ${stud.name} linked to parent.`);
-  };
 
   const handleAddToCart = (name: string, price: number) => {
     setCart((prev) => {
@@ -395,36 +385,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
     return () => clearInterval(intervalId);
   }, [activeQrCode]);
 
-  const handleSimulateCompletePayment = async () => {
-    if (!activeQrCode) return;
-    setSimError('');
-    setSimLoading(true);
-    try {
-      const res = await fetch('/api/pos/complete-dynamic-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          refCode: activeQrCode.referenceCode,
-          fundingSource: simFundingSource,
-          studentId: simFundingSource === 'STUDENT' ? simStudentId : undefined,
-          parentId: simFundingSource === 'PARENT' ? simParentId : undefined,
-          pin: simPin
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setShowSimModal(false);
-        setSimPin('');
-        setSimError('');
-      } else {
-        setSimError(data.error || 'Failed to process simulated payment.');
-      }
-    } catch (e: any) {
-      setSimError(e.message || 'Error occurred during simulation.');
-    } finally {
-      setSimLoading(false);
-    }
-  };
+
 
   const handleKeyboardClick = (num: string) => {
     if (enteredPin.length < 4) setEnteredPin((prev) => prev + num);
@@ -716,24 +677,38 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                     <Camera className="h-4.5 w-4.5 text-[#ED0101] animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800 tracking-tight text-sm">Active RFID / QR Optical Terminal</h3>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Dual-stream merchant scanner terminal for student cards & parent devices</p>
+                    <h3 className="font-bold text-slate-800 tracking-tight text-sm">Canteen Camera Terminal</h3>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Dual-stream optical QR reader for cards & parent devices</p>
                   </div>
                 </div>
                 
                 {/* Active telemetry label */}
                 <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="text-[10px] font-mono text-slate-700 font-bold tracking-wider">TERMINAL_ACTIVE</span>
+                  <span className="text-[10px] font-mono text-slate-700 font-bold tracking-wider">CAMERA_ONLINE</span>
                 </div>
               </div>
 
               {/* Viewfinder Stream Viewport (Full width inside left col card) */}
               <div className="p-5 border-b border-slate-100">
-                <div className={`w-full bg-slate-900 rounded-xl relative flex flex-col justify-between p-5 min-h-60 overflow-hidden transition-colors duration-300 ${scanFlash ? 'flash-active' : ''}`}>
+                <div className={`w-full bg-slate-950 rounded-xl relative flex flex-col justify-between p-5 min-h-60 overflow-hidden transition-colors duration-300 ${scanFlash ? 'flash-active' : ''}`}>
+                  
+                  {/* Real video stream element */}
+                  {isWebcamActive && (
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover z-0"
+                    />
+                  )}
+
+                  {/* Viewfinder Overlay / Grid */}
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_45%,rgba(0,0,0,0.4))] z-1"></div>
+
                   {/* Status Indicator overlay */}
                   <div className="flex items-center justify-between z-10">
-                    <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/5">
+                    <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10">
                       <span className={`h-1.5 w-1.5 rounded-full ${
                         scannerStatus === 'SUCCESS' ? 'bg-emerald-500 animate-ping' :
                         scannerStatus === 'DECODING' ? 'bg-amber-500 animate-spin' :
@@ -741,21 +716,18 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                         'bg-emerald-500 animate-pulse'
                       }`}></span>
                       <span className="text-[9px] font-mono text-slate-300 uppercase tracking-widest font-black">
-                        {scannerStatus === 'READY' && 'CAMERA_LIVE'}
-                        {scannerStatus === 'SCANNING' && 'CAPTURING...'}
-                        {scannerStatus === 'DECODING' && 'DECODING...'}
-                        {scannerStatus === 'SUCCESS' && 'VERIFIED!'}
+                        {isWebcamActive ? 'WEBCAM_STREAM' : 'SIMULATOR_ACTIVE'}
                       </span>
                     </div>
 
-                    <div className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-mono text-slate-400">
+                    <div className="bg-black/70 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-mono text-slate-400 border border-white/5">
                       60FPS • 1080P
                     </div>
                   </div>
 
                   {/* Viewfinder Target Reticle */}
-                  <div className="absolute inset-0 flex items-center justify-center p-4">
-                    <div className="w-40 h-40 border border-dashed border-slate-700 rounded-2xl relative flex flex-col items-center justify-center bg-black/25">
+                  <div className="absolute inset-0 flex items-center justify-center p-4 z-10">
+                    <div className="w-40 h-40 border border-dashed border-red-500/40 rounded-2xl relative flex flex-col items-center justify-center bg-black/20 backdrop-blur-[1px]">
                       
                       {/* Viewfinder Corners */}
                       <div className="viewfinder-corner top-0 left-0 border-t-4 border-l-4 rounded-tl-xl"></div>
@@ -771,16 +743,16 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                       {/* Content based on Scanner State */}
                       {scannerStatus === 'READY' && (
                         <div className="text-center p-3 space-y-2 z-10">
-                          <QrCode className="h-8 w-8 text-slate-400 mx-auto animate-pulse" />
-                          <p className="text-[11px] font-bold text-slate-200">Ready to Scan</p>
-                          <p className="text-[9px] text-slate-400 leading-tight">Tap the simulation button below to trigger card swiping</p>
+                          <QrCode className="h-8 w-8 text-white/80 mx-auto animate-pulse" />
+                          <p className="text-[11px] font-bold text-white uppercase tracking-wider">Ready to Scan</p>
+                          <p className="text-[9px] text-slate-400 leading-tight">Hold student card QR to lens, or use the card swiper below</p>
                         </div>
                       )}
 
                       {scannerStatus === 'SCANNING' && (
                         <div className="text-center p-3 space-y-2 z-10">
                           <div className="w-8 h-8 rounded-full border-2 border-red-500/30 border-t-red-500 animate-spin mx-auto"></div>
-                          <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest animate-pulse">Scanning Code...</p>
+                          <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest animate-pulse">Scanning QR...</p>
                         </div>
                       )}
 
@@ -794,9 +766,9 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                       {scannerStatus === 'SUCCESS' && (
                         <div className="text-center p-3 space-y-1.5 z-10 animate-in zoom-in-75 duration-150">
                           <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
-                          <p className="text-xs font-bold text-emerald-400">Match Succeeded!</p>
+                          <p className="text-xs font-bold text-emerald-400">Scan Complete!</p>
                           <p className="text-[9px] font-mono text-slate-300 truncate max-w-36">
-                            {detectedStudent ? detectedStudent.name : detectedParent?.name}
+                            {detectedStudent?.name}
                           </p>
                         </div>
                       )}
@@ -804,22 +776,83 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                     </div>
                   </div>
 
-                  {/* Simulation Scan Trigger Button Overlaid / Stacked */}
-                  <div className="flex justify-center z-20 pb-1 mt-auto">
+                  {/* Camera toggles / Actions overlay */}
+                  <div className="flex justify-center items-center z-10 mt-auto pt-10">
                     <button
                       type="button"
                       onClick={() => {
-                        setShowScannerModal(true);
-                        setDetectedStudent(null);
-                        setDetectedParent(null);
-                        setScannerStatus('READY');
+                        if (isWebcamActive) stopWebcam();
+                        else startWebcam();
                       }}
-                      className="px-4 py-2 bg-[#06065C] hover:bg-[#040440] text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center gap-1.5 transform active:scale-95"
+                      className="px-4 py-2 bg-black/75 hover:bg-black text-white font-bold text-xs rounded-xl border border-white/10 transition-all flex items-center gap-1.5 active:scale-95"
                     >
-                      <CreditCard className="h-4 w-4 text-white" />
-                      Simulate Card / QR Tap
+                      <Camera className="h-4 w-4 text-white" />
+                      {isWebcamActive ? 'Disable Canteen Live Camera' : 'Enable Canteen Live Camera'}
                     </button>
                   </div>
+                </div>
+              </div>
+
+              {/* MANUAL CARD SWIPER / SIMULATOR (No long lists!) */}
+              <div className="p-4 bg-slate-50 border-b border-slate-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                    <span className="text-xs font-bold text-slate-700">Simulate Card Swipe (Tap Card)</span>
+                  </div>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Instant QR Reader</span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter Student Card QR (e.g., STU001)"
+                      value={searchQrInput}
+                      onChange={(e) => setSearchQrInput(e.target.value)}
+                      className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono font-semibold focus:border-[#06065C] focus:ring-1 focus:ring-[#06065C] outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const trimmed = searchQrInput.trim();
+                        if (!trimmed) {
+                          toast.error('Please enter a card QR code to swipe.');
+                          return;
+                        }
+                        const found = allStudents.find(
+                          (s) => s.qrHash.toLowerCase() === trimmed.toLowerCase() || s.id.toLowerCase() === trimmed.toLowerCase()
+                        );
+                        if (found) {
+                          triggerCardScan(found);
+                        } else {
+                          toast.error(`Card QR Code "${trimmed}" not matched in active registry.`);
+                        }
+                      }}
+                      className="px-3.5 py-2 bg-[#06065C] hover:bg-[#040440] text-white font-bold text-xs rounded-lg shadow-xs transition-colors flex items-center gap-1 active:scale-95"
+                    >
+                      <CreditCard className="h-3.5 w-3.5" />
+                      Swipe Card
+                    </button>
+                  </div>
+                  {allStudents.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      <span className="text-[10px] text-slate-400">Registry Samples:</span>
+                      {allStudents.slice(0, 4).map((stud) => (
+                        <button
+                          key={stud.id}
+                          type="button"
+                          onClick={() => {
+                            setSearchQrInput(stud.qrHash);
+                            triggerCardScan(stud);
+                          }}
+                          className="text-[10px] font-mono font-bold text-[#06065C] bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded px-2 py-0.5 transition-colors"
+                        >
+                          {stud.qrHash} ({stud.name.split(' ')[0]})
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -837,36 +870,65 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
                           <h4 className="font-bold text-slate-800 text-xs truncate">{scannedStudent.name}</h4>
-                          <span className="text-[9px] bg-red-50 text-[#ED0101] font-mono px-1.5 py-0.5 rounded border border-red-100 font-bold whitespace-nowrap">
-                            LOADED
+                          <span className="text-[9px] bg-red-50 text-[#ED0101] font-mono px-1.5 py-0.5 rounded border border-red-100 font-bold whitespace-nowrap animate-pulse">
+                            ACTIVE SESSION
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500">{scannedStudent.class} • ID: <span className="font-mono text-slate-700 font-bold">{scannedStudent.qrHash}</span></p>
                       </div>
                     </div>
 
-                    <div className="border-t border-slate-100 pt-2.5 flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Account Balance</span>
-                        <span className="text-sm font-mono font-black text-slate-800">{(scannedStudent.balance || 0).toLocaleString()} UGX</span>
+                    <div className="border-t border-slate-150 pt-2.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Account Balance</span>
+                          <span className="text-sm font-mono font-black text-slate-800">{(scannedStudent.balance || 0).toLocaleString()} UGX</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setScannedStudent(null);
+                            setSearchQr('');
+                            toast.success('Student session ended. Terminal cleared.');
+                          }}
+                          className="px-2.5 py-1.5 bg-slate-150 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-bold transition-colors border border-slate-250"
+                        >
+                          Clear Session
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setScannedStudent(null);
-                          setSearchQr('');
-                          toast.success('Student session ended. Terminal cleared.');
-                        }}
-                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-bold transition-colors border border-slate-200"
-                      >
-                        Clear Session
-                      </button>
+
+                      {/* DYNAMIC BALANCE CHECK INSIDE PROFILE CARD */}
+                      {cartTotal > 0 && (
+                        <div className={`mt-2 p-2.5 rounded-lg border text-xs leading-snug font-medium transition-all ${
+                          scannedStudent.balance >= cartTotal
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                            : 'bg-rose-50 border-rose-200 text-rose-800 animate-pulse'
+                        }`}>
+                          {scannedStudent.balance >= cartTotal ? (
+                            <p className="flex items-center gap-1.5">
+                              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+                              <span>✅ Balance is sufficient to clear {cartTotal.toLocaleString()} UGX.</span>
+                            </p>
+                          ) : (
+                            <div className="space-y-1">
+                              <p className="font-bold flex items-center gap-1.5 text-rose-700">
+                                <span className="inline-block w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping"></span>
+                                <span>❌ INSUFFICIENT FUNDS! ORDER FAILS</span>
+                              </p>
+                              <p className="text-[11px] text-rose-650 font-normal">
+                                Student wallet has only {(scannedStudent.balance || 0).toLocaleString()} UGX.
+                                Shortfall: <span className="font-mono font-bold">{(cartTotal - scannedStudent.balance).toLocaleString()} UGX</span>. Checkout is blocked.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center gap-2.5 py-4 text-slate-500 text-xs border border-dashed border-slate-200 rounded-xl bg-white">
+                  <div className="flex items-center justify-center gap-2.5 py-5 text-slate-500 text-xs border border-dashed border-slate-200 rounded-xl bg-white">
                     <UserCheck className="h-4 w-4 text-slate-400" />
-                    <span>No active card swiped</span>
+                    <span>No student card swiped yet. Use the student tray above.</span>
                   </div>
                 )}
               </div>
@@ -924,19 +986,38 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                   </div>
                   
                   {scannedStudent ? (
-                    <button
-                      type="button"
-                      onClick={() => executeCheckoutRequest(null, scannedStudent)}
-                      disabled={cart.length === 0 || loading}
-                      className={`w-full py-3.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${
-                        cart.length === 0 || loading
-                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                          : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-98 shadow-sm shadow-emerald-600/10'
-                      }`}
-                    >
-                      {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                      Charge {scannedStudent.name}'s Card
-                    </button>
+                    (() => {
+                      const isInsufficient = scannedStudent.balance < cartTotal;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isInsufficient) {
+                              toast.error(`Order Failed: Student has only ${scannedStudent.balance.toLocaleString()} UGX which is less than the order total of ${cartTotal.toLocaleString()} UGX.`);
+                              return;
+                            }
+                            executeCheckoutRequest(null, scannedStudent);
+                          }}
+                          disabled={cart.length === 0 || loading}
+                          className={`w-full py-3.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${
+                            cart.length === 0 || loading
+                              ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                              : isInsufficient
+                                ? 'bg-[#ED0101] text-white hover:bg-[#d60000] active:scale-98 shadow-sm shadow-red-600/15'
+                                : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-98 shadow-sm shadow-emerald-600/10'
+                          }`}
+                        >
+                          {loading ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : isInsufficient ? (
+                            <X className="h-4 w-4" />
+                          ) : (
+                            <CreditCard className="h-4 w-4" />
+                          )}
+                          {isInsufficient ? 'Order Failed: Insufficient Balance' : `Charge ${scannedStudent.name}'s Card`}
+                        </button>
+                      );
+                    })()
                   ) : (
                     <button
                       type="button"
@@ -1522,7 +1603,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
       )}
 
       {/* Dynamic QR Code Presentation Modal */}
-      {activeQrCode && !showSimModal && (
+      {activeQrCode && (
         <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200 text-center space-y-5">
             <div className="flex flex-col items-center">
@@ -1542,197 +1623,15 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               <p className="text-xs font-bold text-slate-700">Amount: <span className="font-mono text-slate-900 font-bold">{activeQrCode.amount.toLocaleString()} UGX</span></p>
             </div>
 
-            {/* Simulated actions */}
+            {/* Cancel Actions */}
             <div className="space-y-2">
               <button
                 type="button"
-                onClick={() => setShowSimModal(true)}
-                className="w-full py-3 bg-[#ED0101] hover:bg-[#d60000] text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 active:scale-98 shadow-md"
-              >
-                <Smartphone className="h-4 w-4" /> Simulate Parent App Scan
-              </button>
-              <button
-                type="button"
                 onClick={() => setActiveQrCode(null)}
-                className="w-full py-2.5 text-xs text-slate-500 hover:text-slate-800 transition"
+                className="w-full py-2.5 text-xs text-slate-500 hover:text-slate-800 transition bg-slate-100 rounded-xl font-bold border border-slate-200 hover:bg-slate-150"
               >
                 Cancel / Dismiss
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Dynamic QR Customer Mobile Scanner Simulation Modal */}
-      {showSimModal && activeQrCode && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-sm rounded-[3rem] border-12 border-slate-800 bg-slate-950 shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-300 ring-4 ring-slate-900/40">
-            {/* Phone Speaker & Camera Cutout (Dynamic Notch) */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-50 flex items-center justify-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-700"></span>
-              <span className="w-12 h-1 bg-slate-700 rounded-full"></span>
-            </div>
-
-            <div className="p-6 pt-10 text-slate-200 min-h-130 flex flex-col justify-between">
-              {/* Simulated Phone Status Bar */}
-              <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4 border-b border-white/5 pb-2">
-                <span>MTN-UG / Airtel</span>
-                <span>12:00 PM</span>
-              </div>
-
-              {/* Simulated App Header */}
-              <div className="text-center space-y-1 mb-4">
-                <span className="text-[10px] font-bold text-[#c7515e] tracking-widest uppercase bg-[#c7515e]/10 px-2 py-0.5 rounded-full">skoolDime Pay</span>
-                <h4 className="text-sm font-bold text-white tracking-wide">Secure QR Checkout</h4>
-                <p className="text-[11px] text-slate-400">Scan payload resolved successfully.</p>
-              </div>
-
-              {/* Billing info */}
-              <div className="bg-slate-900/80 border border-white/5 rounded-2xl p-4 space-y-2 mb-4 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Merchant:</span>
-                  <span className="font-semibold text-white">{vendor?.name || 'Mama Betty Canteen'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Reference:</span>
-                  <span className="font-mono text-slate-300">{activeQrCode.referenceCode}</span>
-                </div>
-                <div className="border-t border-white/5 pt-2 flex justify-between items-center">
-                  <span className="text-slate-400 font-medium">Billing Amount:</span>
-                  <span className="text-base font-bold text-emerald-400 font-mono">{activeQrCode.amount.toLocaleString()} UGX</span>
-                </div>
-              </div>
-
-              {/* Funding Source Segmented Tabs */}
-              <div className="space-y-3 mb-4">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">Choose Funding Wallet:</span>
-                <div className="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-xl border border-white/5">
-                  {(['MOMO', 'STUDENT', 'PARENT'] as const).map((source) => (
-                    <button
-                      key={source}
-                      type="button"
-                      onClick={() => {
-                        setSimFundingSource(source);
-                        setSimPin('');
-                        setSimError('');
-                      }}
-                      className={`py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                        simFundingSource === source 
-                          ? 'bg-[#c7515e] text-white shadow-sm' 
-                          : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      {source}
-                    </button>
-                  ))}
-                </div>
-
-                {simError && (
-                  <div className="p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-[11px] text-rose-300 text-center font-medium">
-                    {simError}
-                  </div>
-                )}
-
-                {/* Conditional Inputs */}
-                {simFundingSource === 'MOMO' && (
-                  <div className="bg-slate-900/50 p-3 rounded-xl border border-white/5 space-y-2">
-                    <p className="text-[11px] text-slate-400 leading-relaxed text-center">
-                      Simulates MTN MoMo or Airtel Money dynamic push. Enter any Ugandan phone to dispatch instant authorization prompt.
-                    </p>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. 0772123456"
-                      defaultValue={userPhone}
-                      className="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white text-center font-semibold focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none"
-                    />
-                  </div>
-                )}
-
-                {simFundingSource === 'STUDENT' && (
-                  <div className="bg-slate-900/50 p-3 rounded-xl border border-white/5 space-y-3">
-                    <div>
-                      <label className="text-[9px] text-slate-500 font-bold uppercase block mb-1">Select Student Debit Account</label>
-                      <select
-                        value={simStudentId}
-                        onChange={(e) => setSimStudentId(e.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-slate-200 outline-none"
-                      >
-                        {allStudents.map((stud) => (
-                          <option key={stud.id} value={stud.id}>
-                            {stud.name} ({stud.class})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[9px] text-slate-500 font-bold uppercase block mb-1">Enter Student PIN (Default 1234)</label>
-                      <input
-                        type="password"
-                        required
-                        maxLength={4}
-                        value={simPin}
-                        onChange={(e) => setSimPin(e.target.value)}
-                        placeholder="••••"
-                        className="w-full rounded-lg border border-white/10 bg-slate-950 py-2 text-center text-sm font-bold tracking-[0.5em] text-white outline-none"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {simFundingSource === 'PARENT' && (
-                  <div className="bg-slate-900/50 p-3 rounded-xl border border-white/5 space-y-3">
-                    <div>
-                      <label className="text-[9px] text-slate-500 font-bold uppercase block mb-1">Select Parent Funder</label>
-                      <select
-                        value={simParentId}
-                        onChange={(e) => setSimParentId(e.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-slate-200 outline-none"
-                      >
-                        {allParents.map((parent) => (
-                          <option key={parent.id} value={parent.id}>
-                            {parent.name} ({parent.phone})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[9px] text-slate-500 font-bold uppercase block mb-1">Enter Parent PIN (Default 1234)</label>
-                      <input
-                        type="password"
-                        required
-                        maxLength={4}
-                        value={simPin}
-                        onChange={(e) => setSimPin(e.target.value)}
-                        placeholder="••••"
-                        className="w-full rounded-lg border border-white/10 bg-slate-950 py-2 text-center text-sm font-bold tracking-[0.5em] text-white outline-none"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="space-y-2 border-t border-white/5 pt-4">
-                <button
-                  onClick={handleSimulateCompletePayment}
-                  disabled={simLoading}
-                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/10"
-                >
-                  {simLoading ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ShieldCheck className="h-4 w-4" />
-                  )}
-                  {simLoading ? 'Authorizing...' : 'Slide to Authorize & Pay'}
-                </button>
-                <button
-                  onClick={() => setShowSimModal(false)}
-                  className="w-full py-2 text-[11px] text-slate-500 hover:text-slate-300 text-center font-medium"
-                >
-                  Dismiss / Cancel Scan
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -1851,219 +1750,6 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Simulation NFC/QR Scanner Modal */}
-      {showScannerModal && (
-        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h4 className="text-base font-bold text-slate-800">Simulate Physical Card / QR Scan</h4>
-                <p className="text-xs text-slate-500">Tap a student's contactless RFID card or scan a parent's QR code</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowScannerModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-sm font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Tabs for Student and Parent */}
-            <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-              <button
-                type="button"
-                onClick={() => {
-                  setScannerTab('STUDENT');
-                  setDetectedParent(null);
-                  setScannerStatus('READY');
-                  setCandidateSearchQuery('');
-                }}
-                className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  scannerTab === 'STUDENT'
-                    ? 'bg-[#06065C] text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-850 hover:bg-white/50'
-                }`}
-              >
-                <User className="h-3.5 w-3.5" />
-                Students
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setScannerTab('PARENT');
-                  setDetectedParent(null);
-                  setScannerStatus('READY');
-                  setCandidateSearchQuery('');
-                }}
-                className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  scannerTab === 'PARENT'
-                    ? 'bg-[#06065C] text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-850 hover:bg-white/50'
-                }`}
-              >
-                <Smartphone className="h-3.5 w-3.5" />
-                Parents
-              </button>
-            </div>
-
-            {/* candidate search field */}
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-              <input
-                type="text"
-                value={candidateSearchQuery}
-                onChange={(e) => setCandidateSearchQuery(e.target.value)}
-                placeholder={scannerTab === 'STUDENT' ? "Search student class or name..." : "Search parent name or phone..."}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2.5 text-xs text-slate-800 focus:border-slate-300 outline-none transition-colors"
-              />
-            </div>
-
-            {/* Candidate List Container */}
-            <div className="max-h-60 overflow-y-auto pr-1 space-y-2 scrollbar-thin">
-              {scannerTab === 'STUDENT' ? (
-                allStudents.filter(stud => 
-                  stud.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-                  stud.class.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-                  stud.admissionNo.toLowerCase().includes(candidateSearchQuery.toLowerCase())
-                ).length === 0 ? (
-                  <div className="text-center py-8 text-slate-400 text-xs italic">
-                    No students match "{candidateSearchQuery}"
-                  </div>
-                ) : (
-                  allStudents
-                    .filter(stud => 
-                      stud.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-                      stud.class.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-                      stud.admissionNo.toLowerCase().includes(candidateSearchQuery.toLowerCase())
-                    )
-                    .map((stud) => {
-                      const isScanningThis = detectedStudent?.id === stud.id;
-                      return (
-                        <button
-                          key={stud.id}
-                          type="button"
-                          disabled={scannerStatus !== 'READY'}
-                          onClick={() => startStudentScan(stud)}
-                          className={`w-full text-left rounded-xl border p-2.5 flex items-center justify-between transition-all duration-150 ${
-                            isScanningThis
-                              ? 'bg-red-50 border-red-200'
-                              : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                          } ${scannerStatus !== 'READY' && !isScanningThis ? 'opacity-40 cursor-not-allowed' : ''}`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <img src={stud.avatarUrl} alt="" className="w-8 h-8 rounded-full border border-slate-200" referrerPolicy="no-referrer" />
-                            <div>
-                              <h4 className="text-xs font-bold text-slate-800 leading-tight">{stud.name}</h4>
-                              <p className="text-[10px] text-slate-500 mt-0.5">{stud.class} • Bal: {(stud.balance || 0).toLocaleString()} UGX</p>
-                            </div>
-                          </div>
-                          <span className="font-mono text-[9px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
-                            {stud.qrHash}
-                          </span>
-                        </button>
-                      );
-                    })
-                )
-              ) : (
-                detectedParent && scannerStatus === 'SUCCESS' ? (
-                  // Parent scanned successfully, choose child
-                  <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
-                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between">
-                      <div>
-                        <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Parent Identified</span>
-                        <h4 className="text-xs font-bold text-slate-800">{detectedParent.name}</h4>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDetectedParent(null);
-                          setScannerStatus('READY');
-                        }}
-                        className="text-[10px] text-slate-500 hover:text-slate-850"
-                      >
-                        [Change]
-                      </button>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] text-slate-500 font-bold uppercase block mb-1">Select linked student child:</span>
-                      {allStudents.filter(s => s.parentPhone === detectedParent.phone).length === 0 ? (
-                        <p className="text-xs text-slate-400 italic p-2 bg-slate-50 rounded border border-slate-200">No students linked to this account.</p>
-                      ) : (
-                        allStudents
-                          .filter(s => s.parentPhone === detectedParent.phone)
-                          .map((s) => (
-                            <button
-                              key={s.id}
-                              type="button"
-                              onClick={() => selectParentChild(s)}
-                              className="w-full text-left bg-white hover:bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex items-center justify-between transition-colors"
-                            >
-                              <div className="flex items-center gap-2">
-                                <img src={s.avatarUrl} alt="" className="w-7 h-7 rounded-full border border-slate-200" referrerPolicy="no-referrer" />
-                                <div>
-                                  <h5 className="text-xs font-bold text-slate-800">{s.name}</h5>
-                                  <p className="text-[9px] text-slate-500">{s.class}</p>
-                                </div>
-                              </div>
-                              <span className="text-[#06065C] font-mono text-[10px] font-bold">Select Child &gt;</span>
-                            </button>
-                          ))
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  allParents.filter(p => 
-                    p.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-                    p.phone.includes(candidateSearchQuery)
-                  ).length === 0 ? (
-                    <div className="text-center py-8 text-slate-400 text-xs italic">
-                      No parents match "{candidateSearchQuery}"
-                    </div>
-                  ) : (
-                    allParents
-                      .filter(p => 
-                        p.name.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-                        p.phone.includes(candidateSearchQuery)
-                      )
-                      .map((parent) => {
-                        const isScanningThis = detectedParent?.id === parent.id;
-                        return (
-                          <button
-                            key={parent.id}
-                            type="button"
-                            disabled={scannerStatus !== 'READY'}
-                            onClick={() => startParentScan(parent)}
-                            className={`w-full text-left rounded-xl border p-2.5 flex items-center justify-between transition-all duration-150 ${
-                              isScanningThis
-                                ? 'bg-red-50 border-red-200'
-                                : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                            } ${scannerStatus !== 'READY' && !isScanningThis ? 'opacity-40 cursor-not-allowed' : ''}`}
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
-                                <User className="h-4 w-4 text-slate-500" />
-                              </div>
-                              <div>
-                                <h4 className="text-xs font-bold text-slate-800 leading-tight">{parent.name}</h4>
-                                <p className="text-[10px] text-slate-500 mt-0.5">{parent.phone}</p>
-                              </div>
-                            </div>
-                            <span className="font-mono text-[9px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
-                              APP QR
-                            </span>
-                          </button>
-                        );
-                      })
-                  )
-                )
-              )}
-            </div>
           </div>
         </div>
       )}
