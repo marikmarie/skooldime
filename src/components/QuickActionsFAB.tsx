@@ -232,7 +232,7 @@ export default function QuickActionsFAB({ user }: QuickActionsFABProps) {
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-white">Uganda Edu Pay POS Scan Simulator</h3>
-                    <p className="text-[10px] text-slate-400 font-mono">Offline-First NFC/QR Standard</p>
+                    <p className="text-[10px] text-slate-400 font-mono">Offline-First QR Standard</p>
                   </div>
                 </div>
                 <button

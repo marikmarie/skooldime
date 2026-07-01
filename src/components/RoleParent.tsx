@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Smartphone, Shield, ArrowRightLeft, Landmark, RefreshCw, Key, CheckCircle2, AlertTriangle, History, Search, ListFilter } from 'lucide-react';
+import { Smartphone, Shield, ArrowRightLeft, Landmark, RefreshCw, Key, CheckCircle2, AlertTriangle, History, Search, ListFilter, Printer } from 'lucide-react';
 import { Parent, Student, Transaction } from '../types';
 import { useToast } from './ToastContext';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface RoleParentProps {
   userPhone?: string;
@@ -17,6 +18,17 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
   const [txChildFilter, setTxChildFilter] = useState<string>('ALL');
   const [loading, setLoading] = useState(false);
   const toast = useToast();
+  const [printingStudent, setPrintingStudent] = useState<Student | null>(null);
+
+  useEffect(() => {
+    if (printingStudent) {
+      const timer = setTimeout(() => {
+        window.print();
+        setPrintingStudent(null);
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [printingStudent]);
 
   // Top up states
   const [depositAmt, setDepositAmt] = useState('');
@@ -245,7 +257,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto font-sans antialiased text-gray-200 bg-[#06080E] p-4 md:p-6 rounded-2xl border border-white/5 shadow-xl">
       
       {/* Main Indicators Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -253,7 +265,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-5 flex items-center justify-between hover:border-[#c7515e]/30 transition-colors shadow-lg">
           <div>
             <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Parent Fund Balance</span>
-            <h4 className="text-2xl font-bold text-white mt-1">{parent.walletBalance.toLocaleString()} <span className="text-sm font-medium text-gray-400">UGX</span></h4>
+            <h4 className="text-2xl font-bold text-[#06065C] mt-1">{parent.walletBalance.toLocaleString()} <span className="text-sm font-medium text-gray-400">UGX</span></h4>
           </div>
           <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
             <Landmark className="h-6 w-6" />
@@ -263,7 +275,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-5 flex items-center justify-between hover:border-[#c7515e]/30 transition-colors shadow-lg">
           <div>
             <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Linked Student Cards</span>
-            <h4 className="text-2xl font-bold text-white mt-1">{students.length} <span className="text-sm font-medium text-gray-400">Active</span></h4>
+            <h4 className="text-2xl font-bold text-[#06065C] mt-1">{students.length} <span className="text-sm font-medium text-gray-400">Active</span></h4>
           </div>
           <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
             <Smartphone className="h-6 w-6" />
@@ -273,7 +285,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-5 flex items-center justify-between hover:border-[#c7515e]/30 transition-colors shadow-lg">
           <div>
             <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Identity Verification</span>
-            <h4 className="text-2xl font-bold text-white mt-1">Tier 2 <span className="text-sm font-medium text-gray-400">Verified</span></h4>
+            <h4 className="text-2xl font-bold text-[#06065C] mt-1">Tier 2 <span className="text-sm font-medium text-gray-400">Verified</span></h4>
           </div>
           <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
             <Shield className="h-6 w-6" />
@@ -332,7 +344,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                 <div className="flex items-center gap-4">
                   <img src={stud.avatarUrl} alt="" className="w-12 h-12 rounded-full border-2 border-[#c7515e]/30 shrink-0" referrerPolicy="no-referrer" />
                   <div className="min-w-0">
-                    <h4 className="text-sm font-bold text-white truncate">{stud.name}</h4>
+                    <h4 className="text-sm font-bold text-[#06065C] truncate">{stud.name}</h4>
                     <p className="text-[11px] text-[#c7515e] font-medium">{stud.class}</p>
                   </div>
                 </div>
@@ -348,18 +360,28 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                   </div>
                 </div>
 
-                <div className="flex gap-2 sm:gap-3">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   <button
                     onClick={() => triggerPinReset(stud.id)}
-                    className="flex-1 rounded-lg border border-white/10 bg-transparent hover:bg-white/5 py-2 text-center text-xs text-gray-300 font-semibold transition-colors"
+                    className="rounded-lg border border-white/10 bg-transparent hover:bg-white/5 py-2 text-center text-[10px] sm:text-xs text-gray-300 font-semibold transition-colors truncate"
+                    title="Reset PIN"
                   >
-                    Reset PIN
+                    PIN
                   </button>
                   <button
                     onClick={() => triggerLimitModal(stud.id, stud.noPinLimit)}
-                    className="flex-1 rounded-lg border border-[#c7515e]/30 bg-[#c7515e]/10 hover:bg-[#c7515e]/20 py-2 text-center text-xs text-[#c7515e] font-semibold transition-colors"
+                    className="rounded-lg border border-[#c7515e]/30 bg-[#c7515e]/10 hover:bg-[#c7515e]/20 py-2 text-center text-[10px] sm:text-xs text-[#c7515e] font-semibold transition-colors truncate"
+                    title="Edit Limits"
                   >
-                    Edit Limits
+                    Limits
+                  </button>
+                  <button
+                    onClick={() => setPrintingStudent(stud)}
+                    className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 py-2 text-center text-[10px] sm:text-xs text-emerald-400 font-semibold transition-colors flex items-center justify-center gap-1 truncate"
+                    title="Print QR Card"
+                  >
+                    <Printer className="h-3 w-3 shrink-0" />
+                    <span>Card</span>
                   </button>
                 </div>
               </div>
@@ -387,7 +409,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
 
             <div className="bg-[#c7515e]/5 rounded-xl border border-[#c7515e]/15 p-3.5 mb-4">
               <p className="text-xs text-gray-400 leading-relaxed">
-              <strong className="text-[#c7515e]">Direct Card Crediting:</strong> Allocate funds instantly from your personal <strong>Parent Wallet</strong> to credit your child's physical <strong> Wallet Card</strong>. This transaction is free, safe, and immediate.
+                🚀 <strong className="text-[#c7515e]">Direct Card Crediting:</strong> Allocate funds instantly from your personal <strong>Parent Wallet</strong> to credit your child's physical <strong>NFC Wallet Card</strong>. This transaction is free, safe, and immediate.
               </p>
             </div>
 
@@ -746,6 +768,73 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
           </div>
         </div>
       )}
+
+       {/* HIDDEN PRINT TARGET CONTAINER */}
+       {printingStudent && (
+         <div id="printable-cards-container">
+           <div className="print-card-grid">
+             <div 
+               className="print-card p-4 border-2 border-[#06065C] rounded-2xl bg-white w-[350px] h-[220px] flex flex-col justify-between overflow-hidden"
+               style={{
+                 printColorAdjust: 'exact',
+                 WebkitPrintColorAdjust: 'exact',
+                 boxSizing: 'border-box'
+               }}
+             >
+               {/* Card header */}
+               <div className="flex items-center justify-between border-b-2 border-[#06065C]/20 pb-2">
+                 <div className="flex items-center gap-2">
+                   <div className="w-5 h-5 rounded-full bg-[#ED0101] flex items-center justify-center font-bold text-[10px] text-white">K</div>
+                   <div>
+                     <h5 className="text-[10px] font-bold uppercase tracking-widest text-[#06065C] leading-none" style={{ margin: 0, color: '#06065C' }}>Kampala Parents</h5>
+                     <span className="text-[7px] text-[#ED0101] tracking-wider uppercase font-bold leading-none" style={{ display: 'block', marginTop: '2px' }}>Primary School</span>
+                   </div>
+                 </div>
+                 <span className="text-[8px] bg-[#ED0101] text-white font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">
+                   Student Wallet
+                 </span>
+               </div>
+
+               {/* Card content */}
+               <div className="flex items-center gap-4 py-2 flex-1">
+                 <div className="w-16 h-16 rounded-xl border-2 border-[#06065C]/20 bg-slate-50 overflow-hidden shrink-0 flex items-center justify-center">
+                   <img 
+                     src={printingStudent.avatarUrl} 
+                     alt="" 
+                     className="w-full h-full object-cover" 
+                     referrerPolicy="no-referrer"
+                     style={{ display: 'block', width: '100%', height: '100%' }} 
+                   />
+                 </div>
+                 <div className="flex-1 min-w-0 space-y-1">
+                   <h4 className="text-sm font-extrabold text-[#06065C] leading-tight truncate" style={{ margin: 0, color: '#06065C' }}>{printingStudent.name}</h4>
+                   <div className="space-y-0.5 text-[10px] text-[#334155] font-mono">
+                     <div><span style={{ color: '#64748b' }}>CLASS:</span> <strong className="text-[#06065C]" style={{ color: '#06065C' }}>{printingStudent.class}</strong></div>
+                     <div><span style={{ color: '#64748b' }}>ADM NO:</span> <strong className="text-[#06065C]" style={{ color: '#06065C' }}>{printingStudent.admissionNo}</strong></div>
+                   </div>
+                 </div>
+                 <div className="bg-white p-1 rounded-lg shrink-0 border-2 border-[#06065C]/10 flex items-center justify-center" style={{ width: '64px', height: '64px' }}>
+                   <QRCodeSVG 
+                     value={printingStudent.qrHash} 
+                     size={56} 
+                     level="H"
+                     style={{ display: 'block' }}
+                   />
+                 </div>
+               </div>
+
+               {/* Card footer */}
+               <div className="border-t-2 border-[#06065C]/15 pt-2 flex items-center justify-between text-[8px] font-mono text-[#475569]">
+                 <div className="flex items-center gap-1.5">
+                   <span className="w-2 h-2 rounded-full bg-emerald-600" style={{ display: 'inline-block' }} />
+                   <span className="font-bold text-[#06065C]" style={{ color: '#06065C' }}>NFC / SECURE CARD</span>
+                 </div>
+                 <span className="text-[#ED0101] font-bold font-mono">{printingStudent.qrHash}</span>
+               </div>
+             </div>
+           </div>
+         </div>
+       )}
 
     </div>
   );

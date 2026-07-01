@@ -597,41 +597,41 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
     <div className="space-y-6 text-slate-800">
       
       {/* Dashboard Sub-Tabs */}
-      <div className="flex bg-slate-100 border border-slate-200 p-1 rounded-xl max-w-lg mb-6">
+      <div className="flex bg-slate-100 border border-slate-200 p-1 rounded-xl max-w-lg mb-6 overflow-x-auto scrollbar-none flex-nowrap w-full">
         <button
           type="button"
           onClick={() => setActiveTerminalTab('POS')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+          className={`flex-1 shrink-0 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide uppercase transition-all ${
             activeTerminalTab === 'POS'
               ? 'bg-navy text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
           }`}
         >
-          <ShoppingCart className="h-4.5 w-4.5" />
+          <ShoppingCart className="h-4 w-4" />
           <span>POS Checkout</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTerminalTab('ANALYTICS')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+          className={`flex-1 shrink-0 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide uppercase transition-all ${
             activeTerminalTab === 'ANALYTICS'
               ? 'bg-navy text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
           }`}
         >
-          <BarChart3 className="h-4.5 w-4.5" />
+          <BarChart3 className="h-4 w-4" />
           <span>Shift Sales</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTerminalTab('HISTORY')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
+          className={`flex-1 shrink-0 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide uppercase transition-all ${
             activeTerminalTab === 'HISTORY'
               ? 'bg-navy text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
           }`}
         >
-          <Banknote className="h-4.5 w-4.5" />
+          <Banknote className="h-4 w-4" />
           <span>Ledger & MoMo</span>
         </button>
       </div>
@@ -949,8 +949,11 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
 
           </div> {/* Close Inner Grid Row */}
 
-          {/* Searchable Catalog & Canteen Inventory */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col gap-6">
+          </div> {/* Close Section 1 (Camera & Verification column container) */}
+
+          {/* SECTION 3: Searchable Catalog & Canteen Inventory (xl:col-span-8) */}
+          <div className="xl:col-span-8 flex flex-col gap-6 order-3 animate-in fade-in duration-300">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col gap-6">
             
             {/* Header with real-time searching input */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
@@ -1025,9 +1028,9 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               </div>
             )}
 
-          </div>
+          </div> {/* Close white catalog card container */}
 
-          </div>
+          </div> {/* Close Section 3 Column container */}
 
           {/* COLUMN 2: Current Order Basket (4 cols) */}
           <div className="xl:col-span-4 flex flex-col gap-6 order-2 xl:order-2 sticky top-6">

@@ -817,16 +817,16 @@ export function devApiMiddleware(req: any, res: any, next: any) {
           if (studentIdx === -1) {
             const studentId = `ST_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
             const CHILD_AVATARS = [
-              'imagesphoto-1503919545889-aef636e10ad4?w=150&auto=format&fit=crop',
-              'imagesphoto-1545696913-b39cd8590984?w=150&auto=format&fit=crop',
-              'imagesphoto-1519457431-44ccd64a579b?w=150&auto=format&fit=crop',
-              'imagesphoto-1507591064344-4c6ce005b128?w=150&auto=format&fit=crop',
-              'imagesphoto-1516627145497-ae6968895b74?w=150&auto=format&fit=crop',
-              'imagesphoto-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop',
-              'imagesphoto-1502082553048-f009c37129b9?w=150&auto=format&fit=crop',
-              'imagesphoto-1517841905240-472988babdf9?w=150&auto=format&fit=crop',
-              'imagesphoto-1544717305-2782549b5136?w=150&auto=format&fit=crop',
-              'imagesphoto-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1503919545889-aef636e10ad4?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1545696913-b39cd8590984?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1519457431-44ccd64a579b?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop',
             ];
             const randAvatar = CHILD_AVATARS[Math.floor(Math.random() * CHILD_AVATARS.length)];
             
@@ -986,10 +986,24 @@ export function devApiMiddleware(req: any, res: any, next: any) {
           return sendError(`Insufficient pocket money balance. Card holds ${db.wallets[studentWalletIdx].balance.toLocaleString()} UGX.`, 400);
         }
 
-        if (amt > student.noPinLimit) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const spentToday = (db.transactions || [])
+          .filter((tx: any) => 
+            tx.senderWalletId === db.wallets[studentWalletIdx].id && 
+            tx.type === 'SPEND' && 
+            tx.status === 'SUCCESS' && 
+            tx.createdAt.startsWith(todayStr)
+          )
+          .reduce((sum: number, tx: any) => sum + tx.amount, 0);
+
+        if ((spentToday + amt) > student.noPinLimit) {
           if (!pin) {
             res.statusCode = 400;
-            return res.end(JSON.stringify({ success: false, pinRequired: true, error: 'Transaction exceeds standard daily PIN-less limit. PIN required.' }));
+            return res.end(JSON.stringify({ 
+              success: false, 
+              pinRequired: true, 
+              error: `Transaction of ${amt.toLocaleString()} UGX plus today's spent ${spentToday.toLocaleString()} UGX exceeds daily PIN-less limit of ${student.noPinLimit.toLocaleString()} UGX. PIN required.` 
+            }));
           }
           if (student.pin !== pin) {
             return sendError('Invalid Student PIN code. Transaction unauthorized.', 400);

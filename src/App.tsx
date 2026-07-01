@@ -215,7 +215,7 @@ export default function App() {
           </div>
 
           {/* Quick Actions Floating Portal */}
-          <QuickActionsFAB user={user} />
+          {user.role !== 'VENDOR' && <QuickActionsFAB user={user} />}
         </div>
       )}
 

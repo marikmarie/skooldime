@@ -104,11 +104,15 @@ div[class*="bg-[#141C2F]"], section[class*="bg-[#141C2F]"] {
 }
 
 /* Map the old red color to our exact primary red */
-[class*="bg-[#c7515e]"] {
+[class*="bg-[#c7515e]"]:not([class*="/"]) {
   background-color: #ED0101 !important;
 }
 [class*="bg-[#c7515e]/10"] {
   background-color: rgba(237, 1, 1, 0.08) !important;
+  color: #ED0101 !important;
+}
+[class*="bg-[#c7515e]/15"] {
+  background-color: rgba(237, 1, 1, 0.12) !important;
   color: #ED0101 !important;
 }
 [class*="bg-[#c7515e]/20"] {

@@ -411,7 +411,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto font-sans antialiased text-gray-200">
+    <div className="space-y-6 max-w-7xl mx-auto font-sans antialiased text-gray-200 bg-[#06080E] p-4 md:p-6 rounded-2xl border border-white/5 shadow-xl">
       
       {/* Dashboard Sub-Tabs */}
       <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-lg">
@@ -486,7 +486,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                       <UploadCloud className="h-5 w-5 text-[#c7515e]" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-white tracking-wide">Bulk Upsert Student CSV Engine</h3>
+                      <h3 className="text-sm font-bold text-[#06065C] tracking-wide">Bulk Upsert Student CSV Engine</h3>
                       <p className="text-[11px] text-gray-500 mt-0.5">Import multiple student and parent linkage records instantly</p>
                     </div>
                   </div>
@@ -504,7 +504,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                       onChange={(e) => setCsvText(e.target.value)}
                       rows={6}
                       placeholder="e.g. KPS01,KPS-2026-004,Joan Kembabazi,Primary 5,Mugisha,+256779998811,..."
-                      className="w-full rounded-lg border border-white/10 bg-[#06080E] p-4 font-mono text-sm text-white focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all placeholder-gray-600"
+                      className="w-full rounded-lg border border-white/10 bg-[#06080E] p-4 font-mono text-sm text-slate-800 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all placeholder-gray-600"
                     />
 
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -539,7 +539,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                     <UserPlus className="h-5 w-5 text-[#c7515e]" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white tracking-wide">Register Student & Parent Link</h3>
+                    <h3 className="text-sm font-bold text-[#06065C] tracking-wide">Register Student & Parent Link</h3>
                     <p className="text-[11px] text-gray-500 mt-0.5">Create a single student record with automated SMS PIN delivery</p>
                   </div>
                 </div>
@@ -550,7 +550,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                     <select
                       value={schoolId}
                       onChange={(e) => setSchoolId(e.target.value)}
-                      className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-300 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all appearance-none cursor-pointer"
+                      className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-slate-800 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all appearance-none cursor-pointer"
                     >
                       {schools.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
                     </select>
@@ -564,7 +564,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                         value={studentName}
                         onChange={(e) => setStudentName(e.target.value)}
                         placeholder="Brian Mukasa"
-                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-slate-800 placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                       />
                     </div>
                     <div>
@@ -574,7 +574,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                         value={admissionNo}
                         onChange={(e) => setAdmissionNo(e.target.value)}
                         placeholder="KPS-2026-004"
-                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-slate-800 placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -587,7 +587,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                         value={studentClass}
                         onChange={(e) => setStudentClass(e.target.value)}
                         placeholder="Primary 5"
-                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-slate-800 placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                       />
                     </div>
                     <div>
@@ -597,7 +597,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                         value={parentPhone}
                         onChange={(e) => setParentPhone(e.target.value)}
                         placeholder="+256772444555"
-                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-slate-800 placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -610,7 +610,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                         value={parentName}
                         onChange={(e) => setParentName(e.target.value)}
                         placeholder="Moses Mukasa"
-                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-slate-800 placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                       />
                     </div>
                     <div>
@@ -620,7 +620,7 @@ GHS02,GHS-2026-102,Angella Namara,Senior 2,Justine Namara,+256782555444,CF900881
                         value={parentNin}
                         onChange={(e) => setParentNin(e.target.value)}
                         placeholder="CM89021102A12"
-                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                        className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-slate-800 placeholder-gray-600 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
                       />
                     </div>
                   </div>

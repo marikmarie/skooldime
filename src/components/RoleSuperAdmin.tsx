@@ -122,7 +122,7 @@ export default function RoleSuperAdmin() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto font-sans antialiased text-gray-200">
+    <div className="space-y-6 max-w-7xl mx-auto font-sans antialiased text-gray-200 bg-[#06080E] p-4 md:p-6 rounded-2xl border border-white/5 shadow-xl">
       
       {/* Overview stats bento */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
