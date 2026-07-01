@@ -129,7 +129,7 @@
       "pin": "1234",
       "parentPhone": "+256772444555",
       "isLinked": true,
-      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120",
+      "avatarUrl": "photo-1544005313-94ddf0286df2?w=120",
       "noPinLimit": 5000
     },
     {
@@ -142,7 +142,7 @@
       "pin": "5678",
       "parentPhone": "+256772444555",
       "isLinked": true,
-      "avatarUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120",
+      "avatarUrl": "photo-1517841905240-472988babdf9?w=120",
       "noPinLimit": 2000
     },
     {
@@ -155,7 +155,7 @@
       "pin": "0000",
       "parentPhone": "+256779998811",
       "isLinked": true,
-      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120",
+      "avatarUrl": "photo-1544005313-94ddf0286df2?w=120",
       "noPinLimit": 2000
     },
     {
@@ -168,7 +168,7 @@
       "pin": "0000",
       "parentPhone": "+256772444555",
       "isLinked": true,
-      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120",
+      "avatarUrl": "photo-1544005313-94ddf0286df2?w=120",
       "noPinLimit": 2000
     },
     {
@@ -181,7 +181,7 @@
       "pin": "0000",
       "parentPhone": "+256782555444",
       "isLinked": true,
-      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120",
+      "avatarUrl": "photo-1544005313-94ddf0286df2?w=120",
       "noPinLimit": 2000
     }
   ],
