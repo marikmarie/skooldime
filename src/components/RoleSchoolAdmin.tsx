@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Landmark, Key, BarChart3, ShieldCheck, RefreshCw, Smartphone, AlertTriangle, Users, UserPlus, Mail, Phone, CheckCircle, Trash2, Search, CreditCard, Printer, CheckSquare, Square } from 'lucide-react';
+import { Landmark, Key, BarChart3, ShieldCheck, RefreshCw, Smartphone, AlertTriangle, Users, UserPlus, Mail, Phone, CheckCircle, Trash2, Search, CreditCard, Printer, CheckSquare, Square, Download } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { Student } from '../types';
 import { useToast } from './ToastContext';
 import StudentBulkUploader from './StudentBulkUploader';
@@ -28,6 +31,76 @@ export default function RoleSchoolAdmin() {
   const [staffEmail, setStaffEmail] = useState('');
 
   const toast = useToast();
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const downloadBatchPDF = async (customIds?: string[]) => {
+    const targetIds = customIds || selectedCardIds;
+    if (targetIds.length === 0) {
+      toast.error("Please select at least one card to download.");
+      return;
+    }
+    
+    setIsExportingPdf(true);
+    setLoading(true);
+    toast.info("Generating high-resolution card PDFs... Please wait.");
+    
+    setTimeout(async () => {
+      const container = document.getElementById('printable-cards-container');
+      if (!container) {
+        toast.error("Error: Printable cards container not found.");
+        setIsExportingPdf(false);
+        setLoading(false);
+        return;
+      }
+
+      const cardElements = container.querySelectorAll('.print-card');
+      if (cardElements.length === 0) {
+        toast.error("Error: No cards found in print layout.");
+        setIsExportingPdf(false);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm',
+          format: [85.6, 54]
+        });
+
+        for (let i = 0; i < cardElements.length; i++) {
+          const cardEl = cardElements[i] as HTMLElement;
+          
+          if (i > 0) {
+            pdf.addPage([85.6, 54], 'landscape');
+          }
+
+          const canvas = await html2canvas(cardEl, {
+            scale: 3, // High DPI capture for crisp prints and QRs
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false
+          });
+
+          const imgData = canvas.toDataURL('image/png');
+          pdf.addImage(imgData, 'PNG', 0, 0, 85.6, 54);
+        }
+
+        const filename = targetIds.length === 1 
+          ? `${students.find(s => s.id === targetIds[0])?.name.replace(/\s+/g, '_')}_Card.pdf`
+          : `Kampala_Parents_NFC_Cards_Batch.pdf`;
+
+        pdf.save(filename);
+        toast.success(`Successfully downloaded ${targetIds.length} card(s) as PDF!`);
+      } catch (err) {
+        console.error('Batch PDF Generation Error:', err);
+        toast.error('Failed to generate PDF. Please try again.');
+      } finally {
+        setIsExportingPdf(false);
+        setLoading(false);
+      }
+    }, 600);
+  };
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -497,7 +570,7 @@ export default function RoleSchoolAdmin() {
               <div>
                 <h3 className="text-sm font-bold text-gray-200 flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-[#c7515e]" />
-                   QR Card Generator & Publisher
+                  NFC QR Card Generator & Publisher
                 </h3>
                 <p className="text-xs text-gray-400 mt-1">Batch print cards with unique secure scan QR codes and student photographs.</p>
               </div>
@@ -527,6 +600,14 @@ export default function RoleSchoolAdmin() {
                 >
                   <Printer className="h-4 w-4" />
                   <span>Print Selected ({selectedCardIds.length})</span>
+                </button>
+                <button
+                  onClick={() => downloadBatchPDF()}
+                  disabled={selectedCardIds.length === 0 || loading}
+                  className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 px-4 py-2 text-xs font-bold text-white transition flex items-center gap-1.5 shadow-md shadow-indigo-600/20"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Download PDF ({selectedCardIds.length})</span>
                 </button>
               </div>
             </div>
@@ -599,6 +680,15 @@ export default function RoleSchoolAdmin() {
                         >
                           <Printer className="h-4 w-4 text-[#c7515e]" />
                         </button>
+                        <button
+                          onClick={() => {
+                            downloadBatchPDF([student.id]);
+                          }}
+                          className="p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm transition active:scale-95"
+                          title="Download Card PDF"
+                        >
+                          <Download className="h-4 w-4 text-indigo-400" />
+                        </button>
                       </div>
 
                       {/* Card Content Mockup */}
@@ -640,7 +730,7 @@ export default function RoleSchoolAdmin() {
                         <div className="border-t border-white/15 pt-1 flex items-center justify-between text-[7px] font-mono text-slate-400">
                           <div className="flex items-center gap-1">
                             <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                            <span> SCAN READY</span>
+                            <span>NFC / SCAN READY</span>
                           </div>
                           <span className="text-white font-bold">{student.qrHash}</span>
                         </div>
@@ -728,74 +818,87 @@ export default function RoleSchoolAdmin() {
       )}
 
       {/* HIDDEN PRINT TARGET CONTAINER */}
-      <div id="printable-cards-container">
-        <div className="print-card-grid">
-          {students
-            .filter(s => selectedCardIds.includes(s.id))
-            .map(student => (
-              <div 
-                key={student.id} 
-                className="print-card p-4 border-2 border-[#06065C] rounded-2xl bg-white w-[350px] h-[220px] flex flex-col justify-between overflow-hidden"
-                style={{
-                  printColorAdjust: 'exact',
-                  WebkitPrintColorAdjust: 'exact',
-                  boxSizing: 'border-box'
-                }}
-              >
-                {/* Card header */}
-                <div className="flex items-center justify-between border-b-2 border-[#06065C]/20 pb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-[#ED0101] flex items-center justify-center font-bold text-[10px] text-white">K</div>
-                    <div>
-                      <h5 className="text-[10px] font-bold uppercase tracking-widest text-[#06065C] leading-none" style={{ margin: 0 }}>Kampala Parents</h5>
-                      <span className="text-[7px] text-[#ED0101] tracking-wider uppercase font-bold leading-none" style={{ display: 'block', marginTop: '2px' }}>Primary School</span>
+      {selectedCardIds.length > 0 && createPortal(
+        <div 
+          id="printable-cards-container"
+          style={isExportingPdf ? {
+            position: 'absolute',
+            left: '-9999px',
+            top: '-9999px',
+            display: 'block',
+            backgroundColor: '#ffffff',
+            zIndex: 99999
+          } : undefined}
+        >
+          <div className="print-card-grid">
+            {students
+              .filter(s => selectedCardIds.includes(s.id))
+              .map(student => (
+                <div 
+                  key={student.id} 
+                  className="print-card p-4 border-2 border-[#06065C] rounded-2xl bg-white w-[350px] h-[220px] flex flex-col justify-between overflow-hidden"
+                  style={{
+                    printColorAdjust: 'exact',
+                    WebkitPrintColorAdjust: 'exact',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {/* Card header */}
+                  <div className="flex items-center justify-between border-b-2 border-[#06065C]/20 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-[#ED0101] flex items-center justify-center font-bold text-[10px] text-white">K</div>
+                      <div>
+                        <h5 className="text-[10px] font-bold uppercase tracking-widest text-[#06065C] leading-none" style={{ margin: 0, color: '#06065C' }}>Kampala Parents</h5>
+                        <span className="text-[7px] text-[#ED0101] tracking-wider uppercase font-bold leading-none" style={{ display: 'block', marginTop: '2px' }}>Primary School</span>
+                      </div>
+                    </div>
+                    <span className="text-[8px] bg-[#ED0101] text-white font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">
+                      Student Wallet
+                    </span>
+                  </div>
+
+                  {/* Card content */}
+                  <div className="flex items-center gap-4 py-2 flex-1">
+                    <div className="w-16 h-16 rounded-xl border-2 border-[#06065C]/20 bg-slate-50 overflow-hidden shrink-0 flex items-center justify-center">
+                      <img 
+                        src={student.avatarUrl} 
+                        alt="" 
+                        className="w-full h-full object-cover" 
+                        referrerPolicy="no-referrer"
+                        style={{ display: 'block', width: '100%', height: '100%' }} 
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <h4 className="text-sm font-extrabold text-[#06065C] leading-tight truncate" style={{ margin: 0, color: '#06065C' }}>{student.name}</h4>
+                      <div className="space-y-0.5 text-[10px] text-[#334155] font-mono">
+                        <div><span style={{ color: '#64748b' }}>CLASS:</span> <strong className="text-[#06065C]" style={{ color: '#06065C' }}>{student.class}</strong></div>
+                        <div><span style={{ color: '#64748b' }}>ADM NO:</span> <strong className="text-[#06065C]" style={{ color: '#06065C' }}>{student.admissionNo}</strong></div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-1 rounded-lg shrink-0 border-2 border-[#06065C]/10 flex items-center justify-center" style={{ width: '64px', height: '64px' }}>
+                      <QRCodeSVG 
+                        value={student.qrHash} 
+                        size={56} 
+                        level="H"
+                        style={{ display: 'block' }}
+                      />
                     </div>
                   </div>
-                  <span className="text-[8px] bg-[#ED0101] text-white font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">
-                    Student Wallet
-                  </span>
-                </div>
 
-                {/* Card content */}
-                <div className="flex items-center gap-4 py-2 flex-1">
-                  <div className="w-16 h-16 rounded-xl border-2 border-[#06065C]/20 bg-slate-50 overflow-hidden shrink-0 flex items-center justify-center">
-                    <img 
-                      src={student.avatarUrl} 
-                      alt="" 
-                      className="w-full h-full object-cover" 
-                      referrerPolicy="no-referrer"
-                      style={{ display: 'block', width: '100%', height: '100%' }} 
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <h4 className="text-sm font-extrabold text-[#06065C] leading-tight truncate" style={{ margin: 0 }}>{student.name}</h4>
-                    <div className="space-y-0.5 text-[10px] text-[#334155] font-mono">
-                      <div><span style={{ color: '#64748b' }}>CLASS:</span> <strong className="text-[#06065C]">{student.class}</strong></div>
-                      <div><span style={{ color: '#64748b' }}>ADM NO:</span> <strong className="text-[#06065C]">{student.admissionNo}</strong></div>
+                  {/* Card footer */}
+                  <div className="border-t-2 border-[#06065C]/15 pt-2 flex items-center justify-between text-[8px] font-mono text-[#475569]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-600" style={{ display: 'inline-block' }} />
+                      <span className="font-bold text-[#06065C]" style={{ color: '#06065C' }}>NFC / SECURE CARD</span>
                     </div>
-                  </div>
-                  <div className="bg-white p-1 rounded-lg shrink-0 border-2 border-[#06065C]/10 flex items-center justify-center" style={{ width: '64px', height: '64px' }}>
-                    <QRCodeSVG 
-                      value={student.qrHash} 
-                      size={56} 
-                      level="H"
-                      style={{ display: 'block' }}
-                    />
+                    <span className="text-[#ED0101] font-bold font-mono">{student.qrHash}</span>
                   </div>
                 </div>
-
-                {/* Card footer */}
-                <div className="border-t-2 border-[#06065C]/15 pt-2 flex items-center justify-between text-[8px] font-mono text-[#475569]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-600" style={{ display: 'inline-block' }} />
-                    <span className="font-bold text-[#06065C]"> SECURE CARD</span>
-                  </div>
-                  <span className="text-[#ED0101] font-bold font-mono">{student.qrHash}</span>
-                </div>
-              </div>
-            ))}
-        </div>
-      </div>
+              ))}
+          </div>
+        </div>,
+        document.body
+      )}
 
     </div>
   );

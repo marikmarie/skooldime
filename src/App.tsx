@@ -1,5 +1,5 @@
 import React, { useState, Suspense } from 'react';
-import Login, { LoggedInUser } from './components/Login'; // Adjust path if Login is placed in a components directory
+import Login, { LoggedInUser, LogoSVG } from './components/Login'; // Adjust path if Login is placed in a components directory
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Dynamic lazy loaded components for optimal bundle splitting
@@ -73,42 +73,31 @@ export default function App() {
         /* ── Logged-in dashboard ─────────────────────────────── */
         <div className="max-w-[1200px] mx-auto px-4 py-6 md:p-6 pb-12">
 
-          {/* Inner Dashboard Header (Subtle, custom-contained, no full navbar) */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-black/5">
+          {/* Inner Dashboard Header - Single row on all screens */}
+          <div className="flex items-center justify-between gap-2 mb-4 pb-4 border-b border-black/5">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <img
-                src="logo.png"
-                alt="Logo"
-                style={{ height: '48px', width: 'auto', objectFit: 'contain' }}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
-              <span style={{
-                fontSize: 11, fontWeight: 600,
-                background: BRAND_LIGHT, color: BRAND, border: `0.5px solid ${BRAND_BORDER}`,
-                borderRadius: 20, padding: '4px 12px',
-                display: 'flex', alignItems: 'center', gap: 6,
-              }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: BRAND, display: 'inline-block' }} />
-                Authorized Portal
-              </span>
+              <LogoSVG iconSize={40} fontSize="text-2xl" />
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 10,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
                 background: 'var(--surface-1, #ffffff)',
                 border: '0.5px solid rgba(0,0,0,0.08)',
-                borderRadius: 10, padding: '6px 14px 6px 8px',
-              }}>
+                borderRadius: 10,
+                padding: '4px 8px',
+              }} className="sm:p-1.5 sm:pr-3">
                 <div style={{
-                  width: 30, height: 30, borderRadius: 8,
+                  width: 28, height: 28, borderRadius: 6,
                   background: BRAND_LIGHT, color: BRAND,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 600, fontSize: 11,
-                }}>
+                  fontWeight: 600, fontSize: 10,
+                }} className="sm:w-8 sm:h-8 sm:rounded-lg sm:text-xs">
                   {user.name.substring(0, 2).toUpperCase()}
                 </div>
-                <div style={{ textAlign: 'left' }}>
+                <div style={{ textAlign: 'left' }} className="hidden sm:block">
                   <div style={{ fontSize: 12, fontWeight: 500 }}>{user.name}</div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted, #888)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     {roleLabel(user.role)}
@@ -118,21 +107,21 @@ export default function App() {
                   onClick={handleLogout}
                   title="Sign out"
                   style={{
-                    marginLeft: 6, padding: 6, borderRadius: 6, border: 'none',
+                    marginLeft: 4, padding: 4, borderRadius: 6, border: 'none',
                     background: 'transparent', cursor: 'pointer', color: 'var(--text-muted, #888)',
                     display: 'flex', alignItems: 'center',
                   }}
                   onMouseEnter={e => (e.currentTarget.style.color = BRAND)}
                   onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted, #888)')}
                 >
-                  <LogOut size={15} />
+                  <LogOut size={14} />
                 </button>
               </div>
             </div>
           </div>
 
           {/* Sub-tabs for Parent / Vendor */}
-          {(user.role === 'PARENT' || user.role === 'VENDOR') && (
+          {(user.role === 'PARENT') && (
             <div className="flex border-b border-black/10 mb-5 overflow-x-auto scrollbar-none whitespace-nowrap gap-1">
               { SuffixedTabs.map(tab => (
                 <button
@@ -176,11 +165,7 @@ export default function App() {
                   {user.role === 'AGENT'          && <RoleAgent />}
                   {user.role === 'SCHOOL_ADMIN'   && <RoleSchoolAdmin />}
 
-                  {user.role === 'VENDOR' && (
-                    userSubTab === 'DASHBOARD'
-                      ? <RoleVendorPOS userPhone={user.phone} />
-                      : <MicroLoans defaultBorrowerId="V1" defaultBorrowerType="VENDOR" />
-                  )}
+                  {user.role === 'VENDOR' && <RoleVendorPOS userPhone={user.phone} />}
 
                   {user.role === 'PARENT' && (
                     userSubTab === 'DASHBOARD'

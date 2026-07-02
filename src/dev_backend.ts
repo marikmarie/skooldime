@@ -43,6 +43,18 @@ const DEFAULT_SYSTEM_SETTINGS = {
   commissionRate: 0.5
 };
 
+const DEFAULT_CATALOG_ITEMS = [
+  { id: 'C1', vendorId: 'V1', name: 'Rolex & Tea Combo', price: 3500, usageCount: 42, category: 'FOOD' },
+  { id: 'C2', vendorId: 'V1', name: 'Samosa (Pair)', price: 1500, usageCount: 19, category: 'FOOD' },
+  { id: 'C3', vendorId: 'V1', name: 'Passion Juice Glass', price: 2000, usageCount: 31, category: 'FOOD' },
+  { id: 'C4', vendorId: 'V1', name: 'Cassava Fries Portion', price: 1000, usageCount: 8, category: 'FOOD' },
+  { id: 'C5', vendorId: 'V2', name: 'Exercise Book (96pg)', price: 1200, usageCount: 15, category: 'STATIONERY' },
+  { id: 'C6', vendorId: 'V2', name: 'Mathematical Set', price: 5000, usageCount: 50, category: 'STATIONERY' },
+  { id: 'C7', vendorId: 'V2', name: 'HB Pencil Pack (12)', price: 3000, usageCount: 22, category: 'STATIONERY' },
+  { id: 'C8', vendorId: 'V3', name: 'Beef Samosa', price: 1200, usageCount: 10, category: 'FOOD' },
+  { id: 'C9', vendorId: 'V3', name: 'Soda Bottle (300ml)', price: 1500, usageCount: 25, category: 'FOOD' }
+];
+
 function load_db() {
   let db: any = {};
   if (fs.existsSync(DB_FILE)) {
@@ -93,6 +105,7 @@ function load_db() {
   if (!db.auditLogs) { db.auditLogs = []; changed = true; }
   if (!db.creditScores) { db.creditScores = []; changed = true; }
   if (!db.transactions) { db.transactions = []; changed = true; }
+  if (!db.catalogItems || db.catalogItems.length === 0) { db.catalogItems = DEFAULT_CATALOG_ITEMS; changed = true; }
 
   if (changed) {
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
@@ -195,12 +208,26 @@ export function devApiMiddleware(req: any, res: any, next: any) {
 
     if (pathname === '/api/parents') {
       const db = load_db();
-      return sendJson(db.parents || []);
+      const parentsWithBalances = (db.parents || []).map((parent: any) => {
+        const wallet = (db.wallets || []).find((w: any) => w.ownerId === parent.id && w.ownerType === 'PARENT');
+        return {
+          ...parent,
+          walletBalance: wallet ? wallet.balance : 0
+        };
+      });
+      return sendJson(parentsWithBalances);
     }
 
     if (pathname === '/api/students') {
       const db = load_db();
-      return sendJson(db.students || []);
+      const studentsWithBalances = (db.students || []).map((student: any) => {
+        const wallet = (db.wallets || []).find((w: any) => w.ownerId === student.id && w.ownerType === 'STUDENT');
+        return {
+          ...student,
+          balance: wallet ? wallet.balance : 0
+        };
+      });
+      return sendJson(studentsWithBalances);
     }
 
     if (pathname === '/api/system/settings') {
@@ -430,6 +457,56 @@ export function devApiMiddleware(req: any, res: any, next: any) {
         } else {
           return sendError('Invalid username or password.', 401);
         }
+      }
+
+      if (pathname === '/api/pos/catalog/create') {
+        const db = load_db();
+        const { vendorId, name, price, category } = input;
+        if (!vendorId || !name || !price || !category) {
+          return sendError('Missing required fields (vendorId, name, price, category).', 400);
+        }
+
+        const newItem = {
+          id: `C_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          vendorId,
+          name,
+          price: Number(price),
+          usageCount: 0,
+          category: category.toUpperCase()
+        };
+
+        if (!db.catalogItems) {
+          db.catalogItems = [];
+        }
+        db.catalogItems.push(newItem);
+        save_db(db);
+
+        const vendor = (db.vendors || []).find((v: any) => v.id === vendorId);
+        audit('VENDOR', vendor ? vendor.name : vendorId, 'VENDOR', 'CATALOG_ITEM_CREATED', null, newItem);
+
+        return sendJson({ success: true, item: newItem });
+      }
+
+      if (pathname === '/api/pos/catalog/delete') {
+        const db = load_db();
+        const { id, vendorId } = input;
+        if (!id) {
+          return sendError('Missing catalog item ID.', 400);
+        }
+
+        const index = (db.catalogItems || []).findIndex((c: any) => c.id === id);
+        if (index === -1) {
+          return sendError('Catalog item not found.', 404);
+        }
+
+        const deletedItem = db.catalogItems[index];
+        db.catalogItems.splice(index, 1);
+        save_db(db);
+
+        const vendor = (db.vendors || []).find((v: any) => v.id === vendorId);
+        audit('VENDOR', vendor ? vendor.name : vendorId, 'VENDOR', 'CATALOG_ITEM_DELETED', deletedItem, null);
+
+        return sendJson({ success: true, message: 'Catalog item deleted successfully.' });
       }
 
       if (pathname === '/api/system/settings') {

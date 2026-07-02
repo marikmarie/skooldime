@@ -21,75 +21,6 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
   const [txChildFilter, setTxChildFilter] = useState<string>('ALL');
   const [loading, setLoading] = useState(false);
   const toast = useToast();
-  const [printingStudent, setPrintingStudent] = useState<Student | null>(null);
-
-  useEffect(() => {
-    if (printingStudent) {
-      // If we are doing normal print, we invoke the dialog.
-      // The pdf download overrides this by managing timing or checking if custom event.
-      // We check if a hidden attribute is set, or simply use printingStudent as a trigger.
-      const timer = setTimeout(() => {
-        // Only trigger native window.print() if it's NOT an html2canvas trigger
-        const isPdfCapturing = document.querySelector('[data-pdf-only="true"]');
-        if (!isPdfCapturing) {
-          window.print();
-          setPrintingStudent(null);
-        }
-      }, 350);
-      return () => clearTimeout(timer);
-    }
-  }, [printingStudent]);
-
-  const downloadCardPDF = async (stud: Student) => {
-    // Set printingStudent to render card in DOM
-    setPrintingStudent(stud);
-    
-    // Allow React 500ms to render the DOM target with QRCode and images loaded
-    setTimeout(async () => {
-      const cardElement = document.getElementById('printable-cards-container');
-      if (!cardElement) {
-        setPrintingStudent(null);
-        return;
-      }
-      
-      try {
-        const cardInner = cardElement.querySelector('.print-card');
-        if (!cardInner) {
-          setPrintingStudent(null);
-          return;
-        }
-
-        // We mark as pdf-only to bypass native window.print() popup
-        cardElement.setAttribute('data-pdf-only', 'true');
-
-        const canvas = await html2canvas(cardInner as HTMLElement, {
-          scale: 3, // High-DPI physical scale
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          logging: false
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        
-        // Exact CR-80 wallet card specs (85.6mm width, 54mm height)
-        const pdf = new jsPDF({
-          orientation: 'landscape',
-          unit: 'mm',
-          format: [85.6, 54]
-        });
-
-        pdf.addImage(imgData, 'PNG', 0, 0, 85.6, 54);
-        pdf.save(`${stud.name.replace(/\s+/g, '_')}_Wallet_Card.pdf`);
-        toast.success(`PDF Card downloaded successfully for ${stud.name}!`);
-      } catch (err: any) {
-        console.error('PDF Generation Error:', err);
-        toast.error('Could not generate PDF download.');
-      } finally {
-        cardElement.removeAttribute('data-pdf-only');
-        setPrintingStudent(null);
-      }
-    }, 500);
-  };
 
   // Top up states
   const [depositAmt, setDepositAmt] = useState('');
@@ -318,37 +249,37 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto font-sans antialiased text-gray-200 bg-[#06080E] p-4 md:p-6 rounded-2xl border border-white/5 shadow-xl">
+    <div className="space-y-6 max-w-7xl mx-auto font-sans antialiased text-gray-200 bg-transparent p-4 md:p-6 rounded-2xl border border-white/10 shadow-xl">
       
       {/* Main Indicators Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         
-        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-5 flex items-center justify-between hover:border-[#c7515e]/30 transition-colors shadow-lg">
+        <div className="rounded-2xl border border-white/10 bg-transparent p-5 flex items-center justify-between hover:border-[#ED0101]/30 transition-colors shadow-lg">
           <div>
-            <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Parent Fund Balance</span>
-            <h4 className="text-2xl font-bold text-[#06065C] mt-1">{parent.walletBalance.toLocaleString()} <span className="text-sm font-medium text-gray-400">UGX</span></h4>
+            <span className="text-[10px] font-mono text-gray-400 uppercase font-bold tracking-widest">Parent Fund Balance</span>
+            <h4 className="text-2xl font-extrabold text-white mt-1">{parent.walletBalance.toLocaleString()} <span className="text-sm font-medium text-gray-400">UGX</span></h4>
           </div>
-          <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
+          <div className="rounded-xl bg-[#ED0101]/10 p-3 text-[#ED0101]">
             <Landmark className="h-6 w-6" />
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-5 flex items-center justify-between hover:border-[#c7515e]/30 transition-colors shadow-lg">
+        <div className="rounded-2xl border border-white/10 bg-transparent p-5 flex items-center justify-between hover:border-[#ED0101]/30 transition-colors shadow-lg">
           <div>
-            <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Linked Student Cards</span>
-            <h4 className="text-2xl font-bold text-[#06065C] mt-1">{students.length} <span className="text-sm font-medium text-gray-400">Active</span></h4>
+            <span className="text-[10px] font-mono text-gray-400 uppercase font-bold tracking-widest">Linked Student Cards</span>
+            <h4 className="text-2xl font-extrabold text-white mt-1">{students.length} <span className="text-sm font-medium text-gray-400">Active</span></h4>
           </div>
-          <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
+          <div className="rounded-xl bg-[#ED0101]/10 p-3 text-[#ED0101]">
             <Smartphone className="h-6 w-6" />
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-5 flex items-center justify-between hover:border-[#c7515e]/30 transition-colors shadow-lg">
+        <div className="rounded-2xl border border-white/10 bg-transparent p-5 flex items-center justify-between hover:border-[#ED0101]/30 transition-colors shadow-lg">
           <div>
-            <span className="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Identity Verification</span>
-            <h4 className="text-2xl font-bold text-[#06065C] mt-1">Tier 2 <span className="text-sm font-medium text-gray-400">Verified</span></h4>
+            <span className="text-[10px] font-mono text-gray-400 uppercase font-bold tracking-widest">Identity Verification</span>
+            <h4 className="text-2xl font-extrabold text-white mt-1">Tier 2 <span className="text-sm font-medium text-gray-400">Verified</span></h4>
           </div>
-          <div className="rounded-xl bg-[#c7515e]/10 p-3 text-[#c7515e]">
+          <div className="rounded-xl bg-[#ED0101]/10 p-3 text-[#ED0101]">
             <Shield className="h-6 w-6" />
           </div>
         </div>
@@ -356,12 +287,12 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
       </div>
 
       {/* Dashboard Sub-Tabs */}
-      <div className="flex bg-[#0B0F19]/60 border border-white/5 p-1 rounded-xl max-w-xl">
+      <div className="flex bg-transparent border border-white/10 p-1 rounded-xl max-w-xl">
         <button
           onClick={() => setActiveParentTab('CARDS')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
             activeParentTab === 'CARDS'
-              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              ? 'bg-[#ED0101] text-white shadow-lg shadow-[#ED0101]/20'
               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
           }`}
         >
@@ -372,7 +303,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
           onClick={() => setActiveParentTab('FUNDS')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
             activeParentTab === 'FUNDS'
-              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              ? 'bg-[#ED0101] text-white shadow-lg shadow-[#ED0101]/20'
               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
           }`}
         >
@@ -383,7 +314,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
           onClick={() => setActiveParentTab('TRANSACTIONS')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold tracking-wide uppercase transition-all ${
             activeParentTab === 'TRANSACTIONS'
-              ? 'bg-[#c7515e] text-white shadow-lg shadow-[#c7515e]/20'
+              ? 'bg-[#ED0101] text-white shadow-lg shadow-[#ED0101]/20'
               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
           }`}
         >
@@ -393,64 +324,52 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
       </div>
 
       {activeParentTab === 'CARDS' && (
-        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-5">
+        <div className="rounded-2xl border border-white/10 bg-transparent p-4 sm:p-6 shadow-xl space-y-5">
           <h3 className="text-sm font-bold text-gray-200 border-b border-white/5 pb-4 flex items-center gap-2">
-            <Smartphone className="h-4 w-4 text-[#c7515e]" />
+            <Smartphone className="h-4 w-4 text-[#ED0101]" />
             Linked Family Ledger Control
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {students.map((stud) => (
-              <div key={stud.id} className="p-4 sm:p-5 rounded-xl bg-[#06080E]/80 border border-white/5 hover:border-[#c7515e]/20 transition-all space-y-4">
+              <div key={stud.id} className="p-4 sm:p-5 rounded-xl bg-transparent border border-white/10 hover:border-[#ED0101]/40 transition-all space-y-4 shadow-md">
                 <div className="flex items-center gap-4">
-                  <img src={stud.avatarUrl} alt="" className="w-12 h-12 rounded-full border-2 border-[#c7515e]/30 shrink-0" referrerPolicy="no-referrer" />
+                  <img src={stud.avatarUrl} alt="" className="w-12 h-12 rounded-full border-2 border-[#ED0101]/30 shrink-0" referrerPolicy="no-referrer" />
                   <div className="min-w-0">
-                    <h4 className="text-sm font-bold text-[#06065C] truncate">{stud.name}</h4>
-                    <p className="text-[11px] text-[#c7515e] font-medium">{stud.class}</p>
+                    <h4 className="text-sm font-bold text-white truncate">{stud.name}</h4>
+                    <p className="text-[11px] text-[#ED0101] font-medium">{stud.class}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 text-[10px] font-mono py-3 border-y border-white/5">
+                <div className="grid grid-cols-3 gap-2 text-[10px] font-mono py-3 border-y border-white/10">
                   <div className="min-w-0">
                     <span className="text-gray-500 block mb-1">CARD CODE</span>
-                    <span className="text-gray-200 font-bold text-[10px] sm:text-[11px] bg-white/5 px-2 py-0.5 rounded truncate block">{stud.qrHash}</span>
+                    <span className="text-gray-200 font-bold text-[10px] bg-white/5 px-2 py-0.5 rounded truncate block" title={stud.qrHash}>{stud.qrHash}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-gray-500 block mb-1">CARD BALANCE</span>
+                    <span className="text-emerald-400 font-bold text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded truncate block">{(stud.balance ?? 0).toLocaleString()} UGX</span>
                   </div>
                   <div className="min-w-0">
                     <span className="text-gray-500 block mb-1">NO-PIN LIMIT</span>
-                    <span className="text-[#c7515e] font-bold text-[10px] sm:text-[11px] bg-[#c7515e]/10 px-2 py-0.5 rounded truncate block">{stud.noPinLimit.toLocaleString()} UGX</span>
+                    <span className="text-[#ED0101] font-bold text-[10px] bg-[#ED0101]/10 px-2 py-0.5 rounded truncate block">{stud.noPinLimit.toLocaleString()} UGX</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-1 sm:gap-1.5">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => triggerPinReset(stud.id)}
                     className="rounded-lg border border-white/10 bg-transparent hover:bg-white/5 py-2 text-center text-[10px] sm:text-xs text-gray-300 font-semibold transition-colors truncate"
                     title="Reset PIN"
                   >
-                    PIN
+                    Reset PIN
                   </button>
                   <button
                     onClick={() => triggerLimitModal(stud.id, stud.noPinLimit)}
-                    className="rounded-lg border border-[#c7515e]/30 bg-[#c7515e]/10 hover:bg-[#c7515e]/20 py-2 text-center text-[10px] sm:text-xs text-[#c7515e] font-semibold transition-colors truncate"
+                    className="rounded-lg border border-[#ED0101]/35 bg-[#ED0101]/10 hover:bg-[#ED0101]/20 py-2 text-center text-[10px] sm:text-xs text-[#ED0101] font-semibold transition-colors truncate"
                     title="Edit Limits"
                   >
-                    Limits
-                  </button>
-                  <button
-                    onClick={() => setPrintingStudent(stud)}
-                    className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 py-2 text-center text-[10px] sm:text-xs text-emerald-400 font-semibold transition-colors flex items-center justify-center gap-0.5 truncate"
-                    title="Print Card"
-                  >
-                    <Printer className="h-3 w-3 shrink-0" />
-                    <span>Print</span>
-                  </button>
-                  <button
-                    onClick={() => downloadCardPDF(stud)}
-                    className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 py-2 text-center text-[10px] sm:text-xs text-indigo-400 font-semibold transition-colors flex items-center justify-center gap-0.5 truncate"
-                    title="Download Card PDF"
-                  >
-                    <Download className="h-3 w-3 shrink-0" />
-                    <span>PDF</span>
+                    Set Limits
                   </button>
                 </div>
               </div>
@@ -462,10 +381,10 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
       {activeParentTab === 'FUNDS' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Allocate pocket money (7 cols) */}
-          <div className="lg:col-span-7 rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-5">
-            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+          <div className="lg:col-span-7 rounded-2xl border border-white/10 bg-transparent p-4 sm:p-6 shadow-xl space-y-5">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <div className="flex items-center gap-2">
-                <ArrowRightLeft className="h-5 w-5 text-[#c7515e]" />
+                <ArrowRightLeft className="h-5 w-5 text-[#ED0101]" />
                 <h3 className="text-sm font-bold text-gray-200">Credit Child's Card from Wallet</h3>
               </div>
               <div className="text-right">
@@ -476,9 +395,9 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
               </div>
             </div>
 
-            <div className="bg-[#c7515e]/5 rounded-xl border border-[#c7515e]/15 p-3.5 mb-4">
+            <div className="bg-transparent rounded-xl border border-white/10 p-3.5 mb-4">
               <p className="text-xs text-gray-400 leading-relaxed">
-                🚀 <strong className="text-[#c7515e]">Direct Card Crediting:</strong> Allocate funds instantly from your personal <strong>Parent Wallet</strong> to credit your child's physical <strong> Wallet Card</strong>. This transaction is free, safe, and immediate.
+                🚀 <strong className="text-[#ED0101]">Direct Card Crediting:</strong> Allocate funds instantly from your personal <strong>Parent Wallet</strong> to credit your child's physical <strong>NFC Wallet Card</strong>. This transaction is free, safe, and immediate.
               </p>
             </div>
 
@@ -488,7 +407,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                 <select
                   value={selectedStudentId}
                   onChange={(e) => setSelectedStudentId(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all font-sans"
+                  className="w-full rounded-lg border border-white/10 bg-slate-900 px-4 py-2.5 text-sm text-gray-200 focus:border-[#ED0101] focus:ring-1 focus:ring-[#ED0101] outline-none transition-all font-sans"
                 >
                   {students.map(s => (
                     <option key={s.id} value={s.id}>
@@ -499,7 +418,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                 {selectedStudentId && (
                   <div className="mt-2 text-xs text-gray-400 flex justify-between px-1">
                     <span>Card Limit: <strong>{students.find(s => s.id === selectedStudentId)?.noPinLimit.toLocaleString()} UGX</strong></span>
-                    <span>Card Identifier: <strong className="font-mono">{students.find(s => s.id === selectedStudentId)?.qrHash}</strong></span>
+                    <span>Card Identifier: <strong className="font-mono text-emerald-400">{students.find(s => s.id === selectedStudentId)?.qrHash}</strong></span>
                   </div>
                 )}
               </div>
@@ -512,13 +431,13 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                   value={allocateAmt}
                   onChange={(e) => setAllocateAmt(e.target.value)}
                   placeholder="e.g., 5000"
-                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all font-mono"
+                  className="w-full rounded-lg border border-white/10 bg-slate-900 px-4 py-2.5 text-sm text-gray-200 focus:border-[#ED0101] focus:ring-1 focus:ring-[#ED0101] outline-none transition-all font-mono"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full rounded-lg bg-[#c7515e] hover:bg-[#b04753] py-2.5 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#c7515e]/20 flex items-center justify-center gap-2"
+                className="w-full rounded-lg bg-[#ED0101] hover:bg-[#c90000] py-2.5 text-sm font-bold text-white transition-all active:scale-95 shadow-lg shadow-[#ED0101]/20 flex items-center justify-center gap-2"
               >
                 <ArrowRightLeft className="h-4 w-4" />
                 <span>Credit Kid's Card Now</span>
@@ -527,9 +446,9 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
           </div>
 
           {/* Top-Up via Collecto MoMo Gateway (5 cols) */}
-          <div className="lg:col-span-5 rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl h-fit space-y-5">
-            <h3 className="text-sm font-bold text-gray-200 border-b border-white/5 pb-4 flex items-center gap-2">
-              <RefreshCw className="h-4 w-4 text-[#c7515e]" />
+          <div className="lg:col-span-5 rounded-2xl border border-white/10 bg-transparent p-4 sm:p-6 shadow-xl h-fit space-y-5">
+            <h3 className="text-sm font-bold text-gray-200 border-b border-white/10 pb-4 flex items-center gap-2">
+              <RefreshCw className="h-4 w-4 text-[#ED0101]" />
               Gateway Top-Up (Collecto Push)
             </h3>
             
@@ -542,7 +461,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                   value={depositPhone}
                   onChange={(e) => setDepositPhone(e.target.value)}
                   placeholder="+256772444555"
-                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 font-mono focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                  className="w-full rounded-lg border border-white/10 bg-slate-900 px-4 py-2.5 text-sm text-gray-200 font-mono focus:border-[#ED0101] focus:ring-1 focus:ring-[#ED0101] outline-none transition-all"
                 />
               </div>
               <div>
@@ -553,14 +472,14 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                   value={depositAmt}
                   onChange={(e) => setDepositAmt(e.target.value)}
                   placeholder="0"
-                  className="w-full rounded-lg border border-white/10 bg-[#06080E] px-4 py-2.5 text-sm text-gray-200 font-mono focus:border-[#c7515e] focus:ring-1 focus:ring-[#c7515e] outline-none transition-all"
+                  className="w-full rounded-lg border border-white/10 bg-slate-900 px-4 py-2.5 text-sm text-gray-200 font-mono focus:border-[#ED0101] focus:ring-1 focus:ring-[#ED0101] outline-none transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-[#c7515e] hover:bg-[#b04753] py-3 text-sm font-bold text-white transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-[#c7515e]/20 disabled:opacity-70 disabled:active:scale-100"
+                className="w-full rounded-lg bg-[#ED0101] hover:bg-[#c90000] py-3 text-sm font-bold text-white transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-[#ED0101]/20 disabled:opacity-70 disabled:active:scale-100"
               >
                 {loading ? (
                   <>
@@ -572,7 +491,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
             </form>
 
             {loading && (
-              <div className="rounded-lg bg-[#06080E] p-4 text-[11px] text-[#c7515e] font-mono border border-[#c7515e]/20 leading-relaxed text-center animate-pulse">
+              <div className="rounded-lg bg-slate-900 p-4 text-[11px] text-[#ED0101] font-mono border border-[#ED0101]/20 leading-relaxed text-center animate-pulse">
                 {pollingMsg}
               </div>
             )}
@@ -581,10 +500,10 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
       )}
 
       {activeParentTab === 'TRANSACTIONS' && (
-        <div className="rounded-2xl border border-white/5 bg-[#0B0F19] p-4 sm:p-6 shadow-xl space-y-5 animate-in fade-in duration-250">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+        <div className="rounded-2xl border border-white/10 bg-transparent p-4 sm:p-6 shadow-xl space-y-5 animate-in fade-in duration-250">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
             <div className="flex items-center gap-2">
-              <History className="h-5 w-5 text-[#c7515e]" />
+              <History className="h-5 w-5 text-[#ED0101]" />
               <h3 className="text-sm font-bold text-gray-200 uppercase tracking-wider">
                 Family Transactions Ledger
               </h3>
@@ -610,7 +529,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
                 placeholder="Search description, reference..."
                 value={txSearchQuery}
                 onChange={(e) => setTxSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#06080E] text-white placeholder-gray-500 focus:border-[#c7515e] outline-none transition"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-slate-900 text-white placeholder-gray-500 focus:border-[#ED0101] outline-none transition"
               />
             </div>
 
@@ -622,7 +541,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
               <select
                 value={txChildFilter}
                 onChange={(e) => setTxChildFilter(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#06080E] text-white focus:border-[#c7515e] outline-none transition appearance-none cursor-pointer"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-slate-900 text-white focus:border-[#ED0101] outline-none transition appearance-none cursor-pointer"
               >
                 <option value="ALL">All Family Members</option>
                 {students.map(s => (
@@ -639,7 +558,7 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
               <select
                 value={txStatusFilter}
                 onChange={(e) => setTxStatusFilter(e.target.value as any)}
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#06080E] text-white focus:border-[#c7515e] outline-none transition appearance-none cursor-pointer"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-slate-900 text-white focus:border-[#ED0101] outline-none transition appearance-none cursor-pointer"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="SUCCESS">Success Only</option>
@@ -838,74 +757,6 @@ export default function RoleParent({ userPhone = '+256772444555' }: RoleParentPr
         </div>
       )}
 
-       {/* HIDDEN PRINT TARGET CONTAINER */}
-       {printingStudent && createPortal(
-         <div id="printable-cards-container">
-           <div className="print-card-grid">
-             <div 
-               className="print-card p-4 border-2 border-[#06065C] rounded-2xl bg-white w-[350px] h-[220px] flex flex-col justify-between overflow-hidden"
-               style={{
-                 printColorAdjust: 'exact',
-                 WebkitPrintColorAdjust: 'exact',
-                 boxSizing: 'border-box'
-               }}
-             >
-               {/* Card header */}
-               <div className="flex items-center justify-between border-b-2 border-[#06065C]/20 pb-2">
-                 <div className="flex items-center gap-2">
-                   <div className="w-5 h-5 rounded-full bg-[#ED0101] flex items-center justify-center font-bold text-[10px] text-white">K</div>
-                   <div>
-                     <h5 className="text-[10px] font-bold uppercase tracking-widest text-[#06065C] leading-none" style={{ margin: 0, color: '#06065C' }}>Kampala Parents</h5>
-                     <span className="text-[7px] text-[#ED0101] tracking-wider uppercase font-bold leading-none" style={{ display: 'block', marginTop: '2px' }}>Primary School</span>
-                   </div>
-                 </div>
-                 <span className="text-[8px] bg-[#ED0101] text-white font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">
-                   Student Wallet
-                 </span>
-               </div>
-
-               {/* Card content */}
-               <div className="flex items-center gap-4 py-2 flex-1">
-                 <div className="w-16 h-16 rounded-xl border-2 border-[#06065C]/20 bg-slate-50 overflow-hidden shrink-0 flex items-center justify-center">
-                   <img 
-                     src={printingStudent.avatarUrl} 
-                     alt="" 
-                     className="w-full h-full object-cover" 
-                     referrerPolicy="no-referrer"
-                     style={{ display: 'block', width: '100%', height: '100%' }} 
-                   />
-                 </div>
-                 <div className="flex-1 min-w-0 space-y-1">
-                   <h4 className="text-sm font-extrabold text-[#06065C] leading-tight truncate" style={{ margin: 0, color: '#06065C' }}>{printingStudent.name}</h4>
-                   <div className="space-y-0.5 text-[10px] text-[#334155] font-mono">
-                     <div><span style={{ color: '#64748b' }}>CLASS:</span> <strong className="text-[#06065C]" style={{ color: '#06065C' }}>{printingStudent.class}</strong></div>
-                     <div><span style={{ color: '#64748b' }}>ADM NO:</span> <strong className="text-[#06065C]" style={{ color: '#06065C' }}>{printingStudent.admissionNo}</strong></div>
-                   </div>
-                 </div>
-                 <div className="bg-white p-1 rounded-lg shrink-0 border-2 border-[#06065C]/10 flex items-center justify-center" style={{ width: '64px', height: '64px' }}>
-                   <QRCodeSVG 
-                     value={printingStudent.qrHash} 
-                     size={56} 
-                     level="H"
-                     style={{ display: 'block' }}
-                   />
-                 </div>
-               </div>
-
-               {/* Card footer */}
-               <div className="border-t-2 border-[#06065C]/15 pt-2 flex items-center justify-between text-[8px] font-mono text-[#475569]">
-                 <div className="flex items-center gap-1.5">
-                   <span className="w-2 h-2 rounded-full bg-emerald-600" style={{ display: 'inline-block' }} />
-                   <span className="font-bold text-[#06065C]" style={{ color: '#06065C' }}> SECURE CARD</span>
-                 </div>
-                 <span className="text-[#ED0101] font-bold font-mono">{printingStudent.qrHash}</span>
-               </div>
-             </div>
-           </div>
-         </div>,
-         document.body
-       )}
-
-    </div>
+     </div>
   );
 }

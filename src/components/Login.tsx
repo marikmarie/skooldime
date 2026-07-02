@@ -14,6 +14,34 @@ interface LoginProps {
   onLoginSuccess: (user: LoggedInUser) => void;
 }
 
+// Beautiful crisp Vector SVG Logo for skoolDime
+export const LogoSVG = ({ 
+  className = "h-12 w-auto", 
+  iconSize = 36, 
+  fontSize = "text-2xl" 
+}: { 
+  className?: string; 
+  iconSize?: number; 
+  fontSize?: string 
+}) => (
+  <div className={`flex items-center gap-3 select-none ${className}`}>
+    <svg width={iconSize} height={iconSize} viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+      <rect x="2" y="2" width="38" height="38" rx="10" fill="#06065C" />
+      <path d="M12 21L21 12L30 21L21 30L12 21Z" fill="#ED0101" />
+      <circle cx="21" cy="21" r="4" fill="#FFFFFF" />
+      <path d="M16 17H26V19L21 23L16 17Z" fill="#FFFFFF" opacity="0.8" />
+    </svg>
+    <div className="flex flex-col text-left">
+      <span className={`${fontSize} font-black tracking-tight flex items-center leading-none`} style={{ color: '#06065C' }}>
+        skool<span style={{ color: '#ED0101' }}>Dime</span>
+      </span>
+      <span className="text-[8px] font-bold tracking-widest uppercase leading-none mt-1.5" style={{ color: 'rgba(6,6,92,0.6)', letterSpacing: '0.12em' }}>
+        Uganda School Fintech
+      </span>
+    </div>
+  </div>
+);
+
 const BRAND        = '#ED0101';
 const BRAND_HOVER  = '#c90000';
 const BRAND_LIGHT  = 'rgba(237,1,1,0.08)';
@@ -21,30 +49,32 @@ const BRAND_BORDER = 'rgba(237,1,1,0.25)';
 const NAVY         = '#06065C';
 const NAVY_LIGHT   = 'rgba(6,6,92,0.08)';
 
-const mockUsers: Record<string, LoggedInUser> = {
-  moses_parent:  { id: 'U6', username: 'moses_parent',  role: 'PARENT',         name: 'Moses Mukasa',          phone: '+256772444555' },
-  superadmin:    { id: 'U1', username: 'superadmin',    role: 'SUPER_ADMIN',    name: 'Alinda Robert (HQ)',    phone: '+256700000001' },
-  central_admin: { id: 'U2', username: 'central_admin', role: 'BUSINESS_ADMIN', name: 'Nakimbugwe Stella',     phone: '+256700000002' },
-  agent_peter:   { id: 'U3', username: 'agent_peter',   role: 'AGENT',          name: 'Peter Ssekabira',       phone: '+256700000003' },
-  kps_bursar:    { id: 'U4', username: 'kps_bursar',    role: 'SCHOOL_ADMIN',   name: 'Kato Charles (Bursar)', phone: '+256700000004', schoolId: 'SCH1' },
-  kps_canteen:   { id: 'U5', username: 'kps_canteen',   role: 'VENDOR',         name: 'Mama Betty Canteen',    phone: '+256700000005' },
-};
-
-const demoChips = [
-  'moses_parent', 'kps_canteen', 'superadmin', 'central_admin', 'agent_peter', 'kps_bursar',
-];
-
 export default function Login({ onLoginSuccess }: LoginProps) {
   const [username, setUsername]       = useState('');
   const [password, setPassword]       = useState('');
   const [authError, setAuthError]     = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [activeChip, setActiveChip]   = useState('');
-  const [logoFailed, setLogoFailed]   = useState(false);
+  const [dbUsers, setDbUsers]         = useState<LoggedInUser[]>([]);
+
+  React.useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch('/api/users');
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setDbUsers(data);
+        }
+      } catch (err) {
+        console.error('Failed to load database users:', err);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanUsername = username.trim();
+    const cleanUsername = username.trim().toLowerCase();
     if (!cleanUsername) { setAuthError('Enter a username to continue.'); return; }
     setAuthLoading(true);
     setAuthError('');
@@ -60,13 +90,13 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         onLoginSuccess(data.user);
         setAuthLoading(false);
         return;
+      } else {
+        setAuthError(data.error || 'User not found in system database. Access denied.');
       }
-    } catch (err) {
-      console.error('API login error, falling back to local simulation:', err);
+    } catch (err: any) {
+      console.error('API login error:', err);
+      setAuthError('Connection error occurred during login. Please check database connection.');
     }
-
-    const found = mockUsers[cleanUsername];
-    onLoginSuccess(found ?? { id: 'U_GUEST', username: cleanUsername, role: 'PARENT', name: cleanUsername.replace('_', ' '), phone: '' });
     setAuthLoading(false);
   };
 
@@ -126,12 +156,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           <div style={{ width: '100%', maxWidth: 380 }}>
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
-              <img
-                src="logo.png"
-                alt="Fintech Logo"
-                style={{ height: '96px', width: 'auto', objectFit: 'contain', marginBottom: 16 }}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
+              <LogoSVG className="mb-4" iconSize={48} fontSize="text-3xl" />
               <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6, color: NAVY, textAlign: 'center' }}>Sign in to your account</h2>
               <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.5, textAlign: 'center', margin: 0 }}>
                 Enter your credentials to access your portal and ledger.
@@ -187,25 +212,29 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             <div style={{ flex: 1, height: '0.5px', background: 'rgba(6,6,92,0.10)' }} />
           </div>
 
-          <div style={{ fontSize: 11, color: '#aaa', marginBottom: 10, fontWeight: 500 }}>Select a demo account</div>
+          <div style={{ fontSize: 11, color: '#aaa', marginBottom: 10, fontWeight: 500 }}>Select a database account</div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {demoChips.map(chip => {
-              const active = activeChip === chip;
-              return (
-                <button key={chip} onClick={() => pickChip(chip)}
-                  style={{ padding: '5px 12px', border: `0.5px solid ${active ? BRAND : 'rgba(6,6,92,0.15)'}`, borderRadius: 20, fontSize: 11, fontFamily: 'monospace', color: active ? BRAND : NAVY, background: active ? BRAND_LIGHT : NAVY_LIGHT, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: active ? 600 : 400, transition: 'all 0.12s' }}
-                  onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = BRAND; e.currentTarget.style.color = BRAND; e.currentTarget.style.background = BRAND_LIGHT; } }}
-                  onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(6,6,92,0.15)'; e.currentTarget.style.color = NAVY; e.currentTarget.style.background = NAVY_LIGHT; } }}
-                >
-                  {chip}
-                </button>
-              );
-            })}
+            {dbUsers.length === 0 ? (
+              <span className="text-xs text-slate-400 italic animate-pulse">Loading active database registries...</span>
+            ) : (
+              dbUsers.map(userObj => {
+                const active = activeChip === userObj.username;
+                return (
+                  <button key={userObj.id} onClick={() => pickChip(userObj.username)}
+                    style={{ padding: '5px 12px', border: `0.5px solid ${active ? BRAND : 'rgba(6,6,92,0.15)'}`, borderRadius: 20, fontSize: 11, fontFamily: 'monospace', color: active ? BRAND : NAVY, background: active ? BRAND_LIGHT : NAVY_LIGHT, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: active ? 600 : 400, transition: 'all 0.12s' }}
+                    onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = BRAND; e.currentTarget.style.color = BRAND; e.currentTarget.style.background = BRAND_LIGHT; } }}
+                    onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(6,6,92,0.15)'; e.currentTarget.style.color = NAVY; e.currentTarget.style.background = NAVY_LIGHT; } }}
+                  >
+                    {userObj.username}
+                  </button>
+                );
+              })
+            )}
           </div>
 
-          <p style={{ fontSize: 11, color: '#bbb', marginTop: 24, lineHeight: 1.6 }}>
-            Demo environment — unknown usernames default to parent role.
+          <p style={{ fontSize: 11, color: '#bbb', marginTop: 24, margin: 0, lineHeight: 1.6 }}>
+            Security Notice — All accounts are real ledger records stored in the SQLite database and fetched via secure API endpoints.
           </p>
         </div>
       </div>

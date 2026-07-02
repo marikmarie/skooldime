@@ -3,12 +3,13 @@ import jsQR from 'jsqr';
 import { 
   ShoppingCart, QrCode, ClipboardList, RefreshCw, Key, ArrowRight, 
   UserCheck, AlertTriangle, ShieldCheck, CheckCircle2, Search, Plus, CreditCard, Banknote,
-  Smartphone, Camera, User, TrendingUp, Users, BarChart3, X
+  Smartphone, Camera, User, TrendingUp, Users, BarChart3, X, Menu, Trash2, ChevronUp, ChevronDown, Minus
 } from 'lucide-react';
 import { Student, CatalogItem, Transaction } from '../types';
 import { useToast } from './ToastContext';
 import { RecentTransactions } from './RecentTransactions';
 import { QRCodeSVG } from 'qrcode.react';
+import MicroLoans from './MicroLoans';
 
 interface CartItem {
   name: string;
@@ -22,7 +23,10 @@ interface RoleVendorPOSProps {
 
 export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendorPOSProps) {
   const [vendor, setVendor] = useState<any>(null);
-  const [activeTerminalTab, setActiveTerminalTab] = useState<'POS' | 'ANALYTICS' | 'HISTORY'>('POS');
+  const [activeTerminalTab, setActiveTerminalTab] = useState<'POS' | 'CATALOG' | 'ANALYTICS' | 'HISTORY' | 'LOANS'>('POS');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [allStudents, setAllStudents] = useState<Student[]>([]);
@@ -30,6 +34,12 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
   // Custom manual item input
   const [customName, setCustomName] = useState('');
   const [customPrice, setCustomPrice] = useState('');
+  
+  // Catalog Management Form
+  const [catalogNewName, setCatalogNewName] = useState('');
+  const [catalogNewPrice, setCatalogNewPrice] = useState('');
+  const [catalogNewCategory, setCatalogNewCategory] = useState<'FOOD' | 'STATIONERY' | 'CLOTHING' | 'OTHER'>('FOOD');
+  const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
   
   // Catalog search & Simulation candidates search
   const [searchCatalogQuery, setSearchCatalogQuery] = useState('');
@@ -133,6 +143,11 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
     allStudentsRef.current = allStudents;
   }, [allStudents]);
 
+  const showScanDialogRef = React.useRef(showScanDialog);
+  useEffect(() => {
+    showScanDialogRef.current = showScanDialog;
+  }, [showScanDialog]);
+
   useEffect(() => {
     if (!isWebcamActive) return;
 
@@ -174,21 +189,35 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                 setTimeout(() => {
                   setScanFlash(false);
                   
-                  // Call scanning API
-                  handleScanQr(qrHash).then(() => {
-                    setScannerStatus('SUCCESS');
+                  if (showScanDialogRef.current) {
+                    // Active camera scan checkout!
                     if (matchedStudent) {
-                      setDetectedStudent(matchedStudent);
-                      toast.success(`Camera Card Detected: ${matchedStudent.name}`);
+                      setScanStatus('READING');
+                      executeCheckoutRequest(null, matchedStudent);
                     } else {
-                      toast.success(`Camera QR Detected: ${qrHash}`);
+                      toast.error('Student QR not recognized in student registry.');
                     }
-                    
+                    setScannerStatus('SUCCESS');
                     setTimeout(() => {
                       setScannerStatus('READY');
-                      setDetectedStudent(null);
-                    }, 1800);
-                  });
+                    }, 1000);
+                  } else {
+                    // Normal idle scan
+                    handleScanQr(qrHash).then(() => {
+                      setScannerStatus('SUCCESS');
+                      if (matchedStudent) {
+                        setDetectedStudent(matchedStudent);
+                        toast.success(`Camera Card Detected: ${matchedStudent.name}`);
+                      } else {
+                        toast.success(`Camera QR Detected: ${qrHash}`);
+                      }
+                      
+                      setTimeout(() => {
+                        setScannerStatus('READY');
+                        setDetectedStudent(null);
+                      }, 1800);
+                    });
+                  }
                 }, 500);
               }
             }
@@ -212,7 +241,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
 
   const startWebcam = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
       setWebcamStream(stream);
       setIsWebcamActive(true);
       toast.success('Canteen terminal camera activated successfully.');
@@ -243,6 +272,14 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
       }
     };
   }, [webcamStream]);
+
+  useEffect(() => {
+    if (showScanDialog) {
+      startWebcam();
+    } else {
+      stopWebcam();
+    }
+  }, [showScanDialog]);
 
   const triggerCardScan = (stud: Student) => {
     setDetectedStudent(stud);
@@ -583,6 +620,70 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
     }
   };
 
+  const handleAddCatalogItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!catalogNewName || !catalogNewPrice || !catalogNewCategory) {
+      toast.error('Please enter name, price, and category.');
+      return;
+    }
+    const targetVendorId = vendor?.id || 'V1';
+    setLoading(true);
+    try {
+      const res = await fetch('/api/pos/catalog/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vendorId: targetVendorId,
+          name: catalogNewName,
+          price: Number(catalogNewPrice),
+          category: catalogNewCategory
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Successfully added ${catalogNewName} to catalog!`);
+        setCatalog(prev => [data.item, ...prev]);
+        setCatalogNewName('');
+        setCatalogNewPrice('');
+      } else {
+        toast.error(data.error || 'Failed to add item to catalog.');
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Error occurred while saving item.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCatalogItem = async (itemId: string) => {
+    if (!window.confirm('Are you sure you want to delete this item from your catalog?')) {
+      return;
+    }
+    const targetVendorId = vendor?.id || 'V1';
+    setLoading(true);
+    try {
+      const res = await fetch('/api/pos/catalog/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: itemId,
+          vendorId: targetVendorId
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Product deleted successfully!');
+        setCatalog(prev => prev.filter(item => item.id !== itemId));
+      } else {
+        toast.error(data.error || 'Failed to delete item.');
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Error deleting item.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // DERIVED DAILY SUMMARY METRICS & TRENDS
   const todayStr = new Date().toISOString().split('T')[0];
   
@@ -683,580 +784,415 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
   const peakPeriodLabel = getPeakPeriodLabel();
 
   return (
-    <div className="space-y-6 text-slate-800">
+    <div className="space-y-6 text-slate-800 relative">
       
-      {/* Dashboard Sub-Tabs */}
-      <div className="flex bg-slate-100 border border-slate-200 p-1 rounded-xl max-w-lg mb-6 overflow-x-auto scrollbar-none flex-nowrap w-full">
-        <button
-          type="button"
-          onClick={() => setActiveTerminalTab('POS')}
-          className={`flex-1 shrink-0 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide uppercase transition-all ${
-            activeTerminalTab === 'POS'
-              ? 'bg-navy text-white shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-          }`}
-        >
-          <ShoppingCart className="h-4 w-4" />
-          <span>POS Checkout</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTerminalTab('ANALYTICS')}
-          className={`flex-1 shrink-0 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide uppercase transition-all ${
-            activeTerminalTab === 'ANALYTICS'
-              ? 'bg-navy text-white shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-          }`}
-        >
-          <BarChart3 className="h-4 w-4" />
-          <span>Shift Sales</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTerminalTab('HISTORY')}
-          className={`flex-1 shrink-0 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide uppercase transition-all ${
-            activeTerminalTab === 'HISTORY'
-              ? 'bg-navy text-white shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-          }`}
-        >
-          <Banknote className="h-4 w-4" />
-          <span>Ledger & MoMo</span>
-        </button>
+      {/* Dynamic Slide-out Sidebar */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex z-50 animate-in fade-in duration-150">
+          {/* Sidebar Area */}
+          <div className="w-68 max-w-[85vw] text-white h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-left duration-200" style={{ backgroundColor: '#06065C' }}>
+            <div>
+              {/* Sidebar Header */}
+              <div className="p-5 border-b border-[#040440]/40 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-[#040440] text-white shadow-sm">
+                    <Smartphone className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-100">Canteen POS</h4>
+                    <p className="text-[10px] text-slate-300 truncate w-36">
+                      {vendor?.name || 'Mama Betty Canteen'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="text-slate-300 hover:text-white p-1 text-sm font-semibold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Sidebar Links */}
+              <div className="p-4 space-y-1">
+                {[
+                  { tab: 'POS', label: 'POS Checkout', icon: ShoppingCart },
+                  { tab: 'CATALOG', label: 'Manage Products', icon: Plus },
+                  { tab: 'ANALYTICS', label: 'Shift Sales', icon: BarChart3 },
+                  { tab: 'HISTORY', label: 'Ledger & MoMo', icon: Banknote },
+                  { tab: 'LOANS', label: 'Apply for Micro-Loans', icon: ClipboardList },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTerminalTab === item.tab;
+                  return (
+                    <button
+                      key={item.tab}
+                      type="button"
+                      onClick={() => {
+                        setActiveTerminalTab(item.tab as any);
+                        setIsSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                        isActive
+                          ? 'bg-[#040440] text-white shadow-md'
+                          : 'text-slate-300 hover:text-white hover:bg-[#040440]/50'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Sidebar Footer */}
+            <div className="p-4 border-t border-[#040440]/40 text-center" style={{ backgroundColor: 'rgba(4, 4, 64, 0.4)' }}>
+              <p className="text-[10px] text-slate-400 font-mono">
+                Terminal ID: {vendor?.id || 'V1'}
+              </p>
+            </div>
+          </div>
+
+          {/* Touch target to dismiss sidebar */}
+          <div className="flex-1" onClick={() => setIsSidebarOpen(false)} />
+        </div>
+      )}
+
+      {/* Sliding Cart Drawer Overlay */}
+      {isCartOpen && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-end justify-center z-45 animate-in fade-in duration-150">
+          <div className="w-full max-w-lg bg-white rounded-t-3xl border-t border-slate-200 overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-200">
+            {/* Drawer Header */}
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-slate-700" />
+                <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider">Current Shopping Cart</h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCartOpen(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold p-1 text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Scrollable list of items */}
+            <div className="max-h-[50vh] overflow-y-auto px-5 py-4 space-y-3 scrollbar-thin">
+              {cart.length === 0 ? (
+                <div className="text-center py-12 text-slate-400 text-xs">
+                  Your cart is empty. Add items from the canteen catalog!
+                </div>
+              ) : (
+                cart.map((item) => (
+                  <div key={item.name} className="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <div className="flex-1 min-w-0 pr-3">
+                      <h5 className="text-xs font-bold text-slate-800 truncate">{item.name}</h5>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                        {item.price.toLocaleString()} UGX × {item.quantity}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {/* Plus/Minus quantity control */}
+                      <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFromCart(item.name)}
+                          className="px-2 py-1.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 text-[10px] font-black transition-colors"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="px-2.5 text-xs font-bold text-slate-800 font-mono">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleAddToCart(item.name, item.price)}
+                          className="px-2 py-1.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 text-[10px] font-black transition-colors"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+
+                      <span className="text-xs font-mono font-bold text-slate-800 w-20 text-right">
+                        {(item.price * item.quantity).toLocaleString()} UGX
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCart(prev => prev.filter(c => c.name !== item.name));
+                        }}
+                        className="text-slate-400 hover:text-brand p-1 transition-colors"
+                        title="Remove item"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Cart Drawer Footer */}
+            <div className="px-5 py-5 border-t border-slate-100 bg-slate-50 space-y-4">
+              <div className="flex justify-between items-center text-slate-800">
+                <span className="text-xs font-bold text-slate-500">Order Subtotal:</span>
+                <span className="text-base font-extrabold font-mono text-slate-900">
+                  {cartTotal.toLocaleString()} UGX
+                </span>
+              </div>
+
+              {/* Checkout Action Button */}
+              <div className="grid grid-cols-1 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCartOpen(false);
+                    setShowScanDialog(true);
+                  }}
+                  disabled={cart.length === 0}
+                  className={`w-full py-3.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${
+                    cart.length === 0
+                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                      : 'bg-[#ED0101] hover:bg-[#c90000] text-white active:scale-98 shadow-md'
+                  }`}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  <span>Scan Card to Pay</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleGeneratePaymentQr}
+                  disabled={cart.length === 0 || loading}
+                  className={`w-full py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all border ${
+                    cart.length === 0 || loading
+                      ? 'border-slate-200 text-slate-400 cursor-not-allowed'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 active:scale-98'
+                  }`}
+                >
+                  <QrCode className="h-4 w-4" />
+                  <span>Generate Family Payment QR</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POS Top Header - Universal for all views inside POS component */}
+      <div className="flex items-center justify-between text-white rounded-2xl p-4 shadow-sm border border-[#040440]/10 mb-4" style={{ backgroundColor: '#06065C' }}>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 hover:bg-[#040440] rounded-xl transition-all active:scale-95 text-slate-200"
+            title="Open POS Menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="flex flex-col">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-white">
+              {activeTerminalTab === 'POS' ? 'POS Checkout' : activeTerminalTab === 'CATALOG' ? 'Manage Products' : activeTerminalTab === 'ANALYTICS' ? 'Shift Sales' : activeTerminalTab === 'HISTORY' ? 'Ledger & MoMo' : 'Micro-Loans'}
+            </span>
+            <span className="text-[10px] text-slate-300 font-mono font-medium">
+              {vendor?.name || 'Mama Betty Canteen'}
+            </span>
+          </div>
+        </div>
+
+        {/* Right side status / compact cart indicator */}
+        <div className="flex items-center gap-2">
+          {activeTerminalTab === 'POS' && (
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="relative p-2.5 hover:bg-[#040440]/80 rounded-xl transition-all active:scale-95 text-white"
+              style={{ backgroundColor: '#040440' }}
+              title="View Order Basket"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center font-mono">
+                  {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {activeTerminalTab === 'POS' && (
-        /* POS Top Section: Main Work Area (Scanner, Cart, Catalog) */
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        
-          {/* LEFT COLUMN: Camera, Verification, and Inventory (8 cols of 12) */}
-          <div className="xl:col-span-8 flex flex-col gap-6 animate-in fade-in duration-300">
-            
-            {/* Top row: Camera Viewfinder and Identity Verification side-by-side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-
-            {/* ACTIVE RFID / QR OPTICAL TERMINAL */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
-              <style>{`
-                @keyframes scanLaser {
-                  0% { top: 4%; opacity: 0.3; }
-                  50% { top: 96%; opacity: 1; }
-                  100% { top: 4%; opacity: 0.3; }
-                }
-                @keyframes scanBeepFlash {
-                  0% { background-color: rgba(16, 185, 129, 0); }
-                  15% { background-color: rgba(16, 185, 129, 0.35); }
-                  100% { background-color: rgba(16, 185, 129, 0); }
-                }
-                .laser-sweep {
-                  animation: scanLaser 2.2s infinite ease-in-out;
-                }
-                .viewfinder-corner {
-                  width: 20px;
-                  height: 20px;
-                  border-color: #ED0101;
-                  position: absolute;
-                }
-                .flash-active {
-                  animation: scanBeepFlash 0.5s ease-out forwards;
-                }
-              `}</style>
-
-              {/* Header */}
-              <div className="bg-white border-b border-slate-150 px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-red-50 text-brand border border-red-100">
-                    <Camera className="h-4.5 w-4.5 text-brand" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-800 tracking-tight text-sm">QR Card Reader</h3>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Hold student card to camera or enter code</p>
-                  </div>
-                </div>
-                
-                {/* Active status indicator */}
-                <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-100">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="text-[10px] font-bold tracking-wider uppercase">Terminal Active</span>
-                </div>
-              </div>
-
-              {/* Viewfinder Stream Viewport (Full width inside left col card) */}
-              <div className="p-5 border-b border-slate-100">
-                <div className={`w-full bg-slate-950 rounded-xl relative flex flex-col justify-between p-5 min-h-60 overflow-hidden transition-colors duration-300 ${scanFlash ? 'flash-active' : ''}`}>
-                  
-                  {/* Real video stream element */}
-                  {isWebcamActive && (
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      className="absolute inset-0 w-full h-full object-cover z-0"
-                    />
-                  )}
-
-                  {/* Viewfinder Overlay / Grid */}
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_45%,rgba(0,0,0,0.4))] z-1"></div>
-
-                  {/* Status Indicator overlay */}
-                  <div className="flex items-center justify-between z-10">
-                    <div className="flex items-center gap-1.5 bg-black/75 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-white/10">
-                      <span className={`h-1.5 w-1.5 rounded-full ${
-                        scannerStatus === 'SUCCESS' ? 'bg-emerald-400' :
-                        scannerStatus === 'DECODING' ? 'bg-amber-400 animate-spin' :
-                        scannerStatus === 'SCANNING' ? 'bg-red-400 animate-pulse' :
-                        'bg-emerald-400 animate-pulse'
-                      }`}></span>
-                      <span className="text-[9px] text-slate-200 uppercase tracking-wider font-bold">
-                        {isWebcamActive ? 'Webcam Stream' : 'Card Scanner Simulator'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Viewfinder Target Reticle */}
-                  <div className="absolute inset-0 flex items-center justify-center p-4 z-10">
-                    <div className="w-40 h-40 border border-dashed border-red-500/40 rounded-2xl relative flex flex-col items-center justify-center bg-black/20 backdrop-blur-[1px]">
-                      
-                      {/* Viewfinder Corners */}
-                      <div className="viewfinder-corner top-0 left-0 border-t-4 border-l-4 rounded-tl-xl"></div>
-                      <div className="viewfinder-corner top-0 right-0 border-t-4 border-r-4 rounded-tr-xl"></div>
-                      <div className="viewfinder-corner bottom-0 left-0 border-b-4 border-l-4 rounded-bl-xl"></div>
-                      <div className="viewfinder-corner bottom-0 right-0 border-b-4 border-r-4 rounded-br-xl"></div>
-
-                      {/* Laser Sweep Line */}
-                      {scannerStatus !== 'SUCCESS' && (
-                        <div className="absolute left-3 right-3 h-0.5 bg-linear-to-r from-transparent via-red-500 to-transparent shadow-[0_0_8px_#ff0000] laser-sweep z-10"></div>
-                      )}
-
-                      {/* Content based on Scanner State */}
-                      {scannerStatus === 'READY' && (
-                        <div className="text-center p-3 space-y-2 z-10">
-                          <QrCode className="h-8 w-8 text-white/80 mx-auto animate-pulse" />
-                          <p className="text-[11px] font-bold text-white uppercase tracking-wider">Ready to Scan</p>
-                          <p className="text-[9px] text-slate-400 leading-tight">Hold student card QR to lens, or use the card swiper below</p>
-                        </div>
-                      )}
-
-                      {scannerStatus === 'SCANNING' && (
-                        <div className="text-center p-3 space-y-2 z-10">
-                          <div className="w-8 h-8 rounded-full border-2 border-red-500/30 border-t-red-500 animate-spin mx-auto"></div>
-                          <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest animate-pulse">Scanning QR...</p>
-                        </div>
-                      )}
-
-                      {scannerStatus === 'DECODING' && (
-                        <div className="text-center p-3 space-y-2 z-10">
-                          <RefreshCw className="h-8 w-8 text-amber-400 mx-auto animate-spin" />
-                          <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Decoding ledger...</p>
-                        </div>
-                      )}
-
-                      {scannerStatus === 'SUCCESS' && (
-                        <div className="text-center p-3 space-y-1.5 z-10 animate-in zoom-in-75 duration-150">
-                          <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
-                          <p className="text-xs font-bold text-emerald-400">Scan Complete!</p>
-                          <p className="text-[9px] font-mono text-slate-300 truncate max-w-36">
-                            {detectedStudent?.name}
-                          </p>
-                        </div>
-                      )}
-
-                    </div>
-                  </div>
-
-                  {/* Camera toggles / Actions overlay */}
-                  <div className="flex justify-center items-center z-10 mt-auto pt-10">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isWebcamActive) stopWebcam();
-                        else startWebcam();
-                      }}
-                      className="px-4 py-2 bg-black/75 hover:bg-black text-white font-bold text-xs rounded-xl border border-white/10 transition-all flex items-center gap-1.5 active:scale-95"
-                    >
-                      <Camera className="h-4 w-4 text-white" />
-                      {isWebcamActive ? 'Disable Canteen Live Camera' : 'Enable Canteen Live Camera'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-            </div> {/* Close Column 1 of Inner Grid (Camera Card) */}
-
-            {/* Column 2 of Inner Grid: Verification & Swiper Card */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between overflow-hidden h-full">
-              
-              <div className="bg-white border-b border-slate-150 px-5 py-4">
-                <h3 className="font-bold text-slate-800 tracking-tight text-sm">Customer Verification</h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">Swipe dynamic card or manage active session</p>
-              </div>
-
-              {/* MANUAL CARD SWIPER / SIMULATOR */}
-              <div className="p-5 border-b border-slate-100 space-y-3 bg-slate-50/30 flex-1 flex flex-col justify-center">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
-                    <span className="text-xs font-bold text-slate-700">Simulate Card Swipe (Tap Card)</span>
-                  </div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Instant QR Reader</span>
-                </div>
-
-                <div className="space-y-2.5">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Enter card QR (e.g. STU001)"
-                      value={searchQrInput}
-                      onChange={(e) => setSearchQrInput(e.target.value)}
-                      className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono font-semibold focus:border-navy focus:ring-1 focus:ring-navy outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const trimmed = searchQrInput.trim();
-                        if (!trimmed) {
-                          toast.error('Please enter a card QR code to swipe.');
-                          return;
-                        }
-                        const found = allStudents.find(
-                          (s) => s.qrHash.toLowerCase() === trimmed.toLowerCase() || s.id.toLowerCase() === trimmed.toLowerCase()
-                        );
-                        if (found) {
-                          triggerCardScan(found);
-                        } else {
-                          toast.error(`Card QR Code "${trimmed}" not matched in active registry.`);
-                        }
-                      }}
-                      className="px-3.5 py-2 bg-[#06065C] hover:bg-[#040440] text-white font-bold text-xs rounded-lg shadow-xs transition-colors flex items-center gap-1 active:scale-95"
-                    >
-                      <CreditCard className="h-3.5 w-3.5" />
-                      Swipe Card
-                    </button>
-                  </div>
-                  {allStudents.length > 0 && (
-                    <div className="space-y-1.5 pt-0.5">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Registry Quick-Tap:</span>
-                      <div className="flex flex-wrap gap-1.5 items-center">
-                        {allStudents.slice(0, 4).map((stud) => (
-                          <button
-                            key={stud.id}
-                            type="button"
-                            onClick={() => {
-                              setSearchQrInput(stud.qrHash);
-                              triggerCardScan(stud);
-                            }}
-                            className="text-[10px] font-medium text-[#06065C] bg-[#06065C]/5 hover:bg-[#06065C]/10 border border-[#06065C]/10 rounded-full px-2.5 py-1 transition-colors flex items-center gap-1 active:scale-95"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            <span>{stud.name.split(' ')[0]}</span>
-                            <span className="text-[9px] text-slate-400 font-mono">({stud.qrHash})</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Verified Profile Card display underneath active scanner */}
-              <div className="p-5 bg-slate-50/50">
-                {scannedStudent ? (
-                  <div className="flex flex-col items-stretch gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-xs animate-in fade-in slide-in-from-bottom-2 duration-200">
-                    <div className="flex items-center gap-3">
-                      <img 
-                        src={scannedStudent.avatarUrl} 
-                        alt={scannedStudent.name} 
-                        className="w-11 h-11 rounded-full border border-slate-200" 
-                        referrerPolicy="no-referrer" 
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1">
-                          <h4 className="font-bold text-slate-800 text-xs truncate">{scannedStudent.name}</h4>
-                          <span className="text-[9px] bg-red-50 text-brand font-mono px-1.5 py-0.5 rounded border border-red-100 font-bold whitespace-nowrap animate-pulse">
-                            ACTIVE SESSION
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-500">{scannedStudent.class} • ID: <span className="font-mono text-slate-700 font-bold">{scannedStudent.qrHash}</span></p>
-                      </div>
-                    </div>
-
-                    <div className="border-t border-slate-150 pt-2.5 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Account Balance</span>
-                          <span className="text-sm font-mono font-black text-slate-800">{(scannedStudent.balance || 0).toLocaleString()} UGX</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setScannedStudent(null);
-                            setSearchQr('');
-                            toast.success('Student session ended. Terminal cleared.');
-                          }}
-                          className="px-2.5 py-1.5 bg-slate-150 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-bold transition-colors border border-slate-250"
-                        >
-                          Clear Session
-                        </button>
-                      </div>
-
-                      {/* DYNAMIC BALANCE CHECK INSIDE PROFILE CARD */}
-                      {cartTotal > 0 && (
-                        <div className={`mt-2 p-2.5 rounded-lg border text-xs leading-snug font-medium transition-all ${
-                          scannedStudent.balance >= cartTotal
-                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                            : 'bg-rose-50 border-rose-200 text-rose-800 animate-pulse'
-                        }`}>
-                          {scannedStudent.balance >= cartTotal ? (
-                            <p className="flex items-center gap-1.5">
-                              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-                              <span>✅ Balance is sufficient to clear {cartTotal.toLocaleString()} UGX.</span>
-                            </p>
-                          ) : (
-                            <div className="space-y-1">
-                              <p className="font-bold flex items-center gap-1.5 text-rose-700">
-                                <span className="inline-block w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping"></span>
-                                <span>❌ INSUFFICIENT FUNDS! ORDER FAILS</span>
-                              </p>
-                              <p className="text-[11px] text-rose-650 font-normal">
-                                Student wallet has only {(scannedStudent.balance || 0).toLocaleString()} UGX.
-                                Shortfall: <span className="font-mono font-bold">{(cartTotal - scannedStudent.balance).toLocaleString()} UGX</span>. Checkout is blocked.
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2.5 py-5 text-slate-500 text-xs border border-dashed border-slate-200 rounded-xl bg-white">
-                    <UserCheck className="h-4 w-4 text-slate-400" />
-                    <span>No student card swiped yet. Use the student tray above.</span>
-                  </div>
-                )}
-              </div>
+        <div className="space-y-5 animate-in fade-in duration-200 pb-16">
+          {/* SEARCH & FILTER CHIPS CONTAINER */}
+          <div className="space-y-4">
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                value={searchCatalogQuery}
+                onChange={(e) => setSearchCatalogQuery(e.target.value)}
+                placeholder="Search catalog items..."
+                className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-12 text-xs text-slate-800 focus:border-slate-300 outline-none transition shadow-xs"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (cart.length === 0) {
+                    toast.error('Your cart is empty. Add items to cart before scanning a card!');
+                    return;
+                  }
+                  setShowScanDialog(true);
+                }}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all ${
+                  cart.length > 0 
+                    ? 'bg-[#06065C]/10 text-[#06065C] hover:bg-[#06065C] hover:text-white' 
+                    : 'text-slate-300 hover:text-slate-500'
+                }`}
+                title="Scan Customer Card"
+              >
+                <CreditCard className="h-4 w-4" />
+              </button>
             </div>
 
-          </div> {/* Close Inner Grid Row */}
-
-          </div> {/* Close Section 1 (Camera & Verification column container) */}
-
-          {/* SECTION 3: Searchable Catalog & Canteen Inventory (xl:col-span-8) */}
-          <div className="xl:col-span-8 flex flex-col gap-6 order-3 animate-in fade-in duration-300">
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col gap-6">
-            
-            {/* Header with real-time searching input */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-              <div>
-                <h3 className="font-bold text-base text-slate-800 tracking-tight">Canteen Inventory</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Select items to build the customer's order basket</p>
-              </div>
-
-              {/* Search Bar */}
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchCatalogQuery}
-                  onChange={(e) => {
-                    setSearchCatalogQuery(e.target.value);
-                    setCustomName(e.target.value);
-                  }}
-                  placeholder="Search catalog items..."
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:border-slate-300 outline-none transition-colors"
-                />
-                {searchCatalogQuery && (
-                  <button
-                    onClick={() => {
-                      setSearchCatalogQuery('');
-                      setCustomName('');
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
-                  >
-                    X
-                  </button>
-                )}
-              </div>
+            {/* Category Chips scroll list */}
+            <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 flex-nowrap">
+              {[
+                { id: 'ALL', label: 'All Items' },
+                { id: 'FOOD', label: 'Food & Drinks' },
+                { id: 'STATIONERY', label: 'Stationery' },
+                { id: 'CLOTHING', label: 'Clothing' },
+                { id: 'OTHER', label: 'Other' },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                    selectedCategory === cat.id
+                      ? 'bg-[#06065C] text-white shadow-sm font-extrabold'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
             </div>
-
-            {/* Dynamic Items Grid */}
-            {catalog.filter(item => item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase())).length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center space-y-4 bg-transparent">
-                <p className="text-xs text-slate-500">No registered menu items match "{searchCatalogQuery}".</p>
-                {searchCatalogQuery && (
-                  <div className="max-w-xs mx-auto p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <p className="text-[11px] text-slate-500 mb-2">Instantly add a custom ticket for this search:</p>
-                    <button
-                      onClick={() => {
-                        const priceNum = parseInt(customPrice) || 1000;
-                        handleAddToCart(searchCatalogQuery, priceNum);
-                        toast.success(`Custom item "${searchCatalogQuery}" added to basket.`);
-                      }}
-                      className="w-full py-1.5 bg-navy hover:bg-navy-hover text-white text-[10px] font-bold rounded-md transition"
-                    >
-                      Add "{searchCatalogQuery}" to Basket (1,000 UGX)
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {catalog
-                  .filter(item => item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase()))
-                  .map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => handleAddToCart(item.name, item.price)}
-                      className="rounded-lg border border-slate-200 bg-white hover:border-slate-300 p-3.5 text-left transition-all active:scale-98 flex flex-col justify-between h-20 shadow-xs"
-                    >
-                      <span className="text-xs font-bold text-slate-800 truncate w-full">{item.name}</span>
-                      <span className="text-[11px] font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
-                        {item.price.toLocaleString()} UGX
-                      </span>
-                    </button>
-                  ))}
-              </div>
-            )}
-
-          </div> {/* Close white catalog card container */}
-
-          </div> {/* Close Section 3 Column container */}
-
-          {/* COLUMN 2: Current Order Basket (4 cols) */}
-          <div className="xl:col-span-4 flex flex-col gap-6 order-2 xl:order-2 sticky top-6">
-
-            {/* ORDER BASKET CARD */}
-            <div className="flex flex-col justify-between bg-white border border-slate-200 rounded-2xl p-5 min-h-110 shadow-sm">
-              <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Current Order</span>
-                  <span className="text-[11px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full font-bold">
-                    {cart.reduce((sum, item) => sum + item.quantity, 0)} Items
-                  </span>
-                </div>
-                
-                {/* Basket list */}
-                <div className="flex-1 overflow-y-auto pr-1 space-y-2 max-h-96 scrollbar-thin">
-                  {cart.length === 0 ? (
-                    <div className="text-center py-12 text-slate-400 text-xs">
-                      Basket is empty. Select canteen menu items below or on the left.
-                    </div>
-                  ) : (
-                    cart.map((item) => (
-                      <div key={item.name} className="flex justify-between items-center border-b border-slate-100 py-2.5">
-                        <div className="flex-1 min-w-0 pr-2">
-                          <h5 className="text-xs font-bold text-slate-800 truncate">{item.name}</h5>
-                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                            {item.price.toLocaleString()} UGX x {item.quantity}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono font-bold text-slate-700">
-                            {(item.price * item.quantity).toLocaleString()} UGX
-                          </span>
-                          <button
-                            onClick={() => handleRemoveFromCart(item.name)}
-                            className="text-slate-400 hover:text-brand p-1 text-xs font-bold font-mono"
-                            title="Remove item"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-                
-                {/* Pay trigger section */}
-                <div className="border-t border-slate-200 pt-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-slate-600">Total Amount:</span>
-                    <span className="text-base font-bold text-slate-900 font-mono">
-                      {cartTotal.toLocaleString()} UGX
-                    </span>
-                  </div>
-                  
-                  {scannedStudent ? (
-                    (() => {
-                      const isInsufficient = scannedStudent.balance < cartTotal;
-                      return (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (isInsufficient) {
-                              toast.error(`Order Failed: Student has only ${scannedStudent.balance.toLocaleString()} UGX which is less than the order total of ${cartTotal.toLocaleString()} UGX.`);
-                              return;
-                            }
-                            executeCheckoutRequest(null, scannedStudent);
-                          }}
-                          disabled={cart.length === 0 || loading}
-                          className={`w-full py-3.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${
-                            cart.length === 0 || loading
-                              ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                              : isInsufficient
-                                ? 'bg-brand text-white hover:bg-[#d60000] active:scale-98 shadow-sm shadow-red-600/15'
-                                : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-98 shadow-sm shadow-emerald-600/10'
-                          }`}
-                        >
-                          {loading ? (
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                          ) : isInsufficient ? (
-                            <X className="h-4 w-4" />
-                          ) : (
-                            <CreditCard className="h-4 w-4" />
-                          )}
-                          {isInsufficient ? 'Order Failed: Insufficient Balance' : `Charge ${scannedStudent.name}'s Card`}
-                        </button>
-                      );
-                    })()
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleCheckout}
-                      disabled={cart.length === 0}
-                      className={`w-full py-3.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${
-                        cart.length === 0
-                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                          : 'bg-brand text-white hover:bg-[#d60000] active:scale-98 shadow-sm shadow-brand/10'
-                      }`}
-                    >
-                      <CreditCard className="h-4 w-4" /> Scan Card to Pay
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={handleGeneratePaymentQr}
-                    disabled={cart.length === 0 || loading}
-                    className={`w-full py-2.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all border ${
-                      cart.length === 0 || loading
-                        ? 'border-slate-200 text-slate-400 cursor-not-allowed'
-                        : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:scale-98'
-                    }`}
-                  >
-                    <QrCode className="h-4 w-4" />
-                    Generate Family Payment QR
-                  </button>
-                </div>
-              </div>
-            </div>
-
           </div>
 
+          {/* MAIN ITEMS GRID SECTION */}
+          <div>
+            {catalog.filter(item => {
+              const matchesSearch = item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase());
+              const matchesCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
+              return matchesSearch && matchesCategory;
+            }).length === 0 ? (
+              /* No matching items message */
+              <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center space-y-4 shadow-xs">
+                <div className="mx-auto w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
+                  <Search className="h-5 w-5 text-slate-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-700">No items match your criteria</p>
+                  <p className="text-xs text-slate-400 mt-1">Select another category or clear your search query to see available products.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchCatalogQuery('');
+                    setSelectedCategory('ALL');
+                  }}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-all"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            ) : (
+              /* Display items catalog list */
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {catalog
+                  .filter(item => {
+                    const matchesSearch = item.name.toLowerCase().includes(searchCatalogQuery.toLowerCase());
+                    const matchesCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
+                    return matchesSearch && matchesCategory;
+                  })
+                  .map((item) => {
+                    // Generate a nice visual identifier count representing standard popularity/frequency
+                    const popularityCode = item.usageCount || (Math.floor((item.price % 9) * 11) + 21);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          handleAddToCart(item.name, item.price);
+                          toast.success(`Added ${item.name} to cart`);
+                        }}
+                        className="relative rounded-xl border border-slate-200 bg-white hover:border-slate-300 p-3.5 text-left transition-all hover:shadow-xs active:scale-98 flex flex-col justify-between h-24 overflow-hidden group"
+                      >
+                        {/* Top Right Popularity Rating Indicator Badge */}
+                        <span className="absolute top-2.5 right-2.5 text-[8px] font-mono font-extrabold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                          {popularityCode}
+                        </span>
+
+                        <span className="text-xs font-bold text-slate-800 leading-snug pr-7 group-hover:text-[#06065C] transition-colors block line-clamp-2">
+                          {item.name}
+                        </span>
+
+                        <span className="text-[11px] font-mono font-extrabold text-slate-600 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100 w-fit">
+                          {item.price.toLocaleString()} UGX
+                        </span>
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* STICKY FLOATING CART SUMMARY BOTTOM BAR ON PORTAL */}
+      {cart.length > 0 && activeTerminalTab === 'POS' && !isCartOpen && (
+        <div className="fixed bottom-0 inset-x-0 text-white border-t border-[#040440]/30 p-3.5 z-40 animate-in slide-in-from-bottom duration-300" style={{ backgroundColor: '#06065C' }}>
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="bg-[#040440] text-white px-2.5 py-1 rounded-full text-xs font-black font-mono">
+                {cart.reduce((sum, item) => sum + item.quantity, 0)} Items
+              </span>
+              <div>
+                <p className="text-[9px] text-slate-300 uppercase tracking-widest font-bold">Total Bill</p>
+                <p className="text-sm font-extrabold font-mono text-emerald-400">
+                  {cartTotal.toLocaleString()} UGX
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="bg-white hover:bg-slate-100 text-[#06065C] px-4.5 py-2.5 rounded-xl text-xs font-black transition flex items-center gap-2 shadow-lg active:scale-95"
+            >
+              <span>View Order & Scan</span>
+              <ChevronUp className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       )}
 
       {activeTerminalTab === 'ANALYTICS' && (
         /* DAILY TRANSACTION SUMMARY */
-        <div className="rounded-xl border border-slate-800 bg-slate-900 shadow-xl p-5">
+        <div className="rounded-xl border border-slate-800 bg-transparent shadow-xl p-5">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4 mb-5">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-brand/10 text-brand">
+            <div className="p-2.5 rounded-lg bg-[#ED0101]/10 text-[#ED0101]">
               <BarChart3 className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-bold text-base text-slate-100">Daily Transaction Summary</h3>
-              <p className="text-xs text-slate-400">Hourly sales volume & student traffic benchmarks for today ({new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })})</p>
+              <h3 className="font-bold text-base text-slate-800">Daily Transaction Summary</h3>
+              <p className="text-xs text-slate-500">Hourly sales volume & student traffic benchmarks for today ({new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })})</p>
             </div>
           </div>
 
@@ -1265,8 +1201,8 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               onClick={() => setShowBenchmark(!showBenchmark)}
               className={`px-3.5 py-1.5 text-xs font-bold rounded-lg border transition-all duration-150 active:scale-95 flex items-center gap-1.5 ${
                 showBenchmark 
-                  ? 'bg-brand/10 text-brand border-brand/30' 
-                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+                  ? 'bg-[#ED0101]/10 text-[#ED0101] border-[#ED0101]/30' 
+                  : 'bg-slate-100 text-slate-600 border-slate-200 hover:text-slate-800 hover:bg-slate-200'
               }`}
             >
               <TrendingUp className="h-3.5 w-3.5" />
@@ -1277,7 +1213,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-4">
+          <div className="bg-transparent border border-slate-800/80 rounded-xl p-4">
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Today's Sales</span>
             <div className="flex items-baseline gap-1">
               <span className="text-xl font-mono font-black text-emerald-400">{todaySales.toLocaleString()}</span>
@@ -1289,7 +1225,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
             </p>
           </div>
 
-          <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-4">
+          <div className="bg-transparent border border-slate-800/80 rounded-xl p-4">
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Active Students</span>
             <div className="flex items-baseline gap-1">
               <span className="text-xl font-mono font-black text-sky-400">{activeStudentsCount}</span>
@@ -1301,7 +1237,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
             </p>
           </div>
 
-          <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-4">
+          <div className="bg-transparent border border-slate-800/80 rounded-xl p-4">
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Avg Ticket Size</span>
             <div className="flex items-baseline gap-1">
               <span className="text-xl font-mono font-black text-slate-200">{avgTicket.toLocaleString()}</span>
@@ -1312,7 +1248,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
             </p>
           </div>
 
-          <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-4">
+          <div className="bg-transparent border border-slate-800/80 rounded-xl p-4">
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">Peak Canteen Hour</span>
             <div className="flex items-baseline gap-1">
               <span className="text-sm font-bold text-slate-200">{peakPeriodLabel}</span>
@@ -1327,7 +1263,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           {/* Chart 1: Sales Volume */}
-          <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl p-4 flex flex-col justify-between">
+          <div className="bg-transparent border border-slate-800/80 rounded-xl p-4 flex flex-col justify-between">
             <div className="mb-4">
               <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
@@ -1391,7 +1327,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
           </div>
 
           {/* Chart 2: Active Student Counts */}
-          <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl p-4 flex flex-col justify-between">
+          <div className="bg-transparent border border-slate-800/80 rounded-xl p-4 flex flex-col justify-between">
             <div className="mb-4">
               <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-sky-400"></span>
@@ -1573,6 +1509,152 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
       </div>
       )}
 
+      {activeTerminalTab === 'CATALOG' && (
+        <div className="space-y-6 animate-in fade-in duration-200 pb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            {/* Left side: Add Product Form (5 columns) */}
+            <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs h-fit space-y-4">
+              <div>
+                <h3 className="text-sm font-extrabold uppercase tracking-wider text-[#06065C]">Add Product to Menu</h3>
+                <p className="text-xs text-slate-500 mt-1">Populate your school canteen catalog so students can add them to card checkout baskets.</p>
+              </div>
+
+              <form onSubmit={handleAddCatalogItem} className="space-y-4 pt-2">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Product Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Rolex, Samosa, HB Pencil"
+                    value={catalogNewName}
+                    onChange={(e) => setCatalogNewName(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-800 outline-none focus:border-slate-300 focus:bg-white transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Unit Price (UGX)</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="e.g. 1500"
+                    value={catalogNewPrice}
+                    onChange={(e) => setCatalogNewPrice(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-800 outline-none focus:border-slate-300 focus:bg-white transition-colors font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Category</label>
+                  <select
+                    value={catalogNewCategory}
+                    onChange={(e) => setCatalogNewCategory(e.target.value as any)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-800 outline-none focus:border-slate-300 focus:bg-white transition-colors"
+                  >
+                    <option value="FOOD">Food & Drinks</option>
+                    <option value="STATIONERY">Stationery</option>
+                    <option value="CLOTHING">Clothing</option>
+                    <option value="OTHER">Other Accessories</option>
+                  </select>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 bg-[#06065C] hover:bg-[#040440] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-98 flex items-center justify-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>{loading ? 'Adding Product...' : 'Add Item to Catalog'}</span>
+                </button>
+              </form>
+            </div>
+
+            {/* Right side: Catalog List & Search (7 columns) */}
+            <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800">Current Catalog</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Active menu items in your register ({catalog.length} items)</p>
+                </div>
+                
+                {/* Search query inside catalog list */}
+                <div className="relative w-full sm:w-56">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search catalog..."
+                    value={catalogSearchQuery}
+                    onChange={(e) => setCatalogSearchQuery(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-[11px] text-slate-800 outline-none focus:border-slate-300 focus:bg-white transition"
+                  />
+                </div>
+              </div>
+
+              {/* List table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <th className="pb-2">Name</th>
+                      <th className="pb-2">Category</th>
+                      <th className="pb-2 text-right">Price</th>
+                      <th className="pb-2 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {catalog.filter(item => 
+                      item.name.toLowerCase().includes(catalogSearchQuery.toLowerCase())
+                    ).length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="text-center py-12 text-xs text-slate-400 italic">
+                          No products found matching "{catalogSearchQuery}"
+                        </td>
+                      </tr>
+                    ) : (
+                      catalog
+                        .filter(item => 
+                          item.name.toLowerCase().includes(catalogSearchQuery.toLowerCase())
+                        )
+                        .map((item) => (
+                          <tr key={item.id} className="text-xs hover:bg-slate-50 transition-colors">
+                            <td className="py-3 font-bold text-slate-800">{item.name}</td>
+                            <td className="py-3 text-slate-500 font-medium">
+                              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold">
+                                {item.category}
+                              </span>
+                            </td>
+                            <td className="py-3 text-right font-bold font-mono text-slate-800">
+                              {item.price.toLocaleString()} UGX
+                            </td>
+                            <td className="py-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCatalogItem(item.id)}
+                                className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-100 transition-colors"
+                                title="Delete product"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {activeTerminalTab === 'LOANS' && (
+        <div className="animate-in fade-in duration-200 pb-16">
+          <MicroLoans defaultBorrowerId={vendor?.id || 'V1'} defaultBorrowerType="VENDOR" />
+        </div>
+      )}
+
       {/* MODALS */}
       
       {/* PIN Authorization Modal */}
@@ -1580,8 +1662,8 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
           <div className="w-full max-w-85 rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="text-center mb-6">
-              <div className="mx-auto bg-brand/10 w-12 h-12 rounded-full flex items-center justify-center mb-3">
-                <ShieldCheck className="h-6 w-6 text-brand" />
+              <div className="mx-auto bg-[#06065C]/10 w-12 h-12 rounded-full flex items-center justify-center mb-3">
+                <ShieldCheck className="h-6 w-6 text-[#06065C]" />
               </div>
               <h4 className="text-lg font-bold text-white">Enter Student PIN</h4>
               <p className="text-xs text-slate-400 mt-1">Required for amounts over {pinRequiredStudent.noPinLimit.toLocaleString()} UGX</p>
@@ -1621,7 +1703,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
               </button>
               <button
                 onClick={handleKeyboardSubmit}
-                className="rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm shadow-md active:scale-95 transition-all"
+                className="rounded-xl bg-[#06065C] hover:bg-[#040440] text-white font-bold text-sm shadow-md active:scale-95 transition-all"
               >
                 OK
               </button>
@@ -1687,7 +1769,7 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
         <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200 text-center space-y-5">
             <div className="flex flex-col items-center">
-              <span className="text-[10px] font-bold text-brand tracking-widest uppercase bg-red-50 px-2 py-0.5 rounded-full">skoolDime Pay</span>
+              <span className="text-[10px] font-bold text-[#06065C] tracking-widest uppercase bg-[#06065C]/5 px-2 py-0.5 rounded-full">skoolDime Pay</span>
               <h4 className="text-base font-black text-slate-800 mt-2">Dynamic Checkout QR</h4>
               <p className="text-xs text-slate-500 mt-1">Scan this QR from a parent app or student device to authorize instantly</p>
             </div>
@@ -1717,14 +1799,14 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
         </div>
       )}
 
-      {/* CONTACTLESS RFID CARD READER DIALOG */}
+      {/* CONTACTLESS CAMERA QR CODE & STUDENT CARD SCANNER DIALOG */}
       {showScanDialog && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl animate-in fade-in zoom-in-95 duration-150 p-6 space-y-5">
+        <div className="fixed inset-0 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150 p-6 space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-slate-700" />
-                <h4 className="font-bold text-slate-800 text-sm">Tap Contactless Card</h4>
+                <Camera className="h-5 w-5 text-[#ED0101] animate-pulse" />
+                <h4 className="font-extrabold text-slate-800 text-sm">POS Camera Card Scanner</h4>
               </div>
               <button
                 type="button"
@@ -1762,71 +1844,107 @@ export default function RoleVendorPOS({ userPhone = '+256771000111' }: RoleVendo
                 </button>
               </div>
             ) : scanStatus === 'READING' ? (
-              <div className="text-center py-8 space-y-3">
-                <div className="w-10 h-10 rounded-full border-2 border-slate-200 border-t-slate-800 animate-spin mx-auto"></div>
-                <p className="text-xs text-slate-500 font-medium">Authorizing payment on ledger...</p>
+              <div className="text-center py-8 space-y-3 animate-pulse">
+                <div className="w-12 h-12 rounded-full border-4 border-slate-200 border-t-[#ED0101] animate-spin mx-auto"></div>
+                <p className="text-xs text-slate-700 font-extrabold uppercase tracking-wider">Authorizing instant payment ledger split...</p>
               </div>
             ) : (
-              /* AWAITING CARD: Simulated list of RFID Student cards for the cashier to trigger simulated tap */
               <div className="space-y-4">
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Search and click a roster card to simulate tapping it against the canteen's terminal.
-                </p>
+                {/* Real Live Camera Scanner Feed! */}
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 shadow-inner bg-slate-950 flex flex-col items-center justify-center">
+                  {isWebcamActive ? (
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="p-4 text-center text-slate-400 text-xs">
+                      <p className="font-semibold mb-1">Canteen camera is starting...</p>
+                      <p className="text-[10px] text-slate-500">Hold student card QR up to the scanner to process instantly.</p>
+                    </div>
+                  )}
 
-                {/* Card Search input */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input
-                    type="text"
-                    value={scanSearchQuery}
-                    onChange={(e) => setScanSearchQuery(e.target.value)}
-                    placeholder="Search card serial by name..."
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-800 focus:border-slate-300 outline-none transition-colors"
-                  />
+                  {/* High-tech Scanning Overlays */}
+                  <div className="absolute inset-0 pointer-events-none border border-emerald-500/20 flex items-center justify-center">
+                    <div className="w-4/5 h-0.5 bg-emerald-500/80 shadow-[0_0_8px_rgba(16,185,129,0.8)] absolute top-1/2 -translate-y-1/2 animate-bounce" style={{ animationDuration: '2s' }} />
+                    <div className="border border-emerald-400/50 w-28 h-28 rounded-md opacity-40 flex items-center justify-center">
+                      <span className="text-[8px] font-mono font-bold text-emerald-400 uppercase tracking-widest bg-black/60 px-1 py-0.5 rounded">ALIGN QR</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Simulated RFID tag cards list */}
-                <div className="max-h-64 overflow-y-auto pr-1 space-y-2 scrollbar-thin">
-                  {allStudents.filter(stud =>
-                    stud.name.toLowerCase().includes(scanSearchQuery.toLowerCase()) ||
-                    stud.class.toLowerCase().includes(scanSearchQuery.toLowerCase())
-                  ).length === 0 ? (
-                    <div className="text-center py-6 text-slate-400 text-xs italic">
-                      No card found matching "{scanSearchQuery}"
-                    </div>
-                  ) : (
-                    allStudents
-                      .filter(stud =>
-                        stud.name.toLowerCase().includes(scanSearchQuery.toLowerCase()) ||
-                        stud.class.toLowerCase().includes(scanSearchQuery.toLowerCase())
-                      )
-                      .map((stud) => (
-                        <button
-                          key={stud.id}
-                          type="button"
-                          onClick={async () => {
-                            setScanStatus('READING');
-                            // Delay slightly for physical tap response simulation
-                            await new Promise(r => setTimeout(r, 600));
-                            executeCheckoutRequest(null, stud);
-                          }}
-                          className="w-full text-left rounded-lg border border-slate-200 hover:border-slate-300 p-2.5 flex items-center justify-between hover:bg-slate-50 transition"
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-700">
-                              {stud.name.charAt(0)}
+                <div className="text-center border-t border-slate-100 pt-3">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-[10px] font-mono text-slate-600">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                    <span>SCANNER ACTIVE — HOLD CARD TO CAMERA</span>
+                  </div>
+                </div>
+
+                {/* Simulated tap list for testing/fallbacks */}
+                <div className="border-t border-slate-100 pt-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Manual / Simulator Backup</span>
+                    <span className="text-[9px] text-slate-400">Click student to simulate scan</span>
+                  </div>
+
+                  {/* Card Search input */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={scanSearchQuery}
+                      onChange={(e) => setScanSearchQuery(e.target.value)}
+                      placeholder="Search students..."
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-800 focus:border-slate-300 outline-none transition-colors"
+                    />
+                  </div>
+
+                  {/* Simulated RFID tag cards list */}
+                  <div className="max-h-40 overflow-y-auto pr-1 space-y-2 scrollbar-thin">
+                    {allStudents.filter(stud =>
+                      stud.name.toLowerCase().includes(scanSearchQuery.toLowerCase()) ||
+                      stud.class.toLowerCase().includes(scanSearchQuery.toLowerCase())
+                    ).length === 0 ? (
+                      <div className="text-center py-6 text-slate-400 text-xs italic">
+                        No students found matching "{scanSearchQuery}"
+                      </div>
+                    ) : (
+                      allStudents
+                        .filter(stud =>
+                          stud.name.toLowerCase().includes(scanSearchQuery.toLowerCase()) ||
+                          stud.class.toLowerCase().includes(scanSearchQuery.toLowerCase())
+                        )
+                        .map((stud) => (
+                          <button
+                            key={stud.id}
+                            type="button"
+                            onClick={async () => {
+                              setScanStatus('READING');
+                              // Delay slightly for physical scan response simulation
+                              await new Promise(r => setTimeout(r, 600));
+                              executeCheckoutRequest(null, stud);
+                            }}
+                            className="w-full text-left rounded-lg border border-slate-200 hover:border-[#ED0101]/40 p-2.5 flex items-center justify-between hover:bg-[#ED0101]/5 transition"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-700">
+                                {stud.name.charAt(0)}
+                              </div>
+                              <div>
+                                <h5 className="text-xs font-bold text-slate-850">{stud.name}</h5>
+                                <p className="text-[10px] text-slate-500">{stud.class}</p>
+                              </div>
                             </div>
-                            <div>
-                              <h5 className="text-xs font-bold text-slate-800">{stud.name}</h5>
-                              <p className="text-[10px] text-slate-400">{stud.class}</p>
-                            </div>
-                          </div>
-                          <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-bold">
-                            TAP CARD
-                          </span>
-                        </button>
-                      ))
-                  )}
+                            <span className="text-[10px] font-mono text-white bg-[#ED0101] hover:bg-[#c90000] px-2.5 py-1 rounded-md font-bold transition">
+                              SIMULATE SCAN
+                            </span>
+                          </button>
+                        ))
+                    )}
+                  </div>
                 </div>
               </div>
             )}
